@@ -20,6 +20,12 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Nouvelles améliorations (16/10/2026, demande de Nathan : agents d'amélioration, fil « Nouvelles améliorations »).
+- 36 achats uniques au lieu de 11 (GDD §3 bis), de 50 € à 50 M€, en cinq rubriques dans l'onglet « Améliorations » : Équipement, Logiciels, Technologies (Salle serveurs), Formations, Certifications et labels, avec « acquis / total » par rubrique.
+- Formations : une série de trois paliers par catégorie (× 1,5, × 1,5, × 2) ; un palier n'apparaît qu'après le précédent (`isUpgradeListed`). Certifications : production globale et réputation à l'achat (`reputationGain`). Technologies de l'ancien §7 (Automatisation, Assistant IA) enfin branchées, avec Sauvegarde cloud et Agents IA : `requiresBuilding` (Salle serveurs niv. N terminée), refus `missing_building` « Nécessite : Salle serveurs niv. 2 ».
+- Aucune formule de `economy.ts` changée : les effets passent par les champs existants de `UpgradeEffect`. Sauvegarde : aucun nouveau champ.
+- `npm run check` : typage OK, 20 fichiers / 191 tests OK, build OK.
+
 Easter eggs (16/10/2026, demande de Nathan, fil « Easter eggs »). Rien n'est annoncé à l'écran avant la découverte ; la liste « Secrets trouvés · N / 9 » n'apparaît dans les Paramètres qu'après le premier.
 - 9 secrets (`data/secrets.ts`, règles pures dans `core/secrets.ts`, gestes dans `ui/Secrets.ts`) : 5 appuis rapides sur le solde (balance équilibrée, +0,01 €), 7 sur l'effectif (une phrase de collaborateur au hasard), code Konami au clavier, saisons du calendrier (1er avril, 1er au 20 mai, 31 décembre : message et libellé du bouton d'action), 1 chance sur 20 qu'une Période fiscale soit « la liasse 2065 sous la machine à café » (même effet), 1 000 et 10 000 saisies.
 - Aucun effet sur l'équilibrage : seule récompense, 0,01 € une fois. Action `discoverSecret`. Sauvegarde : champ `secrets` (liste vide s'il manque, identifiants inconnus ignorés), sans changement de version.
@@ -108,6 +114,7 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 - iPhone : Exporter › Copier fonctionne, et le texte collé dans Importer sur un autre appareil recrée le cabinet.
 
 ## Idées / plus tard
+- Améliorations : spécialisations de collaborateurs (un senior « fiscaliste » ou « auditeur » choisi à l'embauche), améliorations de pièces (cafétéria, salle de formation qui réduit le prix des formations), séminaire annuel temporaire (× 2 pendant 60 s, rechargeable), abonnements logiciels avec coût récurrent, objectifs liés aux rubriques (« obtenir ISO 9001 »).
 _(Hors périmètre de l'étape en cours.)_
 - Importer un cabinet du même nom qu'un existant : ajouter un suffixe (« (2) ») pour les distinguer.
 - Index des cabinets illisible : le reconstruire à partir des clés `comptatycoon:save:*` au lieu de repartir d'une liste vide.

@@ -5,6 +5,7 @@ export type RefusalReason =
   | 'locked'
   | 'already_owned'
   | 'missing_prerequisite'
+  | 'missing_building'
   | 'nobody_to_dismiss'
   | 'last_partner'
   | 'team_too_large'
