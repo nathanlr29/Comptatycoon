@@ -1,12 +1,14 @@
 import type { BuildingType } from '../data/buildings';
 import type { StaffRole } from '../data/staff';
 import { DEPARTMENT_REPUTATION, PORTFOLIO, type DepartmentId } from '../data/departments';
+import type { SecretId } from '../data/secrets';
 import type { UpgradeId } from '../data/upgrades';
 import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
 import { canBuild, canUpgrade, startBuild, startUpgrade } from './buildings';
 import { canExpand } from './expansion';
 import { canClaimObjective, claimObjective } from './objectives';
+import { discoverSecret } from './secrets';
 import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
 import type { RefusalReason } from './refusals';
 import { canBuyUpgrade } from './upgrades';
@@ -24,7 +26,9 @@ export type GameAction =
   | { type: 'build'; building: BuildingType }
   /** `hq` = agrandir le cabinet (conditions d'équipe en plus, voir canExpand). */
   | { type: 'upgradeBuilding'; buildingId: string }
-  | { type: 'claimObjective'; id: string };
+  | { type: 'claimObjective'; id: string }
+  /** Easter egg : enregistré une fois, récompense symbolique au plus. */
+  | { type: 'discoverSecret'; id: SecretId };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -124,5 +128,7 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       if (!check.ok) return refuse(state, check.reason);
       return { state: claimObjective(state, check.def), result: { ok: true } };
     }
+    case 'discoverSecret':
+      return { state: discoverSecret(state, action.id), result: { ok: true } };
   }
 }

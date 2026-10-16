@@ -1,3 +1,4 @@
+import type { EventReport } from '../core/events';
 import type { GameStore } from '../core/store';
 import type { GameState } from '../core/state';
 import { getObjective } from '../core/objectives';
@@ -12,13 +13,16 @@ export class LiveInfo {
   private readonly banner = new FiscalBanner();
   private readonly objectives: ObjectivesView;
 
-  constructor(store: GameStore, notifications: NotificationManager) {
+  /** `intercept` : renvoie `true` quand il a lui-même annoncé l'événement (variante secrète). */
+  constructor(store: GameStore, notifications: NotificationManager, intercept: (report: EventReport) => boolean = () => false) {
     this.objectives = new ObjectivesView((id) => {
       const def = getObjective(id);
       if (store.dispatch({ type: 'claimObjective', id }, Date.now()).ok && def) notifications.show(OBJECTIVE_TEXTS.claimed, def.title, 'success');
     });
     document.body.append(h('div', { class: 'live-info' }, this.banner.el, this.objectives.el));
-    store.onEvent((report) => notifyEvent(notifications, report));
+    store.onEvent((report) => {
+      if (!intercept(report)) notifyEvent(notifications, report);
+    });
   }
 
   render(state: GameState, now: number): void {

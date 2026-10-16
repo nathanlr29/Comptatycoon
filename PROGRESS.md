@@ -20,6 +20,11 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Easter eggs (16/10/2026, demande de Nathan, fil « Easter eggs »). Rien n'est annoncé à l'écran avant la découverte ; la liste « Secrets trouvés · N / 9 » n'apparaît dans les Paramètres qu'après le premier.
+- 9 secrets (`data/secrets.ts`, règles pures dans `core/secrets.ts`, gestes dans `ui/Secrets.ts`) : 5 appuis rapides sur le solde (balance équilibrée, +0,01 €), 7 sur l'effectif (une phrase de collaborateur au hasard), code Konami au clavier, saisons du calendrier (1er avril, 1er au 20 mai, 31 décembre : message et libellé du bouton d'action), 1 chance sur 20 qu'une Période fiscale soit « la liasse 2065 sous la machine à café » (même effet), 1 000 et 10 000 saisies.
+- Aucun effet sur l'équilibrage : seule récompense, 0,01 € une fois. Action `discoverSecret`. Sauvegarde : champ `secrets` (liste vide s'il manque, identifiants inconnus ignorés), sans changement de version.
+- `npm run check` : typage OK, 20 fichiers / 185 tests OK, build OK. Vérifié en Chromium (iPhone 13, horloge au 1er avril) : libellé « Lettrer un poisson », appuis sur le solde et l'effectif, Konami, liste dans les Paramètres, aucune erreur console. À vérifier sur iPhone : les appuis rapides sur le HUD ne zooment pas la page.
+
 Clic utile toute la partie (16/10/2026, demande de Nathan : à 9 k€/s, un clic ne rapportait que 12 €).
 - Chaque clic ajoute une part du revenu/s actuel : Double écran +1 %, Raccourcis clavier +1 %, Logiciel OCR +2 %, nouvelle **Application de saisie mobile** (75 000 €, après l'OCR, clic ×2 et +3 %). Total 7 % ; l'Assistant comptable IA (§7) ajoutera 5 %. À 9 000 €/s : 654 € par clic au lieu de 12 €.
 - `UpgradeEffect.clickIncomeShare` (parts additionnées dans `getMultipliers`) ; `getClickValue` inchangé, le texte flottant affiche toujours le montant crédité. Sauvegarde : aucun nouveau champ.

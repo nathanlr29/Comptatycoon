@@ -27,6 +27,13 @@ export class HUD {
     );
   }
 
+  /** Appuis sur le solde ou l'effectif (easter eggs, rien ne l'annonce à l'écran). */
+  onTap(which: 'money' | 'staff', fn: () => void): void {
+    const el = which === 'money' ? this.money.el : this.staff.el;
+    el.classList.add('stat--tappable');
+    el.addEventListener('pointerup', fn);
+  }
+
   render(state: GameState, now: number): void {
     setText(this.money.value, formatMoney(state.money));
     setText(this.rate.value, formatRate(getIncomePerSecond(state, now)));

@@ -41,6 +41,13 @@
   white-space: nowrap;
 }
 
+.stat--tappable {
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .stat .icon {
   width: 16px;
   height: 16px;
