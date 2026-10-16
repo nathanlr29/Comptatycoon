@@ -6,7 +6,7 @@
 - [x] 01 Socle et déploiement
 - [x] 02 Cœur métier (économie, recrutement)
 - [x] 03 Carte et caméra
-- [ ] 04 HUD et panneaux (prototype jouable)
+- [x] 04 HUD et panneaux (prototype jouable)
 - [ ] 05 Bâtiments et construction
 - [ ] 06 Profils, sauvegarde et progression hors ligne
 - [ ] 07 Départements, technologies, événements, objectifs
@@ -15,6 +15,13 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Étape 4 terminée (16/10/2026). **Le jeu est jouable** : saisir des factures, recruter, acheter les améliorations du clic, voir la capacité d'encadrement. Une recharge remet la partie à zéro (sauvegarde à l'étape 6).
+- `src/main.ts` crée le `GameStore`, la scène (`new MapScene(store)`) et l'interface (`new App(store, game)`), puis appelle `store.tick` à chaque image.
+- `src/ui/` : `App.ts` (assemblage), `HUD.ts`, `ActionDock.ts` (bouton d'action + texte flottant `+X €`), `Panel.ts` (feuille du bas sur mobile, panneau latéral ≥ 900 px ; fermeture bouton, Échap, tap hors panneau, glissement vers le bas), `RecruitmentPanel.ts`, `UpgradesPanel.ts`, `BuildingInfo.ts`, `NotificationManager.ts`.
+- Textes du jeu dans `src/data/texts.ts` (libellé de l'action selon le niveau du Bureau principal, raisons de refus).
+- `npm run check` : typage OK, 7 fichiers / 48 tests OK, build OK.
+- Vérifié en Chromium headless (iPhone SE portrait et paysage, bureau 1280 × 800) : 20 saisies = 20 €, recrutement d'un alternant (0,5 €/s, 1 / 15), aucun débordement horizontal, aucune erreur console.
+
 Étape 3 terminée (16/10/2026). La carte est navigable ; l'économie n'est pas encore affichée (étape 4).
 - `src/data/map.ts` : monde 2400 × 1800, 4 zones (Cabinet ouvert ; Aile Est, Aile Nord, Jardins ouverts aux niveaux 2, 3, 4 du Bureau principal), 13 emplacements + le Bureau principal.
 - `src/game/` : `geometry.ts` (fonctions pures : tap, zoom, limites, sélection, inertie), `CameraController.ts`, `InputController.ts` (glisser, pincer, molette, tap), `MapRenderer.ts` (dessin vectoriel Phaser : sol, allées, arbres, Bureau principal, emplacements en pointillés, zones verrouillées avec cadenas), `MapScene.ts`.
@@ -42,12 +49,15 @@
 - Graphismes dessinés en vectoriel avec `Phaser.GameObjects.Graphics` (pas de fichiers image) : léger et net à tous les zooms.
 - Zoom de 0,5 à 2 (relevé automatiquement si l'écran est plus grand que le monde), zoom initial 0,65 ; caméra bornée par nos propres fonctions (`clampScrollAxis`) plutôt que `camera.setBounds`, pour qu'elles soient testées.
 - Tap = moins de 8 px et moins de 250 ms, un seul doigt. Inertie seulement si le doigt bougeait encore au lâcher (< 80 ms).
+- Panneaux HTML recréés une fois puis mis à jour champ par champ (`setText` n'écrit que si le texte change).
+- Toucher un emplacement vide ne fait rien tant que la construction n'existe pas (étape 5) ; toucher une zone verrouillée affiche sa condition.
 - Un test d'architecture interdit à `src/core/` d'importer Phaser, le DOM ou le stockage.
 
 ## À vérifier à la main (iPhone, navigateur)
 - Ouvrir le site publié sur iPhone (Safari) : pas de zoom ni de défilement de la page, bandeau sous l'encoche.
 - iPhone : pincement fluide et centré entre les doigts, inertie agréable (ni trop longue ni trop courte), aucun tap accidentel en fin de glissement.
 - iPhone : rotation portrait ↔ paysage sans déformation ni zone vide ; bouton Recentrer atteignable au pouce.
+- iPhone : bouton « Saisir une facture » atteignable au pouce, texte `+X €` lisible ; feuille de recrutement qui se ferme en la glissant vers le bas.
 - Trackpad Mac : le pincement du trackpad zoome la carte (il arrive comme une molette avec ctrl).
 
 ## Idées / plus tard
