@@ -1,5 +1,6 @@
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import type { DepartmentId } from '../data/departments';
+import type { BuildingType } from '../data/buildings';
 import type { UpgradeId } from '../data/upgrades';
 
 /** Effet temporaire (ex. Période fiscale). Expire à `expiresAt` (ms). */
@@ -11,9 +12,12 @@ export interface TimedEffect {
 
 export interface BuildingState {
   id: string;
-  type: string;
+  type: BuildingType;
+  /** Niveau effectif (0 pendant le premier chantier). */
   level: number;
   slotId: string;
+  /** Chantier en cours : le niveau visé est atteint à `endsAt` (ms). */
+  pending?: { targetLevel: number; endsAt: number };
 }
 
 /** État complet et sérialisable du jeu : objets simples uniquement. */
@@ -30,6 +34,8 @@ export interface GameState {
   portfolios: number;
   buildings: BuildingState[];
   effects: TimedEffect[];
+  /** Fraction de point de réputation accumulée (salles de réunion). */
+  reputationProgress: number;
   /** Horodatage (ms) jusqu'auquel la production a été créditée. */
   lastSimulatedAt: number;
   createdAt: number;
@@ -48,6 +54,7 @@ export function createInitialState(now: number): GameState {
     portfolios: 0,
     buildings: [{ id: 'hq', type: 'headquarters', level: 1, slotId: 'hq' }],
     effects: [],
+    reputationProgress: 0,
     lastSimulatedAt: now,
     createdAt: now,
     stats: { totalEarned: 0, clicks: 0 },

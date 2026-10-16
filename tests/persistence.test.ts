@@ -64,6 +64,16 @@ describe('schéma de sauvegarde', () => {
     expect(validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, portfolios: -1 } }).ok).toBe(false);
   });
 
+  it('relit les pièces en travaux et la réputation en cours (étape 5)', () => {
+    const building = { ...played, reputationProgress: 0.4, buildings: [...played.buildings, { id: 'openSpace', type: 'openSpace' as const, level: 0, slotId: 'east-3', pending: { targetLevel: 1, endsAt: T0 + 10_000 } }] };
+    expect(parseSave(serializeSave(building, T0))).toEqual({ ok: true, save: { schemaVersion: SCHEMA_VERSION, savedAt: T0, state: building } });
+    const { reputationProgress: _r, ...older } = played;
+    const parsed = validateSave({ schemaVersion: 1, savedAt: T0, state: older });
+    expect(parsed.ok && parsed.save.state.reputationProgress).toBe(0);
+    const unknown = validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, buildings: [{ id: 'x', type: 'castle', level: 1, slotId: 'hq' }] } });
+    expect(unknown).toEqual({ ok: false, error: 'state.buildings[0].type : type de pièce inconnu' });
+  });
+
   it('migre une sauvegarde v0 (sans version ni statistiques) vers v1', () => {
     const { stats: _omit, ...v0State } = played;
     const parsed = validateSave({ savedAt: T0, state: v0State });

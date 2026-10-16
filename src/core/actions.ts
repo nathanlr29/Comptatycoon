@@ -1,10 +1,13 @@
+import type { BuildingType } from '../data/buildings';
 import type { StaffRole } from '../data/staff';
 import { DEPARTMENT_REPUTATION, PORTFOLIO, type DepartmentId } from '../data/departments';
 import type { UpgradeId } from '../data/upgrades';
 import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
-import { canDismiss, canDismissPartner, canHire, canHirePartner, type RefusalReason } from './recruitment';
-import { canExpand, expandFirm } from './expansion';
+import { canBuild, canUpgrade, startBuild, startUpgrade } from './buildings';
+import { canExpand } from './expansion';
+import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
+import type { RefusalReason } from './refusals';
 import { canBuyUpgrade } from './upgrades';
 import type { GameState } from './state';
 
@@ -17,8 +20,9 @@ export type GameAction =
   | { type: 'buyUpgrade'; id: UpgradeId }
   | { type: 'buyDepartment'; id: DepartmentId }
   | { type: 'buyPortfolio' }
-  /** Agrandir le cabinet = améliorer le Bureau principal (seul `hq` pour l'instant). */
-  | { type: 'upgradeBuilding'; buildingId: 'hq' };
+  | { type: 'build'; building: BuildingType }
+  /** `hq` = agrandir le cabinet (conditions d'équipe en plus, voir canExpand). */
+  | { type: 'upgradeBuilding'; buildingId: string };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -101,10 +105,17 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       };
       return { state: next, result: { ok: true } };
     }
-    case 'upgradeBuilding': {
-      const check = canExpand(state);
+    case 'build': {
+      const check = canBuild(state, action.building);
       if (!check.ok) return refuse(state, check.reason);
-      return { state: expandFirm(state, check.cost), result: { ok: true } };
+      return { state: startBuild(state, action.building, check, now), result: { ok: true } };
+    }
+    case 'upgradeBuilding': {
+      const check = action.buildingId === 'hq' ? canExpand(state) : canUpgrade(state, action.buildingId);
+      if (!check.ok) return refuse(state, check.reason);
+      const upgrade = canUpgrade(state, action.buildingId);
+      if (!upgrade.ok) return refuse(state, upgrade.reason);
+      return { state: startUpgrade(state, action.buildingId, upgrade, now), result: { ok: true } };
     }
   }
 }

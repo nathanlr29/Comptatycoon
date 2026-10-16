@@ -2,7 +2,7 @@ import { canExpand, getFirmLevel, missingForExpansion } from '../core/expansion'
 import { formatMoney } from '../core/format';
 import type { GameState } from '../core/state';
 import { EXPANSION_LEVELS, FIRM_BONUS_PER_LEVEL, MAX_FIRM_LEVEL, type ExpansionLevel } from '../data/expansion';
-import { expansionMissingText, expansionRequirementText, refusalText } from '../data/texts';
+import { durationText, expansionMissingText, expansionRequirementText, refusalText } from '../data/texts';
 import { h, setText } from './dom';
 
 type Row = { el: HTMLElement; status: HTMLElement; button: HTMLButtonElement; reason: HTMLElement; level: ExpansionLevel };
@@ -57,7 +57,10 @@ export class ExpansionPanel {
       let reason = '';
       if (!check.ok) {
         const missing = missingForExpansion(state, level);
-        reason = check.reason === 'missing_prerequisite' ? expansionMissingText(missing.staff, missing.partners) : refusalText(check.reason);
+        const works = state.buildings.find((b) => b.id === 'hq')?.pending;
+        if (check.reason === 'missing_prerequisite') reason = expansionMissingText(missing.staff, missing.partners);
+        else if (works) reason = `Travaux en cours, encore ${durationText(works.endsAt - Date.now())}`;
+        else reason = refusalText(check.reason);
       }
       setText(row.reason, reason);
     }
