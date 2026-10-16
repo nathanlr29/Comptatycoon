@@ -87,3 +87,33 @@ describe('GameStore', () => {
     expect(store.getState()).toBe(fresh);
   });
 });
+
+describe('chantiers pendant l’absence', () => {
+  const HOUR_MS = 3_600_000;
+  // 2 juniors = 8 €/s ; salle serveurs en travaux (niveau 0 → 1, +5 % de production) finie 1 h après le départ.
+  const building = { id: 'serverRoom', type: 'serverRoom' as const, level: 0, slotId: 's1', pending: { targetLevel: 1, endsAt: T0 + HOUR_MS } };
+  const base = makeState({ staff: { intern: 0, junior: 2, senior: 0, manager: 0 }, buildings: [...makeState().buildings, building] });
+
+  it('achève le chantier à son heure et applique son bonus ensuite', () => {
+    const { state, report } = catchUpOffline(base, T0 + 3 * HOUR_MS);
+    const room = state.buildings.find((b) => b.id === 'serverRoom')!;
+    expect(room.level).toBe(1);
+    expect(room.pending).toBeUndefined();
+    expect(state.reputation).toBe(1);
+    const repMultiplier = 1.01; // +1 réputation après le chantier
+    expect(report.earned).toBeCloseTo(8 * 3_600 + 8 * 1.05 * repMultiplier * 2 * 3_600, 3);
+  });
+
+  it('achève aussi un chantier échu après les 8 h créditées, sans revenu en plus', () => {
+    const late = { ...building, pending: { targetLevel: 1, endsAt: T0 + 9 * HOUR_MS } };
+    const { state, report } = catchUpOffline({ ...base, buildings: [...makeState().buildings, late] }, T0 + 10 * HOUR_MS);
+    expect(state.buildings.find((b) => b.id === 'serverRoom')!.level).toBe(1);
+    expect(report.earned).toBeCloseTo(8 * 8 * 3_600, 3);
+  });
+
+  it('laisse en cours un chantier qui n’est pas fini', () => {
+    const { state } = catchUpOffline(base, T0 + HOUR_MS / 2);
+    expect(state.buildings.find((b) => b.id === 'serverRoom')!.pending).toBeDefined();
+  });
+});
+
