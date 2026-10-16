@@ -1,3 +1,4 @@
+import { BUILDINGS, type BuildingType } from '../data/buildings';
 import { DEPARTMENT_IDS, type DepartmentId } from '../data/departments';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
@@ -72,14 +73,26 @@ function departmentIds(value: unknown, path: string): DepartmentId[] {
   return arr(value, path, str).filter((id): id is DepartmentId => (DEPARTMENT_IDS as string[]).includes(id));
 }
 
+function buildingType(value: unknown, path: string): BuildingType {
+  const type = str(value, path);
+  if (!(type in BUILDINGS)) throw new SchemaError(`${path} : type de pièce inconnu`);
+  return type as BuildingType;
+}
+
+/** Niveau 0 = premier aménagement en cours ; `pending` = travaux en cours. */
 function building(value: unknown, path: string): BuildingState {
   const b = obj(value, path);
-  return {
+  const result: BuildingState = {
     id: str(b.id, `${path}.id`),
-    type: str(b.type, `${path}.type`),
-    level: int(b.level, `${path}.level`, 1),
+    type: buildingType(b.type, `${path}.type`),
+    level: int(b.level, `${path}.level`, 0),
     slotId: str(b.slotId, `${path}.slotId`),
   };
+  if (b.pending !== undefined) {
+    const p = obj(b.pending, `${path}.pending`);
+    result.pending = { targetLevel: int(p.targetLevel, `${path}.pending.targetLevel`, 1), endsAt: num(p.endsAt, `${path}.pending.endsAt`, 0) };
+  }
+  return result;
 }
 
 function effect(value: unknown, path: string): TimedEffect {
@@ -108,6 +121,7 @@ function readState(value: unknown): GameState {
     portfolios: s.portfolios === undefined ? 0 : int(s.portfolios, 'state.portfolios', 0),
     buildings: arr(s.buildings, 'state.buildings', building),
     effects: arr(s.effects, 'state.effects', effect),
+    reputationProgress: s.reputationProgress === undefined ? 0 : num(s.reputationProgress, 'state.reputationProgress', 0),
     lastSimulatedAt: num(s.lastSimulatedAt, 'state.lastSimulatedAt', 0),
     createdAt: num(s.createdAt, 'state.createdAt', 0),
     stats: {

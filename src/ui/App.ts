@@ -4,7 +4,7 @@ import type { GameState } from '../core/state';
 import { DEPARTMENT_IDS, DEPARTMENTS, type DepartmentId } from '../data/departments';
 import { canExpand, getFirmLevel } from '../core/expansion';
 import { getExpansionLevel } from '../data/expansion';
-import { clickLabel } from '../data/texts';
+import { clickLabel, durationText } from '../data/texts';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
 import { BuildingInfo } from './BuildingInfo';
@@ -44,6 +44,8 @@ export class App {
   private readonly growth: Tabs;
   private readonly buildingInfo = new BuildingInfo(() => this.show('Agrandir le cabinet', this.expansion));
   private readonly expansion = new ExpansionPanel(() => this.expand());
+  /** Niveau du cabinet au dernier rendu, pour annoncer la fin des travaux d'agrandissement. */
+  private firmLevel = Number.POSITIVE_INFINITY;
   private readonly expandButton = h('button', { class: 'expand-button', type: 'button', 'aria-label': 'Agrandir le cabinet' });
   private openView: View | null = null;
 
@@ -95,13 +97,15 @@ export class App {
     return result.ok && result.amount !== undefined ? result.amount : null;
   }
 
-  /** Agrandit le cabinet puis ferme le menu pour laisser voir le nouveau local apparaître. */
+  /** Lance les travaux d'agrandissement ; le nouveau local apparaît à leur fin (voir `render`). */
   private expand(): void {
+    const next = getExpansionLevel(getFirmLevel(this.store.getState()) + 1);
     const result = this.store.dispatch({ type: 'upgradeBuilding', buildingId: 'hq' }, Date.now());
-    if (!result.ok) return;
-    const level = getExpansionLevel(getFirmLevel(this.store.getState()));
+    if (!result.ok || !next) return;
     this.panel.close();
-    if (level) this.notifications.show('Cabinet agrandi', level.name, 'success');
+    const hq = this.store.getState().buildings.find((b) => b.id === 'hq');
+    const remaining = hq?.pending ? durationText(hq.pending.endsAt - Date.now()) : '';
+    this.notifications.show('Travaux d’agrandissement lancés', `${next.name} dans ${remaining}`);
   }
 
   private onBuildingSelected(id: string | null): void {
@@ -122,6 +126,12 @@ export class App {
   private render(state: GameState): void {
     const now = Date.now();
     this.hud.render(state, now);
+    const firmLevel = getFirmLevel(state);
+    if (firmLevel > this.firmLevel) {
+      const level = getExpansionLevel(firmLevel);
+      if (level) this.notifications.show('Cabinet agrandi', `${level.name} · +1 réputation`, 'success');
+    }
+    this.firmLevel = firmLevel;
     this.dock.setLabel(clickLabel(getFirmLevel(state)));
     this.expandButton.classList.toggle('expand-button--ready', canExpand(state).ok);
     this.openView?.render(state, now);

@@ -1,4 +1,5 @@
 import { BALANCE } from '../data/balance';
+import { BUILDINGS } from '../data/buildings';
 import { STAFF, STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADES } from '../data/upgrades';
 import { getDepartmentBonuses } from './departments';
@@ -29,6 +30,12 @@ export function getMultipliers(state: GameState): Multipliers {
     click *= effect.click ?? 1;
     global *= effect.global ?? 1;
     for (const r of STAFF_ROLES) role[r] *= effect.roles?.[r] ?? 1;
+  }
+  for (const b of state.buildings) {
+    const { globalPerLevel, rolesPerLevel } = BUILDINGS[b.type].effect;
+    if (b.level <= 0) continue;
+    if (globalPerLevel) global *= 1 + globalPerLevel * b.level;
+    if (rolesPerLevel) for (const r of rolesPerLevel.roles) role[r] *= 1 + rolesPerLevel.bonus * b.level;
   }
   const departments = getDepartmentBonuses(state);
   global *= departments.global;
