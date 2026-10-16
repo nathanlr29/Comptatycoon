@@ -452,3 +452,32 @@
     transition-duration: 1ms !important;
   }
 }
+
+.item__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.item__dismiss {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text-2) 40%, transparent);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font: 800 1.25rem var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.item__dismiss:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.item__dismiss--armed {
+  border-color: #f87171;
+  background: #f87171;
+  color: var(--bg);
+}

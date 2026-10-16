@@ -18,8 +18,24 @@ Gains de réputation : construction ou amélioration d'un bâtiment +1, départe
 Un seul bouton dans le HUD (« Saisir une facture »), **distinct** du tap sur les bâtiments (le tap sert à sélectionner).
 - Gain de base : 1 €. Gain du clic = 1 € × multiplicateurs de clic + (pourcentage du revenu/s accordé par les technologies).
 - Le texte flottant `+X €` affiche exactement le montant crédité.
-- Améliorations du clic (achats uniques) : « Double écran » 50 € → clic ×2 ; « Raccourcis clavier » 500 € → clic ×2 ; Logiciel OCR (voir §7) → clic ×3.
+- Les améliorations du clic font partie des équipements et logiciels (§3 bis).
 - Le libellé évolue avec le niveau du Bureau principal : Saisir une facture → Réviser un bilan (niv. 2) → Établir une liasse fiscale (niv. 4). Cosmétique.
+
+## 3 bis. Équipements et logiciels (achats uniques)
+Onglet « Améliorations ». Affichés par coût croissant ; un achat fait affiche « Acquis » ; un prérequis manquant est affiché en clair (« Nécessite : Scanner de documents »). Ils ne demandent aucun bâtiment : ce sont les premières technologies du cabinet, les suivantes (§7) demandent la Salle serveurs.
+
+| Achat | Coût | Prérequis | Effet |
+|---|---|---|---|
+| Double écran | 50 € | — | clic ×2 |
+| Scanner de documents | 150 € | — | alternants ×2 |
+| Raccourcis clavier | 500 € | — | clic ×2 |
+| Logiciel OCR | 2 000 € | Scanner | clic ×3 |
+| Connexion bancaire EBICS | 4 000 € | — | juniors ×2 |
+| Télétransmission EDI | 8 000 € | — | production globale ×1,1 |
+| Facture électronique | 12 000 € | Logiciel OCR | alternants et juniors ×1,5 |
+| Logiciel de révision | 20 000 € | réputation ≥ 5 | seniors ×2 |
+| GED et portail client | 60 000 € | Facture électronique | production globale ×1,25 |
+| Tableaux de bord clients | 150 000 € | réputation ≥ 20 | managers ×2 |
 
 ## 4. Collaborateurs
 | Catégorie | Coût initial | Production | Condition | Compte dans la capacité |
@@ -35,6 +51,8 @@ Un seul bouton dans le HUD (« Saisir une facture »), **distinct** du tap sur l
 - Coût de l'associé suivant = `ceil(25 000 × 4^(a − 1))`, a = nombre d'associés achetés en plus du premier (+1). Soit 25 000 €, 100 000 €, 400 000 €…
 - **Capacité d'encadrement** = `associés × 15`. Alternants, juniors, seniors et managers comptent ; les associés non.
 - Le moteur refuse l'embauche d'un collaborateur si la capacité est atteinte (raison renvoyée : `capacity_full`). L'embauche d'un associé reste possible à capacité pleine.
+- **Licenciement** : bouton « − » à côté du bouton de recrutement ; un premier appui affiche l'indemnité, un second appui dans les 3 s confirme. Indemnité = `ceil(prix payé pour le dernier recruté du poste × 25 %)`, soit `ceil(ceil(coûtInitial × 1,15^(n−1)) × 0,25)`. Refusé si personne dans le poste (`nobody_to_dismiss`) ou si l'indemnité n'est pas payable. Le prix d'embauche redescend d'un cran.
+- Un associé peut aussi partir (indemnité = 25 % du prix du dernier associé), sauf s'il est le dernier (`last_partner`) ou si l'équipe dépasserait les places restantes (`team_too_large`).
 - HUD : « 12 / 15 collaborateurs », alerte visuelle à ≥ 80 % et à 100 %.
 
 ## 5. Formule de production
@@ -87,8 +105,7 @@ Un local non loué est dessiné dans le noir (sol nu, murs en pointillés), avec
 | Pôle Social (paie, DSN) | 20 000 € | Locaux Pôle Social, réputation ≥ 15 | +150 €/s ; juniors ×1,5 |
 | Pôle Juridique (secrétariat, AG, statuts) | 60 000 € | Locaux Pôle Juridique, réputation ≥ 25 | immunité au contrôle fiscal ; seniors ×1,5 |
 | Pôle Conseil & Audit (fiscal, stratégie, CAC) | 400 000 € | Locaux Conseil & Audit, réputation ≥ 50 | production globale ×2 ; managers ×1,5 |
-| Logiciel OCR | 2 000 € | Salle serveurs | clic ×3 |
-| Automatisation de la saisie | 25 000 € | OCR | alternants et juniors ×2 |
+| Automatisation de la saisie | 25 000 € | Logiciel OCR (§3 bis), Salle serveurs | alternants et juniors ×2 |
 | Assistant comptable IA | 250 000 € | Automatisation, Salle serveurs niv. 3 | production globale ×1,5 ; chaque clic ajoute 5 % du revenu/s |
 | Rachat de portefeuille clients (**répétable**) | `ceil(10 000 × 1,5^n)` | Pôle Social | production globale +5 % et +2 réputation par rachat |
 

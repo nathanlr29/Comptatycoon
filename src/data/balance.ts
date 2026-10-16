@@ -8,6 +8,8 @@ export const BALANCE = {
   partnerBaseCost: 25_000,
   partnerCostGrowth: 4,
   partnerMinReputation: 10,
+  /** Indemnité de licenciement : part du prix payé pour le dernier recruté du poste. */
+  severanceShare: 0.25,
   /** Gain de base d'une action manuelle. */
   baseClickValue: 1,
   /** Bonus de production par point de réputation, et plafond de ce bonus. */

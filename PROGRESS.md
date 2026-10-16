@@ -16,6 +16,12 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Licenciements et nouvelles améliorations (16/10/2026, demande de Nathan, hors étapes).
+- Bouton « − » à côté de chaque recrutement (associés compris) : premier appui = indemnité affichée, second appui dans les 3 s = départ. Indemnité = 25 % du prix payé pour le dernier recruté (`BALANCE.severanceShare`). Jamais le dernier associé ; un associé ne part pas si l'équipe dépasserait les places restantes. Actions `dismiss` et `dismissPartner`, `canDismiss`/`canDismissPartner` dans `core/recruitment.ts`.
+- 10 améliorations au lieu de 2 (GDD §3 bis) : scanner, OCR, EBICS, EDI, facture électronique, logiciel de révision, GED, tableaux de bord… Effets clic / poste / global dans `data/upgrades.ts`, prérequis et réputation vérifiés par `core/upgrades.ts`. Le Logiciel OCR quitte la table des technologies (§7) : l'étape 7 ne doit pas le recréer, l'Automatisation de la saisie le demande.
+- Sauvegarde : aucun nouveau champ d'état ; seulement de nouveaux identifiants possibles dans `upgrades`.
+- `npm run check` : typage OK, 10 fichiers / 64 tests OK, build OK.
+
 Refonte graphique « vue intérieure » (16/10/2026, demande de Nathan) : le jeu se passe dans le cabinet, en plan de coupe vu de dessus. On commence dans un petit bureau (Bureau principal + 2 emplacements + accueil) ; les locaux voisins (« Local voisin », « Le plateau », « Espace détente ») sont dans le noir avec un panneau « À louer » jusqu'aux niveaux 2, 3, 4 du Bureau principal. GDD §6 et prompts 03 et 05 mis à jour (bâtiments = pièces). `src/data/map.ts` : plan 1600 × 1240, mêmes types et `ZoneId`, nouveaux ids d'emplacements. `src/game/MapRenderer.ts` (même API), `furniture.ts` (mobilier), `rooms.ts` (`drawRoom(g, type, level, rect, staff)` pour les 9 pièces, `drawFreeSlot`, `drawWorks`, badge) prêts pour l'étape 5. Le Bureau principal se meuble selon son niveau (1 à 5).
 
 Étape 4 terminée (16/10/2026). **Le jeu est jouable** : saisir des factures, recruter, acheter les améliorations du clic, voir la capacité d'encadrement. Une recharge remet la partie à zéro (sauvegarde à l'étape 6).

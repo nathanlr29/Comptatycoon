@@ -43,6 +43,9 @@ export class App {
     this.recruitment = new RecruitmentPanel((role) => {
       const result = role === 'partner' ? store.dispatch({ type: 'hirePartner' }, Date.now()) : store.dispatch({ type: 'hire', role }, Date.now());
       if (result.ok && role === 'partner') this.notifications.show('Nouvel associé', '+15 places d’encadrement', 'success');
+    }, (role) => {
+      if (role === 'partner') store.dispatch({ type: 'dismissPartner' }, Date.now());
+      else store.dispatch({ type: 'dismiss', role }, Date.now());
     });
     this.upgrades = new UpgradesPanel((id) => store.dispatch({ type: 'buyUpgrade', id }, Date.now()));
 
