@@ -115,6 +115,7 @@ Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat 
 - Le +150 €/s du Pôle Social s'ajoute à la production des collaborateurs **avant** les multiplicateurs globaux (bâtiments, pôles, réputation, événement).
 - Les multiplicateurs de catégorie des pôles se multiplient avec ceux des améliorations (§3 bis).
 - Rachat de portefeuille : bonus global additif `1 + 0,05 × n`, puis multiplié avec les autres sources globales.
+- Contrôle fiscal : la perte d'argent ne dépasse jamais le solde ; avec le Pôle Juridique, aucune perte et +1 réputation (§8). L'effet est dans `resolveTaxAudit` (`src/core/departments.ts`), le tirage viendra avec le moteur d'événements.
 - Données : `src/data/departments.ts` (`DEPARTMENTS`, `PORTFOLIO`, `TAX_AUDIT`) ; état : `departments: DepartmentId[]` et `portfolios: number` dans `GameState`.
 
 ## 8. Événements aléatoires

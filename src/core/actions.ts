@@ -1,5 +1,7 @@
 import type { StaffRole } from '../data/staff';
+import { DEPARTMENT_REPUTATION, PORTFOLIO, type DepartmentId } from '../data/departments';
 import type { UpgradeId } from '../data/upgrades';
+import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
 import { canDismiss, canDismissPartner, canHire, canHirePartner, type RefusalReason } from './recruitment';
 import { canBuyUpgrade } from './upgrades';
@@ -11,7 +13,9 @@ export type GameAction =
   | { type: 'hirePartner' }
   | { type: 'dismiss'; role: StaffRole }
   | { type: 'dismissPartner' }
-  | { type: 'buyUpgrade'; id: UpgradeId };
+  | { type: 'buyUpgrade'; id: UpgradeId }
+  | { type: 'buyDepartment'; id: DepartmentId }
+  | { type: 'buyPortfolio' };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -71,6 +75,28 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
         state: { ...state, money: state.money - check.cost, upgrades: [...state.upgrades, action.id] },
         result: { ok: true },
       };
+    }
+    case 'buyDepartment': {
+      const check = canBuyDepartment(state, action.id);
+      if (!check.ok) return refuse(state, check.reason);
+      const next: GameState = {
+        ...state,
+        money: state.money - check.cost,
+        reputation: state.reputation + DEPARTMENT_REPUTATION,
+        departments: [...state.departments, action.id],
+      };
+      return { state: next, result: { ok: true } };
+    }
+    case 'buyPortfolio': {
+      const check = canBuyPortfolio(state);
+      if (!check.ok) return refuse(state, check.reason);
+      const next: GameState = {
+        ...state,
+        money: state.money - check.cost,
+        reputation: state.reputation + PORTFOLIO.reputationEach,
+        portfolios: state.portfolios + 1,
+      };
+      return { state: next, result: { ok: true } };
     }
   }
 }

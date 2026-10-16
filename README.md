@@ -25,6 +25,14 @@ VITE_BASE=/Comptatycoon/ npm run build
 VITE_BASE=/Comptatycoon/ npm run preview   # puis ouvrir http://localhost:4173/Comptatycoon/
 ```
 
+## Sauvegarde
+
+La partie est enregistrée **dans ce navigateur, sur cet appareil** (`localStorage`) : toutes les 15 s, après chaque achat et quand vous quittez la page. Jusqu'à 5 cabinets par appareil, choisis sur l'écran d'accueil.
+
+- Sur iPhone, Safari peut effacer les données d'un site que vous n'avez pas ouvert depuis 7 jours.
+- Le jeu ajouté à l'écran d'accueil a un stockage **séparé** de Safari : ce sont deux parties différentes.
+- Pour changer d'appareil ou garder une copie : Paramètres › **Exporter** (texte à copier), puis **Importer** sur l'autre appareil (écran d'accueil ou Paramètres).
+
 ## Déploiement GitHub Pages
 
 Le workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) vérifie le typage, lance les tests et construit le jeu à chaque pull request.

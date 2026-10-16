@@ -1,9 +1,11 @@
 import { BALANCE } from '../data/balance';
 import { applyAction, type ActionResult, type GameAction } from './actions';
 import { getIncomePerSecond } from './economy';
+import { catchUpOffline, type OfflineReport } from './offline';
 import type { GameState } from './state';
 
 export type Listener = (state: GameState) => void;
+export type ActionListener = (action: GameAction, result: ActionResult) => void;
 
 /**
  * Crédite la production de `lastSimulatedAt` jusqu'à `now`, par pas fixes.
@@ -37,6 +39,7 @@ export function simulate(state: GameState, now: number): GameState {
 export class GameStore {
   private state: GameState;
   private readonly listeners = new Set<Listener>();
+  private readonly actionListeners = new Set<ActionListener>();
 
   constructor(initial: GameState) {
     this.state = initial;
@@ -50,11 +53,30 @@ export class GameStore {
     this.setState(simulate(this.state, now));
     const { state, result } = applyAction(this.state, action, now);
     this.setState(state);
+    for (const listener of this.actionListeners) listener(action, result);
     return result;
   }
 
   tick(now: number): void {
     this.setState(simulate(this.state, now));
+  }
+
+  /** Au chargement et au retour d'un onglet caché : rattrapage plafonné de l'absence. */
+  catchUp(now: number): OfflineReport {
+    const { state, report } = catchUpOffline(this.state, now);
+    this.setState(state);
+    return report;
+  }
+
+  /** Remplace toute la partie (restauration d'une sauvegarde, réinitialisation). */
+  replace(state: GameState): void {
+    this.setState(state);
+  }
+
+  /** Prévenu après chaque action joueur (déclencheur de sauvegarde après un achat). */
+  onAction(listener: ActionListener): () => void {
+    this.actionListeners.add(listener);
+    return () => this.actionListeners.delete(listener);
   }
 
   /** Renvoie la fonction de désabonnement. */
