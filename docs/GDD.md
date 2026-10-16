@@ -17,27 +17,54 @@ Gains de réputation : construction ou amélioration d'un bâtiment +1, départe
 ## 3. Action manuelle
 Un seul bouton dans le HUD (« Saisir une facture »), **distinct** du tap sur les bâtiments (le tap sert à sélectionner).
 - Gain de base : 1 €. Gain du clic = 1 € × multiplicateurs de clic + part du revenu/s × revenu/s actuel (effets temporaires compris).
-- La part du revenu/s est la somme des parts accordées par les améliorations du clic (§3 bis) puis par les technologies (§7) : 0 % au départ, 7 % avec tous les équipements, 12 % avec l'Assistant comptable IA. Elle garde le clic utile toute la partie sans dépasser la production passive (à 5 clics/s et 12 %, le clic rapporte 60 % du revenu/s). Exemple : 9 000 €/s et tous les équipements → 24 € + 630 € = 654 € par clic.
+- La part du revenu/s est la somme des parts accordées par les améliorations du clic (§3 bis) puis par les technologies (§3 bis, rubrique Technologies) : 0 % au départ, 7 % avec tous les équipements, 12 % avec l'Assistant comptable IA. Elle garde le clic utile toute la partie sans dépasser la production passive (à 5 clics/s et 12 %, le clic rapporte 60 % du revenu/s). Exemple : 9 000 €/s et tous les équipements → 24 € + 630 € = 654 € par clic.
 - Le texte flottant `+X €` affiche exactement le montant crédité.
 - Les améliorations du clic font partie des équipements et logiciels (§3 bis).
 - Le libellé évolue avec le niveau du Bureau principal : Saisir une facture → Réviser un bilan (niv. 2) → Établir une liasse fiscale (niv. 4). Cosmétique.
 
-## 3 bis. Équipements et logiciels (achats uniques)
-Onglet « Améliorations ». Affichés par coût croissant ; un achat fait affiche « Acquis » ; un prérequis manquant est affiché en clair (« Nécessite : Scanner de documents »). Ils ne demandent aucun bâtiment : ce sont les premières technologies du cabinet, les suivantes (§7) demandent la Salle serveurs.
+## 3 bis. Améliorations (achats uniques)
+Onglet « Améliorations », en cinq rubriques : Équipement, Logiciels, Technologies (Salle serveurs), Formations, Certifications et labels ; chaque titre de rubrique affiche « acquis / total ». Dans une rubrique, ordre de coût croissant ; un achat fait affiche « Acquis » ; une condition manquante est affichée en clair (« Nécessite : Scanner de documents », « Nécessite : Salle serveurs niv. 2 », « Réputation 25 requise »). Les formations sont des séries de trois paliers : un palier n'apparaît qu'une fois le précédent acquis. Une certification donne en plus de la réputation, une seule fois, à l'achat. Données : `src/data/upgrades.ts` ; conditions : `src/core/upgrades.ts` (`canBuyUpgrade`, `isUpgradeListed`). La Salle serveurs compte à son niveau terminé (pas pendant les travaux).
 
-| Achat | Coût | Prérequis | Effet |
-|---|---|---|---|
-| Double écran | 50 € | — | clic ×2 ; chaque clic + 1 % du revenu/s |
-| Scanner de documents | 150 € | — | alternants ×2 |
-| Raccourcis clavier | 500 € | — | clic ×2 ; chaque clic + 1 % du revenu/s |
-| Logiciel OCR | 2 000 € | Scanner | clic ×3 ; chaque clic + 2 % du revenu/s |
-| Connexion bancaire EBICS | 4 000 € | — | juniors ×2 |
-| Télétransmission EDI | 8 000 € | — | production globale ×1,1 |
-| Facture électronique | 12 000 € | Logiciel OCR | alternants et juniors ×1,5 |
-| Logiciel de révision | 20 000 € | réputation ≥ 5 | seniors ×2 |
-| GED et portail client | 60 000 € | Facture électronique | production globale ×1,25 |
-| Application de saisie mobile | 75 000 € | Logiciel OCR | clic ×2 ; chaque clic + 3 % du revenu/s |
-| Tableaux de bord clients | 150 000 € | réputation ≥ 20 | managers ×2 |
+| Achat | Rubrique | Coût | Conditions | Effet |
+|---|---|---|---|---|
+| Double écran | Équipement | 50 € | — | clic ×2 ; chaque clic + 1 % du revenu/s |
+| Scanner de documents | Équipement | 150 € | — | alternants ×2 |
+| Formation tableur | Formations (alternants I) | 300 € | — | alternants ×1,5 |
+| Raccourcis clavier | Équipement | 500 € | — | clic ×2 ; chaque clic + 1 % du revenu/s |
+| Logiciel OCR | Logiciels | 2 000 € | Scanner | clic ×3 ; chaque clic + 2 % du revenu/s |
+| Formation TVA | Formations (juniors I) | 2 500 € | — | juniors ×1,5 |
+| Sièges ergonomiques | Équipement | 3 000 € | — | production globale ×1,05 |
+| Connexion bancaire EBICS | Logiciels | 4 000 € | — | juniors ×2 |
+| Formation au logiciel comptable | Formations (alternants II) | 5 000 € | Formation tableur | alternants ×1,5 |
+| Télétransmission EDI | Logiciels | 8 000 € | — | production globale ×1,1 |
+| Charte qualité du cabinet | Certifications | 10 000 € | réputation ≥ 5 | production globale ×1,05 ; +3 réputation |
+| Logiciel de liasse fiscale | Logiciels | 11 000 € | EDI | seniors ×1,5 |
+| Facture électronique | Logiciels | 12 000 € | Logiciel OCR | alternants et juniors ×1,5 |
+| Logiciel de révision | Logiciels | 20 000 € | réputation ≥ 5 | seniors ×2 |
+| Automatisation de la saisie | Technologies | 25 000 € | Logiciel OCR, Salle serveurs niv. 1 | alternants et juniors ×2 |
+| Formation révision et contrôle interne | Formations (seniors I) | 30 000 € | réputation ≥ 5 | seniors ×1,5 |
+| Plateforme de pré-comptabilité en ligne | Logiciels | 35 000 € | EBICS | juniors ×1,5 ; seniors ×1,25 |
+| Formation clôture des comptes annuels | Formations (juniors II) | 40 000 € | Formation TVA | juniors ×1,5 |
+| GED et portail client | Logiciels | 60 000 € | Facture électronique | production globale ×1,25 |
+| Tutorat par les seniors | Formations (alternants III) | 65 000 € | Formation au logiciel comptable | alternants ×2 |
+| Application de saisie mobile | Logiciels | 75 000 € | Logiciel OCR | clic ×2 ; chaque clic + 3 % du revenu/s |
+| Sauvegarde cloud et cybersécurité | Technologies | 100 000 € | Salle serveurs niv. 2 | production globale ×1,15 |
+| Tableaux de bord clients | Logiciels | 150 000 € | réputation ≥ 20 | managers ×2 |
+| Certification ISO 9001 | Certifications | 180 000 € | Charte qualité, réputation ≥ 25 | production globale ×1,15 ; +5 réputation |
+| Assistant comptable IA | Technologies | 250 000 € | Automatisation, Salle serveurs niv. 3 | production globale ×1,5 ; chaque clic + 5 % du revenu/s |
+| Formation management d'équipe | Formations (managers I) | 280 000 € | réputation ≥ 20 | managers ×1,5 |
+| Formation consolidation et normes IFRS | Formations (seniors II) | 400 000 € | Formation révision | seniors ×1,5 |
+| Formation fiscalité des entreprises | Formations (juniors III) | 500 000 € | Formation clôture | juniors ×2 |
+| Label RSE du cabinet | Certifications | 800 000 € | ISO 9001, réputation ≥ 40 | production globale ×1,2 ; +8 réputation |
+| Logiciel de consolidation de groupe | Logiciels | 1 200 000 € | Tableaux de bord, réputation ≥ 50 | managers ×2 |
+| Certification ISO 27001 | Certifications | 2 500 000 € | Sauvegarde cloud, réputation ≥ 60 | production globale ×1,25 ; +10 réputation |
+| Formation pilotage de la relation client | Formations (managers II) | 4 000 000 € | Formation management | managers ×1,5 |
+| Diplôme d'expertise comptable financé | Formations (seniors III) | 5 000 000 € | Formation IFRS | seniors ×2 |
+| Agents IA de révision | Technologies | 8 000 000 € | Assistant IA, réputation ≥ 80 | seniors et managers ×2 |
+| Trophée national de l'expertise comptable | Certifications | 25 000 000 € | Label RSE, réputation ≥ 100 | production globale ×1,5 ; +15 réputation |
+| Executive MBA | Formations (managers III) | 50 000 000 € | Formation relation client | managers ×2 |
+
+Ordres de grandeur : chaque série de formations multiplie sa catégorie par 4,5 ; toutes les améliorations ensemble multiplient la production globale par environ 4,9. Les paliers chers visent la fin de partie (5ᵉ et 6ᵉ associés, Pôle Conseil & Audit).
 
 ## 4. Collaborateurs
 | Catégorie | Coût initial | Production | Condition | Compte dans la capacité |
@@ -101,14 +128,14 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 - Une pièce a : `id` stable, `type`, `level`, `state`, `buildEndsAt?`. Sa place vient de son type (`ROOMS` dans `src/data/office.ts`) ; l'ancien `slotId` n'est plus utilisé pour la position.
 - Le visuel suit toujours l'état : rien n'est dessiné pour ce qui n'est pas acheté.
 
-## 7. Départements et technologies (achats uniques sauf mention)
+## 7. Départements (achats uniques sauf mention)
+Les technologies (Automatisation de la saisie, Assistant comptable IA…) sont dans l'onglet « Améliorations », rubrique Technologies (§3 bis).
+
 | Achat | Coût | Prérequis | Effet |
 |---|---|---|---|
 | Pôle Social (paie, DSN) | 20 000 € | cabinet niv. 2, réputation ≥ 15 | +150 €/s ; juniors ×1,5 |
 | Pôle Juridique (secrétariat, AG, statuts) | 60 000 € | cabinet niv. 2, réputation ≥ 25 | immunité au contrôle fiscal ; seniors ×1,5 |
 | Pôle Conseil & Audit (fiscal, stratégie, CAC) | 400 000 € | cabinet niv. 3, réputation ≥ 50 | production globale ×2 ; managers ×1,5 |
-| Automatisation de la saisie | 25 000 € | Logiciel OCR (§3 bis), Salle serveurs | alternants et juniors ×2 |
-| Assistant comptable IA | 250 000 € | Automatisation, Salle serveurs niv. 3 | production globale ×1,5 ; chaque clic ajoute 5 % du revenu/s |
 | Rachat de portefeuille clients (**répétable**) | `ceil(10 000 × 1,5^n)` | Pôle Social | production globale +5 % et +2 réputation par rachat |
 
 Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat répétable affiche son compteur.

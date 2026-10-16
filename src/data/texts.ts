@@ -21,6 +21,8 @@ export function refusalText(reason: RefusalReason, threshold = 0): string {
       return 'Acquis';
     case 'missing_prerequisite':
       return 'Prérequis manquant';
+    case 'missing_building':
+      return 'Pièce requise';
     case 'nobody_to_dismiss':
       return 'Personne à licencier';
     case 'last_partner':
@@ -42,6 +44,11 @@ export function refusalText(reason: RefusalReason, threshold = 0): string {
 
 export function requiresText(name: string): string {
   return `Nécessite : ${name}`;
+}
+
+/** « Nécessite : Salle serveurs niv. 2 ». */
+export function requiresBuildingText(building: BuildingDefinition, level: number): string {
+  return requiresText(`${building.name} niv. ${level}`);
 }
 
 /** Affiché après un premier appui sur « − ». */

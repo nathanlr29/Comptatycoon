@@ -290,6 +290,23 @@
   gap: 10px;
 }
 
+.list__heading {
+  margin: 8px 0 0;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.list__heading:first-child {
+  margin-top: 0;
+}
+
+.item[hidden] {
+  display: none;
+}
+
 .list__summary {
   margin: 0 0 4px;
   color: var(--text-2);

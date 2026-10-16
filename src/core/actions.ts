@@ -2,7 +2,7 @@ import type { BuildingType } from '../data/buildings';
 import type { StaffRole } from '../data/staff';
 import { DEPARTMENT_REPUTATION, PORTFOLIO, type DepartmentId } from '../data/departments';
 import type { SecretId } from '../data/secrets';
-import type { UpgradeId } from '../data/upgrades';
+import { UPGRADES, type UpgradeId } from '../data/upgrades';
 import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
 import { canBuild, canUpgrade, startBuild, startUpgrade } from './buildings';
@@ -85,7 +85,12 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       const check = canBuyUpgrade(state, action.id);
       if (!check.ok) return refuse(state, check.reason);
       return {
-        state: { ...state, money: state.money - check.cost, upgrades: [...state.upgrades, action.id] },
+        state: {
+          ...state,
+          money: state.money - check.cost,
+          reputation: state.reputation + (UPGRADES[action.id].reputationGain ?? 0),
+          upgrades: [...state.upgrades, action.id],
+        },
         result: { ok: true },
       };
     }
