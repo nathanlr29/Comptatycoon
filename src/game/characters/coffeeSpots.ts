@@ -26,11 +26,15 @@ export function coffeeSpots(stage: number): CoffeeSpot[] {
     .flatMap((s) => s.furniture)
     .find((f) => f.type === 'coffee');
   if (!machine) return [];
-  const { w, h } = getStage(stage).size;
-  return AROUND.map(([dx, dy]) => {
-    const ix = Math.min(Math.max(machine.x + dx, 0.3), w - 0.3);
-    const iy = Math.min(Math.max(machine.y + dy, 0.3), h - 0.15);
-    const p = isoToScreen(ix, iy);
-    return { ix, iy, x: p.x, y: p.y, depth: depthOf(ix, iy) + 1 };
-  });
+  return spotsAround(machine.x, machine.y, getStage(stage).size);
+}
+
+/** Quatre places debout autour d'un meuble (coin du fond en fx, fy), dans l'emprise du cabinet. */
+export function spotsAround(fx: number, fy: number, size: { w: number; h: number }): CoffeeSpot[] {
+  return AROUND.map(([dx, dy]) => spotAt(Math.min(Math.max(fx + dx, 0.3), size.w - 0.3), Math.min(Math.max(fy + dy, 0.3), size.h - 0.15)));
+}
+
+export function spotAt(ix: number, iy: number): CoffeeSpot {
+  const p = isoToScreen(ix, iy);
+  return { ix, iy, x: p.x, y: p.y, depth: depthOf(ix, iy) + 1 };
 }
