@@ -567,3 +567,119 @@
   color: var(--text);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
 }
+
+/* ---------- Événements et objectifs (étape 7) ---------- */
+.live-info {
+  position: fixed;
+  top: calc(var(--safe-top) + 68px);
+  left: calc(var(--safe-left) + 10px);
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: min(300px, 72vw);
+  pointer-events: none;
+}
+
+/* Petit écran : un seul objectif à la fois pour garder le cabinet visible. */
+@media (max-width: 599px) {
+  .objective + .objective {
+    display: none;
+  }
+}
+
+.live-info > * {
+  pointer-events: auto;
+}
+
+.fiscal-banner {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--money);
+  color: var(--bg);
+  font-weight: 800;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fiscal-banner[hidden],
+.objective[hidden],
+.objective__claim[hidden] {
+  display: none;
+}
+
+.objectives {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.objective {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-2) 18%, transparent);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
+}
+
+.objective--done {
+  border-color: var(--money);
+}
+
+.objective__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.objective__title {
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.objective__bar {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text-2) 25%, transparent);
+  overflow: hidden;
+}
+
+.objective__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.objective--done .objective__bar-fill {
+  background: var(--money);
+}
+
+.objective__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.objective__claim {
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--money);
+  color: var(--bg);
+  font: 800 0.875rem var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}

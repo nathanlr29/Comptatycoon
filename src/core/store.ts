@@ -2,11 +2,14 @@ import { BALANCE } from '../data/balance';
 import { applyAction, type ActionResult, type GameAction } from './actions';
 import { accrueReputation, completeConstructions } from './buildings';
 import { getIncomePerSecond } from './economy';
+import { runEvents, type EventReport } from './events';
 import { catchUpOffline, type OfflineReport } from './offline';
+import type { Rng } from './random';
 import type { GameState } from './state';
 
 export type Listener = (state: GameState) => void;
 export type ActionListener = (action: GameAction, result: ActionResult) => void;
+export type EventListener = (report: EventReport) => void;
 
 /**
  * Crédite la production de `lastSimulatedAt` jusqu'à `now`, par pas fixes.
@@ -40,8 +43,13 @@ export class GameStore {
   private state: GameState;
   private readonly listeners = new Set<Listener>();
   private readonly actionListeners = new Set<ActionListener>();
+  private readonly eventListeners = new Set<EventListener>();
 
-  constructor(initial: GameState) {
+  /** `rng` : aléatoire des événements (injecté pour des tests reproductibles). */
+  constructor(
+    initial: GameState,
+    private readonly rng: Rng = Math.random,
+  ) {
     this.state = initial;
   }
 
@@ -57,8 +65,17 @@ export class GameStore {
     return result;
   }
 
+  /** Jeu actif (onglet visible) : production, puis événement aléatoire si son échéance est passée. */
   tick(now: number): void {
-    this.setState(simulate(this.state, now));
+    const { state, report } = runEvents(simulate(this.state, now), now, this.rng);
+    this.setState(state);
+    if (report) for (const listener of this.eventListeners) listener(report);
+  }
+
+  /** Prévenu de chaque événement aléatoire, pour la notification. */
+  onEvent(listener: EventListener): () => void {
+    this.eventListeners.add(listener);
+    return () => this.eventListeners.delete(listener);
   }
 
   /** Au chargement et au retour d'un onglet caché : rattrapage plafonné de l'absence. */

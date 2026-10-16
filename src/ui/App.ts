@@ -12,6 +12,7 @@ import { h } from './dom';
 import { ExpansionPanel } from './ExpansionPanel';
 import { ICONS } from './icons';
 import { HUD } from './HUD';
+import { LiveInfo } from './LiveInfo';
 import { NotificationManager } from './NotificationManager';
 import { Panel } from './Panel';
 import { RecruitmentPanel } from './RecruitmentPanel';
@@ -48,6 +49,7 @@ export class App {
   private firmLevel = Number.POSITIVE_INFINITY;
   private readonly expandButton = h('button', { class: 'expand-button', type: 'button', 'aria-label': 'Agrandir le cabinet' });
   private openView: View | null = null;
+  private readonly liveInfo: LiveInfo;
 
   constructor(
     private readonly store: GameStore,
@@ -79,6 +81,7 @@ export class App {
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
 
+    this.liveInfo = new LiveInfo(store, this.notifications);
     store.subscribe((state) => this.render(state));
     this.render(store.getState());
   }
@@ -126,6 +129,7 @@ export class App {
   private render(state: GameState): void {
     const now = Date.now();
     this.hud.render(state, now);
+    this.liveInfo.render(state, now);
     const firmLevel = getFirmLevel(state);
     if (firmLevel > this.firmLevel) {
       const level = getExpansionLevel(firmLevel);
