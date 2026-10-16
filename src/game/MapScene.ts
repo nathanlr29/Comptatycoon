@@ -3,6 +3,7 @@ import { getCoffeeBreakEnd } from '../core/coffee';
 import type { GameStore } from '../core/store';
 import { getStage } from '../data/office';
 import { CameraController } from './CameraController';
+import { placesFrom } from './characters/behavior';
 import { coffeeSpots, type CoffeeSpot } from './characters/coffeeSpots';
 import { officeSeats } from './characters/officeSeats';
 import { StaffLayer } from './characters/StaffLayer';
@@ -51,11 +52,16 @@ export class MapScene extends Phaser.Scene {
     const onRecenter = () => this.camera.fit(FIT_MAX_ZOOM);
     const onClear = () => this.office.setHighlight(null);
     const unsubscribe = this.store.subscribe(() => this.refresh());
+    // Objectif réclamé : l'équipe lève les bras.
+    const offAction = this.store.onAction((action, result) => {
+      if (action.type === 'claimObjective' && result.ok) this.staff.celebrate();
+    });
     this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
     this.game.events.on(MAP_EVENTS.recenter, onRecenter);
     this.game.events.on(MAP_EVENTS.clearSelection, onClear);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       unsubscribe();
+      offAction();
       this.scale.off(Phaser.Scale.Events.RESIZE, onResize);
       this.game.events.off(MAP_EVENTS.recenter, onRecenter);
       this.game.events.off(MAP_EVENTS.clearSelection, onClear);
@@ -81,6 +87,7 @@ export class MapScene extends Phaser.Scene {
       const door = isoToScreen(stage.entranceX, stage.size.h + 0.8);
       this.staff.setEntrance(door.x, door.y);
       this.spots = coffeeSpots(view.stage);
+      this.staff.setPlaces(placesFrom(this.office.visibleFurniture(), stage.size));
       this.camera.setBounds(this.office.bounds());
       if (grew) this.reveal(view.stage);
     }

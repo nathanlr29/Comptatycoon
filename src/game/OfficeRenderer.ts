@@ -43,6 +43,8 @@ export class OfficeRenderer {
   private readonly lighting: LightingLayer;
   private readonly ambient: AmbientLayer;
   private readonly baker: FlatBaker;
+  /** Mobilier affiché (les employés s'y rendent : imprimante, café, réunion…). */
+  private shown: Furniture[] = [];
 
   constructor(private readonly scene: Phaser.Scene) {
     this.highlight = scene.add.graphics().setDepth(DEPTH.floor + 0.5);
@@ -57,6 +59,10 @@ export class OfficeRenderer {
   updateAmbience(now = new Date()): void {
     this.lighting.setDaylight(daylightAt(localHour(now)));
     this.ambient.tickClock(now);
+  }
+
+  visibleFurniture(): readonly Furniture[] {
+    return this.shown;
   }
 
   render(view: OfficeView): void {
@@ -94,6 +100,7 @@ export class OfficeRenderer {
     this.setHighlight(null);
     this.lighting.setLayout(stage.size, visibleDesks(stage.stage, builtRoomTypes(view)));
     this.ambient.render(furniture);
+    this.shown = furniture;
     this.updateAmbience();
   }
 
