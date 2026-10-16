@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fond plein (iOS et Android arrondissent eux-mêmes) ; motif dans la zone sûre centrale de 80 %. -->
+  <rect width="512" height="512" fill="#0f172a"/>
+  <rect x="128" y="200" width="256" height="196" rx="16" fill="#38bdf8"/>
+  <path d="M100 214 256 100l156 114z" fill="#10b981"/>
+  <rect x="164" y="236" width="48" height="44" rx="6" fill="#0f172a"/>
+  <rect x="300" y="236" width="48" height="44" rx="6" fill="#0f172a"/>
+  <rect x="228" y="306" width="56" height="90" rx="6" fill="#0f172a"/>
+  <rect x="104" y="396" width="304" height="16" rx="8" fill="#f8fafc"/>
+  <circle cx="356" cy="356" r="58" fill="#fbbf24" stroke="#0f172a" stroke-width="10"/>
+  <text x="356" y="378" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700" fill="#0f172a" text-anchor="middle">€</text>
+</svg>

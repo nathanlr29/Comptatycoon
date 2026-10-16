@@ -11,6 +11,7 @@
 - [ ] 06 Profils, sauvegarde et progression hors ligne
 - [ ] 07 Départements, technologies, événements, objectifs
 - [ ] 08 Polissage, performance et PWA
+  - Partie PWA faite (16/10/2026) : `public/manifest.webmanifest` (`standalone`, `start_url` et `scope` relatifs `./`), icône `public/icons/icon.svg` → PNG 192, 512 (aussi `maskable`) et `apple-touch-icon` 180 générés par `node scripts/generate-icons.mjs` (Playwright/Chromium, hors dépendances ; PNG versionnés), balises iOS dans `index.html`, test `tests/pwa.test.ts`. Vérifié en Chromium sous `/Comptatycoon/` : manifeste sans erreur, icônes en 200, aucune erreur d'installabilité. **Pas de service worker** (risque de versions incohérentes après déploiement, gain faible). Reste : animations, lisibilité, performance, poids du build. À vérifier sur iPhone : Partager › Sur l'écran d'accueil, icône et nom corrects, ouverture plein écran, barre d'état lisible au-dessus du HUD.
 - [ ] 09 Recette finale et documentation
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
