@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction } from '../src/core/actions';
-import { getClickValue, getHireCost, getIncomePerSecond, getPartnerCost } from '../src/core/economy';
+import { getClickValue, getHireCost, getIncomePerSecond, getMultipliers, getPartnerCost } from '../src/core/economy';
 import { GameStore, simulate } from '../src/core/store';
 import { makeState, T0 } from './helpers';
 
@@ -21,6 +21,26 @@ describe('action manuelle', () => {
     const { state: after, result } = applyAction(state, { type: 'click' }, T0);
     expect(after.money - state.money).toBe(4);
     expect(result).toEqual({ ok: true, amount: 4 });
+  });
+
+  it('ajoute à chaque clic une part du revenu/s accordée par les améliorations', () => {
+    const upgrades = ['dualScreen', 'keyboardShortcuts', 'scanner', 'ocr', 'mobileCapture'] as const;
+    const state = makeState({ upgrades: [...upgrades], staff: { ...staff, junior: 10 } });
+    const income = getIncomePerSecond(state, T0);
+    expect(getMultipliers(state).clickIncomeShare).toBeCloseTo(0.07);
+    expect(getClickValue(state, T0)).toBeCloseTo(24 + 0.07 * income);
+    const { state: after, result } = applyAction(state, { type: 'click' }, T0);
+    expect(after.money - state.money).toBeCloseTo(24 + 0.07 * income);
+    expect(result).toMatchObject({ ok: true, amount: getClickValue(state, T0) });
+  });
+
+  it('reste utile tard dans la partie sans dépasser la production passive', () => {
+    const all = ['dualScreen', 'keyboardShortcuts', 'scanner', 'ocr', 'mobileCapture'] as const;
+    const state = makeState({ upgrades: [...all], staff: { ...staff, senior: 300 } });
+    const income = getIncomePerSecond(state, T0);
+    expect(income).toBeGreaterThanOrEqual(9_000);
+    expect(getClickValue(state, T0)).toBeGreaterThan(income * 0.05);
+    expect(getClickValue(state, T0) * 5).toBeLessThan(income);
   });
 
   it('refuse un achat unique déjà fait', () => {

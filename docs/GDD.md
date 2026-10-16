@@ -16,7 +16,8 @@ Gains de réputation : construction ou amélioration d'un bâtiment +1, départe
 
 ## 3. Action manuelle
 Un seul bouton dans le HUD (« Saisir une facture »), **distinct** du tap sur les bâtiments (le tap sert à sélectionner).
-- Gain de base : 1 €. Gain du clic = 1 € × multiplicateurs de clic + (pourcentage du revenu/s accordé par les technologies).
+- Gain de base : 1 €. Gain du clic = 1 € × multiplicateurs de clic + part du revenu/s × revenu/s actuel (effets temporaires compris).
+- La part du revenu/s est la somme des parts accordées par les améliorations du clic (§3 bis) puis par les technologies (§7) : 0 % au départ, 7 % avec tous les équipements, 12 % avec l'Assistant comptable IA. Elle garde le clic utile toute la partie sans dépasser la production passive (à 5 clics/s et 12 %, le clic rapporte 60 % du revenu/s). Exemple : 9 000 €/s et tous les équipements → 24 € + 630 € = 654 € par clic.
 - Le texte flottant `+X €` affiche exactement le montant crédité.
 - Les améliorations du clic font partie des équipements et logiciels (§3 bis).
 - Le libellé évolue avec le niveau du Bureau principal : Saisir une facture → Réviser un bilan (niv. 2) → Établir une liasse fiscale (niv. 4). Cosmétique.
@@ -26,15 +27,16 @@ Onglet « Améliorations ». Affichés par coût croissant ; un achat fait affic
 
 | Achat | Coût | Prérequis | Effet |
 |---|---|---|---|
-| Double écran | 50 € | — | clic ×2 |
+| Double écran | 50 € | — | clic ×2 ; chaque clic + 1 % du revenu/s |
 | Scanner de documents | 150 € | — | alternants ×2 |
-| Raccourcis clavier | 500 € | — | clic ×2 |
-| Logiciel OCR | 2 000 € | Scanner | clic ×3 |
+| Raccourcis clavier | 500 € | — | clic ×2 ; chaque clic + 1 % du revenu/s |
+| Logiciel OCR | 2 000 € | Scanner | clic ×3 ; chaque clic + 2 % du revenu/s |
 | Connexion bancaire EBICS | 4 000 € | — | juniors ×2 |
 | Télétransmission EDI | 8 000 € | — | production globale ×1,1 |
 | Facture électronique | 12 000 € | Logiciel OCR | alternants et juniors ×1,5 |
 | Logiciel de révision | 20 000 € | réputation ≥ 5 | seniors ×2 |
 | GED et portail client | 60 000 € | Facture électronique | production globale ×1,25 |
+| Application de saisie mobile | 75 000 € | Logiciel OCR | clic ×2 ; chaque clic + 3 % du revenu/s |
 | Tableaux de bord clients | 150 000 € | réputation ≥ 20 | managers ×2 |
 
 ## 4. Collaborateurs

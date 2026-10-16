@@ -20,6 +20,11 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Clic utile toute la partie (16/10/2026, demande de Nathan : à 9 k€/s, un clic ne rapportait que 12 €).
+- Chaque clic ajoute une part du revenu/s actuel : Double écran +1 %, Raccourcis clavier +1 %, Logiciel OCR +2 %, nouvelle **Application de saisie mobile** (75 000 €, après l'OCR, clic ×2 et +3 %). Total 7 % ; l'Assistant comptable IA (§7) ajoutera 5 %. À 9 000 €/s : 654 € par clic au lieu de 12 €.
+- `UpgradeEffect.clickIncomeShare` (parts additionnées dans `getMultipliers`) ; `getClickValue` inchangé, le texte flottant affiche toujours le montant crédité. Sauvegarde : aucun nouveau champ.
+- `npm run check` : typage OK, 19 fichiers / 177 tests OK, build OK.
+
 Menu « Agrandir le cabinet » (16/10/2026, demande de Nathan, hors étapes).
 - Onglets « Locaux » (niveaux du cabinet) et « Pièces » (`ui/RoomsPanel.ts`) : aménager une pièce (`build`), l'améliorer (`upgradeBuilding`), barre d'avancement et temps restant pendant les travaux, raison affichée sinon (« Agrandissez le cabinet », « Bureau principal niv. N requis »…). Toucher une pièce sur la carte ouvre l'onglet « Pièces ». Notification « Travaux terminés ».
 - Bouton « Agrandir » sur la carte (pastille quand c'est possible) et dans la fiche du Bureau principal. Le menu liste les 5 niveaux : prix, équipe requise, ce que chaque niveau ajoute. Action `{ type: 'upgradeBuilding', buildingId: 'hq' }` → `canExpand`/`expandFirm` (`core/expansion.ts`), immédiate pour l'instant (l'étape 5 ajoutera la durée de travaux). Production +10 % par niveau au-delà du 1er (`getFirmMultiplier` dans `getMultipliers`).
