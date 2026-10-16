@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyAction } from '../src/core/actions';
 import {
   canBuyDepartment,
+  getDepartmentStatus,
   getMissingRequirements,
   getPortfolioCost,
   isProtectedFromTaxAudit,
@@ -61,6 +62,16 @@ describe('ouverture des pôles', () => {
       { kind: 'reputation', required: 25 },
     ]);
     expect(getMissingRequirements(ready(), 'legal')).toEqual([]);
+  });
+
+  it('donne le statut complet, fonds compris', () => {
+    expect(getDepartmentStatus(makeState({ money: 100, reputation: 30 }), 'legal')).toEqual({
+      owned: false,
+      cost: 60_000,
+      missing: [{ kind: 'building', name: 'Locaux Pôle Juridique' }, { kind: 'funds', cost: 60_000 }],
+    });
+    expect(getDepartmentStatus(ready(), 'legal')).toEqual({ owned: false, cost: 60_000, missing: [] });
+    expect(getDepartmentStatus(ready({ departments: ['legal'], money: 0 }), 'legal').owned).toBe(true);
   });
 });
 

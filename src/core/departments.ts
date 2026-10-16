@@ -6,7 +6,8 @@ import type { GameState } from './state';
 /** Prérequis non remplis d'un pôle, pour les afficher en clair. */
 export type MissingRequirement =
   | { kind: 'building'; name: string }
-  | { kind: 'reputation'; required: number };
+  | { kind: 'reputation'; required: number }
+  | { kind: 'funds'; cost: number };
 
 /** Les locaux du pôle sont aménagés (niveau ≥ 1, travaux du premier niveau finis). */
 export function hasDepartmentBuilding(state: GameState, id: DepartmentId): boolean {
@@ -14,12 +15,29 @@ export function hasDepartmentBuilding(state: GameState, id: DepartmentId): boole
   return state.buildings.some((b) => b.type === type && b.level >= 1);
 }
 
+/** Prérequis non remplis (locaux, réputation) ; l'argent est à part, voir `getDepartmentStatus`. */
 export function getMissingRequirements(state: GameState, id: DepartmentId): MissingRequirement[] {
   const def = DEPARTMENTS[id];
   const missing: MissingRequirement[] = [];
   if (!hasDepartmentBuilding(state, id)) missing.push({ kind: 'building', name: def.buildingName });
   if (state.reputation < def.minReputation) missing.push({ kind: 'reputation', required: def.minReputation });
   return missing;
+}
+
+export interface DepartmentStatus {
+  owned: boolean;
+  cost: number;
+  /** Toutes les conditions manquantes, fonds compris ; vide = achetable (ou déjà acquis). */
+  missing: MissingRequirement[];
+}
+
+/** Statut d'un pôle pour l'écran « Développement ». */
+export function getDepartmentStatus(state: GameState, id: DepartmentId): DepartmentStatus {
+  const cost = DEPARTMENTS[id].cost;
+  if (state.departments.includes(id)) return { owned: true, cost, missing: [] };
+  const missing = getMissingRequirements(state, id);
+  if (state.money < cost) missing.push({ kind: 'funds', cost });
+  return { owned: false, cost, missing };
 }
 
 /** Conditions d'ouverture d'un pôle (docs/GDD.md §7). */
