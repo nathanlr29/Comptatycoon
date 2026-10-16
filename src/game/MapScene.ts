@@ -7,7 +7,7 @@ import { StaffLayer } from './characters/StaffLayer';
 import { playReveal } from './expansionView';
 import { screenToWorld } from './geometry';
 import { InputController } from './InputController';
-import { isoQuad } from './iso';
+import { isoQuad, isoToScreen } from './iso';
 import { OfficeRenderer } from './OfficeRenderer';
 import { builtRoomTypes, officeViewKey, toOfficeView, worksProgress, type OfficeView } from './officeView';
 
@@ -74,6 +74,9 @@ export class MapScene extends Phaser.Scene {
       this.view = view;
       this.office.render(view);
       this.staff.setSeats(officeSeats(view.stage, builtRoomTypes(view)));
+      const stage = getStage(view.stage);
+      const door = isoToScreen(stage.entranceX, stage.size.h + 0.8);
+      this.staff.setEntrance(door.x, door.y);
       this.camera.setBounds(this.office.bounds());
       if (grew) this.reveal(view.stage);
     }
