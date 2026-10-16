@@ -1,4 +1,5 @@
 import { BALANCE } from '../data/balance';
+import { accrueReputation, completeConstructions } from './buildings';
 import { getBaseIncomePerSecond } from './economy';
 import type { GameState } from './state';
 
@@ -21,20 +22,38 @@ export interface OfflineOutcome {
 /**
  * Rattrape l'absence de `lastSimulatedAt` jusqu'à `now`, en une fois :
  * revenu/s sans multiplicateur d'événement × durée plafonnée à 8 h.
+ * Les chantiers échus pendant la fenêtre créditée s'achèvent à leur heure (le revenu suit leur nouveau niveau),
+ * ceux échus après la fenêtre mais avant `now` s'achèvent aussi, sans revenu supplémentaire.
  * Les effets temporaires expirés sont retirés et `lastSimulatedAt` passe à `now`,
  * si bien qu'un second appel avec le même `now` ne crédite rien.
  */
 export function catchUpOffline(state: GameState, now: number): OfflineOutcome {
   const elapsedMs = Math.max(0, now - state.lastSimulatedAt);
   const creditedMs = Math.min(elapsedMs, BALANCE.offlineCapMs);
-  const earned = (getBaseIncomePerSecond(state) * creditedMs) / 1000;
+  const windowEnd = state.lastSimulatedAt + creditedMs;
+
+  // Production par tranches : de chantier achevé en chantier achevé, puis jusqu'à la fin de la fenêtre.
+  let current = state;
+  let t = state.lastSimulatedAt;
+  let earned = 0;
+  const finishes = state.buildings
+    .map((b) => b.pending?.endsAt)
+    .filter((end): end is number => end !== undefined && end > t && end <= windowEnd)
+    .sort((a, b) => a - b);
+  for (const end of [...finishes, windowEnd]) {
+    earned += (getBaseIncomePerSecond(current) * (end - t)) / 1000;
+    current = completeConstructions(accrueReputation(current, end - t), end);
+    t = end;
+  }
+  current = completeConstructions(current, now);
+
   const money = state.money + earned;
   const next: GameState = {
-    ...state,
+    ...current,
     money,
     lastSimulatedAt: now,
-    effects: state.effects.filter((e) => e.expiresAt > now),
-    stats: { ...state.stats, totalEarned: state.stats.totalEarned + earned },
+    effects: current.effects.filter((e) => e.expiresAt > now),
+    stats: { ...current.stats, totalEarned: current.stats.totalEarned + earned },
   };
   return {
     state: next,
