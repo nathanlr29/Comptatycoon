@@ -36,7 +36,8 @@ const ROOMS: Record<RoomType, (g: G, r: Rect, level: number, staff: number) => v
     else cabinet(g, r.x + r.w - 52, r.y + 10);
     const deskW = level >= 2 ? 120 : 96;
     if (level >= 5) g.fillStyle(C.gold, 1).fillRect(r.x + 24, r.y + 18, deskW + 8, deskW / 2 + 8);
-    workstation(g, r.x + 28, r.y + 22, deskW, true, 4);
+    // Le joueur est dessiné à part, assis face à nous (src/game/characters).
+    workstation(g, r.x + 28, r.y + 22, deskW, false, 4);
     if (level >= 3) sofa(g, r.x + r.w - 104, r.y + r.h - 46, 88);
     if (level >= 4) {
       const cx = r.x + r.w - 56;

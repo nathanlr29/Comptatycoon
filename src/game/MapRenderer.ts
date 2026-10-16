@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BUILDING, HQ_SLOT, KITCHEN, RECEPTION, SLOTS, START_VIEW, WORLD, ZONES, isZoneUnlocked, type Rect, type Zone, type ZoneId } from '../data/map';
-import { floor } from './furniture';
+import { floor, roomWalls } from './furniture';
+import { staffSlots } from './characters/tempSeats';
 import { MAP_COLORS as C } from './palette';
 import { drawFreeSlot, drawKitchen, drawLevelBadge, drawReception, drawRoom } from './rooms';
 
@@ -45,7 +46,14 @@ export class MapRenderer {
     this.overlay.removeAll(true);
     const open = (id: ZoneId) => ZONES.some((z) => z.id === id && isZoneUnlocked(z, hqLevel));
     for (const door of DOORS) if (door.between.every(open)) floor(g, door.rect, 'corridor');
-    for (const slot of SLOTS) if (open(slot.zone)) drawFreeSlot(g, slot);
+    // Open space provisoire : les postes et leurs occupants viennent de StaffLayer.
+    const furnished = new Set(staffSlots(hqLevel).map((s) => s.id));
+    for (const slot of SLOTS) {
+      if (furnished.has(slot.id)) {
+        floor(g, slot, 'carpet');
+        roomWalls(g, slot);
+      } else if (open(slot.zone)) drawFreeSlot(g, slot);
+    }
     drawRoom(g, 'headquarters', hqLevel, HQ_SLOT);
     this.label(HQ_SLOT, 'Bureau principal', hqLevel);
     for (const zone of ZONES) if (!isZoneUnlocked(zone, hqLevel)) this.drawLockedZone(zone);
