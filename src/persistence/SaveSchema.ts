@@ -1,11 +1,13 @@
 import { BUILDINGS, type BuildingType } from '../data/buildings';
+import { EVENT_TIMING } from '../data/events';
+import { OBJECTIVES } from '../data/objectives';
 import { DEPARTMENT_IDS, type DepartmentId } from '../data/departments';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
 import type { BuildingState, GameState, TimedEffect } from '../core/state';
 
 /** Format stocké : `{ schemaVersion, savedAt, state }` (docs/GDD.md §10). */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export interface SaveFile {
   schemaVersion: number;
@@ -25,6 +27,12 @@ const MIGRATIONS: Record<number, (save: Raw) => Raw> = {
   0: (save) => {
     const state = isObject(save.state) ? save.state : {};
     return { ...save, schemaVersion: 1, state: { stats: { totalEarned: 0, clicks: 0 }, ...state } };
+  },
+  // v2 (étape 7) : échéance du prochain événement et objectifs réclamés.
+  1: (save) => {
+    const state = isObject(save.state) ? save.state : {};
+    const last = typeof state.lastSimulatedAt === 'number' ? state.lastSimulatedAt : 0;
+    return { ...save, schemaVersion: 2, state: { nextEventAt: last + EVENT_TIMING.firstAfterMs, claimedObjectives: [], ...state } };
   },
 };
 
@@ -71,6 +79,11 @@ function upgradeIds(value: unknown, path: string): UpgradeId[] {
 function departmentIds(value: unknown, path: string): DepartmentId[] {
   if (value === undefined) return [];
   return arr(value, path, str).filter((id): id is DepartmentId => (DEPARTMENT_IDS as string[]).includes(id));
+}
+
+/** Objectifs réclamés : identifiants inconnus ignorés. */
+function objectiveIds(value: unknown, path: string): string[] {
+  return arr(value, path, str).filter((id) => OBJECTIVES.some((o) => o.id === id));
 }
 
 function buildingType(value: unknown, path: string): BuildingType {
@@ -121,6 +134,8 @@ function readState(value: unknown): GameState {
     portfolios: s.portfolios === undefined ? 0 : int(s.portfolios, 'state.portfolios', 0),
     buildings: arr(s.buildings, 'state.buildings', building),
     effects: arr(s.effects, 'state.effects', effect),
+    nextEventAt: num(s.nextEventAt, 'state.nextEventAt', 0),
+    claimedObjectives: objectiveIds(s.claimedObjectives, 'state.claimedObjectives'),
     reputationProgress: s.reputationProgress === undefined ? 0 : num(s.reputationProgress, 'state.reputationProgress', 0),
     lastSimulatedAt: num(s.lastSimulatedAt, 'state.lastSimulatedAt', 0),
     createdAt: num(s.createdAt, 'state.createdAt', 0),

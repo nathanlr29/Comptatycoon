@@ -74,13 +74,22 @@ describe('schéma de sauvegarde', () => {
     expect(unknown).toEqual({ ok: false, error: 'state.buildings[0].type : type de pièce inconnu' });
   });
 
-  it('migre une sauvegarde v0 (sans version ni statistiques) vers v1', () => {
+  it('migre une sauvegarde v0 (sans version ni statistiques) jusqu’à la version actuelle', () => {
     const { stats: _omit, ...v0State } = played;
     const parsed = validateSave({ savedAt: T0, state: v0State });
     expect(parsed).toEqual({
       ok: true,
-      save: { schemaVersion: 1, savedAt: T0, state: { ...played, stats: { totalEarned: 0, clicks: 0 } } },
+      save: { schemaVersion: SCHEMA_VERSION, savedAt: T0, state: { ...played, stats: { totalEarned: 0, clicks: 0 } } },
     });
+  });
+
+  it('migre v1 → v2 : premier événement 3 min après la dernière partie, aucun objectif réclamé', () => {
+    const { nextEventAt: _n, claimedObjectives: _c, ...v1State } = played;
+    const parsed = validateSave({ schemaVersion: 1, savedAt: T0, state: { ...v1State, lastSimulatedAt: T0 + 5_000 } });
+    expect(parsed.ok && parsed.save.schemaVersion).toBe(2);
+    expect(parsed.ok && [parsed.save.state.nextEventAt, parsed.save.state.claimedObjectives]).toEqual([T0 + 5_000 + 180_000, []]);
+    const claimed = validateSave({ schemaVersion: 2, savedAt: T0, state: { ...played, claimedObjectives: ['firstInvoices', 'removed'] } });
+    expect(claimed.ok && claimed.save.state.claimedObjectives).toEqual(['firstInvoices']);
   });
 
   it('refuse une version plus récente que le jeu', () => {

@@ -6,6 +6,7 @@ import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
 import { canBuild, canUpgrade, startBuild, startUpgrade } from './buildings';
 import { canExpand } from './expansion';
+import { canClaimObjective, claimObjective } from './objectives';
 import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
 import type { RefusalReason } from './refusals';
 import { canBuyUpgrade } from './upgrades';
@@ -22,7 +23,8 @@ export type GameAction =
   | { type: 'buyPortfolio' }
   | { type: 'build'; building: BuildingType }
   /** `hq` = agrandir le cabinet (conditions d'équipe en plus, voir canExpand). */
-  | { type: 'upgradeBuilding'; buildingId: string };
+  | { type: 'upgradeBuilding'; buildingId: string }
+  | { type: 'claimObjective'; id: string };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -116,6 +118,11 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       const upgrade = canUpgrade(state, action.buildingId);
       if (!upgrade.ok) return refuse(state, upgrade.reason);
       return { state: startUpgrade(state, action.buildingId, upgrade, now), result: { ok: true } };
+    }
+    case 'claimObjective': {
+      const check = canClaimObjective(state, action.id, now);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: claimObjective(state, check.def), result: { ok: true } };
     }
   }
 }

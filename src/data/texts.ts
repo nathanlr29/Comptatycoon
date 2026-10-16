@@ -91,3 +91,21 @@ export function durationText(ms: number): string {
   if (min === 0) return `${sec}\u00a0s`;
   return sec === 0 ? `${min}\u00a0min` : `${min}\u00a0min ${sec}\u00a0s`;
 }
+
+/** Notifications des événements aléatoires (docs/GDD.md §8). Montants déjà formatés par l'interface. */
+export const EVENT_TEXTS = {
+  fiscalPeriod: { title: 'Période fiscale !', body: 'Revenu ×2 pendant 20 s' },
+  taxAuditLoss: (loss: string, reputation: number) => ({ title: 'Contrôle fiscal', body: `−${loss} · réputation ${reputation}` }),
+  taxAuditSafe: { title: 'Contrôle fiscal sans suite', body: 'Le Pôle Juridique veillait · réputation +1' },
+  resignation: (role: string) => ({ title: 'Démission', body: `Un ${role.toLowerCase()} quitte le cabinet` }),
+  prestigiousClient: (bonus: string, reputation: number) => ({ title: 'Client prestigieux', body: `+${bonus} · réputation +${reputation}` }),
+  fiscalBanner: (seconds: number) => `Période fiscale ×2 · ${seconds}\u00a0s`,
+} as const;
+
+export const OBJECTIVE_TEXTS = {
+  heading: 'Objectif',
+  claim: 'Réclamer',
+  reward: (parts: string[]) => `Récompense : ${parts.join(' et ')}`,
+  reputation: (n: number) => `${n} de réputation`,
+  claimed: 'Objectif atteint',
+} as const;

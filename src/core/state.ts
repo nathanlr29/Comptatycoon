@@ -1,3 +1,4 @@
+import { EVENT_TIMING } from '../data/events';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import type { DepartmentId } from '../data/departments';
 import type { BuildingType } from '../data/buildings';
@@ -36,6 +37,10 @@ export interface GameState {
   effects: TimedEffect[];
   /** Fraction de point de réputation accumulée (salles de réunion). */
   reputationProgress: number;
+  /** Échéance (ms) du prochain événement aléatoire (docs/GDD.md §8). */
+  nextEventAt: number;
+  /** Objectifs dont la récompense a été réclamée (docs/GDD.md §9). */
+  claimedObjectives: string[];
   /** Horodatage (ms) jusqu'auquel la production a été créditée. */
   lastSimulatedAt: number;
   createdAt: number;
@@ -55,6 +60,8 @@ export function createInitialState(now: number): GameState {
     buildings: [{ id: 'hq', type: 'headquarters', level: 1, slotId: 'hq' }],
     effects: [],
     reputationProgress: 0,
+    nextEventAt: now + EVENT_TIMING.firstAfterMs,
+    claimedObjectives: [],
     lastSimulatedAt: now,
     createdAt: now,
     stats: { totalEarned: 0, clicks: 0 },
