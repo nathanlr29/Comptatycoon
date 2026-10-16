@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { HQ_SLOT, SLOTS, WORLD, ZONES, isZoneUnlocked, type Rect } from '../data/map';
+import { HQ_SLOT, SLOTS, START_VIEW, WORLD, ZONES, isZoneUnlocked, type Rect } from '../data/map';
 import { CameraController } from './CameraController';
 import { hitTest, screenToWorld } from './geometry';
 import { InputController } from './InputController';
@@ -20,8 +20,6 @@ export const MAP_EVENTS = {
   clearSelection: 'selection:clear',
 } as const;
 
-const HQ_CENTER = { x: HQ_SLOT.x + HQ_SLOT.w / 2, y: HQ_SLOT.y + HQ_SLOT.h / 2 };
-
 export class MapScene extends Phaser.Scene {
   private camera!: CameraController;
   private mapView!: MapRenderer;
@@ -37,11 +35,11 @@ export class MapScene extends Phaser.Scene {
     this.mapView.render(this.hqLevel);
 
     this.camera = new CameraController(this.cameras.main);
-    this.camera.centerOn(HQ_CENTER.x, HQ_CENTER.y);
+    this.camera.centerOn(START_VIEW.x, START_VIEW.y);
     new InputController(this, this.camera, (sx, sy) => this.select(sx, sy));
 
     const onResize = (size: Phaser.Structs.Size) => this.camera.resize(size.width, size.height);
-    const onRecenter = () => this.camera.centerOn(HQ_CENTER.x, HQ_CENTER.y);
+    const onRecenter = () => this.camera.centerOn(START_VIEW.x, START_VIEW.y);
     const onClear = () => this.mapView.setHighlight(null);
     // Ne redessine la carte que si le niveau du Bureau principal change.
     const unsubscribe = this.store.subscribe(() => {

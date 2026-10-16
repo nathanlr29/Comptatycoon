@@ -11,7 +11,7 @@ const store = new GameStore(createInitialState(Date.now()));
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
-  backgroundColor: '#8fbf6a',
+  backgroundColor: '#232c3b',
   scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
   input: { mouse: { preventDefaultWheel: true } },
   scene: [new MapScene(store)],

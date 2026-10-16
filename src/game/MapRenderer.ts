@@ -1,45 +1,54 @@
 import Phaser from 'phaser';
-import { HQ_SLOT, SLOTS, WORLD, ZONES, isZoneUnlocked, type Rect, type Slot } from '../data/map';
+import { BUILDING, HQ_SLOT, KITCHEN, RECEPTION, SLOTS, START_VIEW, WORLD, ZONES, isZoneUnlocked, type Rect, type Zone, type ZoneId } from '../data/map';
+import { floor } from './furniture';
 import { MAP_COLORS as C } from './palette';
+import { drawFreeSlot, drawKitchen, drawLevelBadge, drawReception, drawRoom } from './rooms';
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+/** Débord des sols de chaque local sur l'espace entre locaux (le reste forme les murs). */
+const ZONE_PAD = 12;
+/** Passages entre locaux, ouverts quand les deux sont loués. */
+const DOORS: { between: [ZoneId, ZoneId]; rect: Rect }[] = [
+  { between: ['start', 'east'], rect: { x: 1036, y: 726, w: 48, h: 88 } },
+  { between: ['start', 'north'], rect: { x: 716, y: 496, w: 88, h: 48 } },
+  { between: ['start', 'garden'], rect: { x: 436, y: 726, w: 48, h: 88 } },
+  { between: ['east', 'north'], rect: { x: 1256, y: 496, w: 88, h: 48 } },
+];
+const ENTRANCE: Rect = { x: 860, y: 988, w: 70, h: 30 };
 
-/** Générateur pseudo-aléatoire déterministe : le décor est identique à chaque chargement. */
-function seeded(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 1664525 + 1013904223) % 4294967296;
-    return s / 4294967296;
-  };
+function pad(r: Rect, p: number): Rect {
+  return { x: r.x - p, y: r.y - p, w: r.w + 2 * p, h: r.h + 2 * p };
 }
 
-function overlaps(a: Rect, x: number, y: number, margin: number): boolean {
-  return x > a.x - margin && x < a.x + a.w + margin && y > a.y - margin && y < a.y + a.h + margin;
-}
-
-/** Dessine la carte statique : sol, allées, décor, zones, emplacements, Bureau principal. */
+/** Dessine le plan intérieur : rue, murs, locaux, pièces, locaux à louer. */
 export class MapRenderer {
-  private readonly lockLayer: Phaser.GameObjects.Container;
-  private readonly slotLayer: Phaser.GameObjects.Graphics;
+  private readonly dynamic: Phaser.GameObjects.Graphics;
+  private readonly overlay: Phaser.GameObjects.Container;
   private readonly highlight: Phaser.GameObjects.Graphics;
   private readonly textResolution = Math.min(window.devicePixelRatio || 1, 3);
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.drawGround();
-    this.drawPaths();
-    this.drawTrees();
-    this.slotLayer = scene.add.graphics();
-    this.drawHeadquarters(HQ_SLOT);
-    this.lockLayer = scene.add.container();
+    const g = scene.add.graphics();
+    this.drawOutside(g);
+    this.drawShell(g);
+    drawReception(g, RECEPTION);
+    drawKitchen(g, KITCHEN);
+    this.dynamic = scene.add.graphics();
+    this.overlay = scene.add.container();
     this.highlight = scene.add.graphics();
   }
 
   /** Redessine ce qui dépend du niveau du Bureau principal. */
   render(hqLevel: number): void {
-    this.slotLayer.clear();
-    for (const slot of SLOTS) this.drawEmptySlot(slot);
-    this.lockLayer.removeAll(true);
-    for (const zone of ZONES) if (!isZoneUnlocked(zone, hqLevel)) this.drawLockedZone(zone.rect, zone.name, zone.unlockLevel);
+    const g = this.dynamic;
+    g.clear();
+    this.overlay.removeAll(true);
+    const open = (id: ZoneId) => ZONES.some((z) => z.id === id && isZoneUnlocked(z, hqLevel));
+    for (const door of DOORS) if (door.between.every(open)) floor(g, door.rect, 'corridor');
+    for (const slot of SLOTS) if (open(slot.zone)) drawFreeSlot(g, slot);
+    drawRoom(g, 'headquarters', hqLevel, HQ_SLOT);
+    this.label(HQ_SLOT, 'Bureau principal', hqLevel);
+    for (const zone of ZONES) if (!isZoneUnlocked(zone, hqLevel)) this.drawLockedZone(zone);
   }
 
   setHighlight(rect: Rect | null): void {
@@ -57,100 +66,66 @@ export class MapRenderer {
       .setResolution(this.textResolution);
   }
 
-  private drawGround(): void {
-    const g = this.scene.add.graphics();
-    g.fillStyle(C.grass, 1).fillRect(0, 0, WORLD.width, WORLD.height);
-    g.fillStyle(C.grassDark, 0.35);
-    for (let x = 0; x < WORLD.width; x += 160) g.fillRect(x, 0, 80, WORLD.height); // bandes de tonte
+  /** Plaque du nom sur le mur du bas (comme une plaque de porte) et badge de niveau. */
+  private label(r: Rect, name: string, level: number): void {
+    const plate = this.text(r.x + 18, r.y + r.h, name, 14, C.textLight).setOrigin(0, 0.5);
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(C.wall, 1).fillRoundedRect(r.x + 8, r.y + r.h - 12, plate.width + 20, 24, 12);
+    const badge = this.scene.add.graphics();
+    const at = drawLevelBadge(badge, r, false);
+    this.overlay.add([bg, plate, badge, this.text(at.x, at.y, String(level), 15, C.textLight)]);
   }
 
-  private drawPaths(): void {
-    const g = this.scene.add.graphics();
-    const cx = HQ_SLOT.x + HQ_SLOT.w / 2;
-    const cy = HQ_SLOT.y + HQ_SLOT.h / 2;
-    const roads: Rect[] = [
-      { x: 0, y: cy - 30, w: WORLD.width, h: 60 }, // axe est-ouest
-      { x: cx - 30, y: 0, w: 60, h: WORLD.height }, // axe nord-sud
-    ];
-    for (const r of roads) {
-      g.fillStyle(C.pathEdge, 1).fillRect(r.x - 4, r.y - 4, r.w + 8, r.h + 8);
-      g.fillStyle(C.path, 1).fillRect(r.x, r.y, r.w, r.h);
-    }
-    g.fillStyle(C.pathEdge, 1).fillRoundedRect(HQ_SLOT.x - 64, HQ_SLOT.y - 44, HQ_SLOT.w + 128, HQ_SLOT.h + 108, 28);
-    g.fillStyle(C.plaza, 1).fillRoundedRect(HQ_SLOT.x - 60, HQ_SLOT.y - 40, HQ_SLOT.w + 120, HQ_SLOT.h + 100, 24);
+  private drawOutside(g: Phaser.GameObjects.Graphics): void {
+    g.fillStyle(C.outside, 1).fillRect(0, 0, WORLD.width, WORLD.height);
+    // Toits des immeubles voisins
+    g.fillStyle(C.roofs, 1);
+    for (let x = 0; x < WORLD.width; x += 200) g.fillRect(x + 6, 0, 188, BUILDING.y - 30);
+    g.fillStyle(C.roofsEdge, 1);
+    for (let x = 0; x < WORLD.width; x += 200) g.fillRect(x + 6, BUILDING.y - 36, 188, 6);
+    // Rue : trottoir, chaussée, trottoir d'en face
+    const sidewalk = BUILDING.y + BUILDING.h + 14;
+    g.fillStyle(C.sidewalkEdge, 1).fillRect(0, sidewalk, WORLD.width, 62);
+    g.fillStyle(C.sidewalk, 1).fillRect(0, sidewalk, WORLD.width, 56);
+    g.fillStyle(C.asphalt, 1).fillRect(0, sidewalk + 62, WORLD.width, WORLD.height - sidewalk - 62);
+    g.fillStyle(C.roadLine, 0.8);
+    for (let x = 20; x < WORLD.width; x += 90) g.fillRect(x, sidewalk + 132, 50, 6);
+    g.fillStyle(C.sidewalk, 1).fillRect(0, WORLD.height - 36, WORLD.width, 36);
   }
 
-  private drawTrees(): void {
-    const g = this.scene.add.graphics();
-    const rand = seeded(42);
-    const blocked: Rect[] = [HQ_SLOT, ...SLOTS];
-    const cx = HQ_SLOT.x + HQ_SLOT.w / 2;
-    const cy = HQ_SLOT.y + HQ_SLOT.h / 2;
-    let placed = 0;
-    for (let i = 0; i < 400 && placed < 90; i++) {
-      const x = rand() * WORLD.width;
-      const y = rand() * WORLD.height;
-      if (Math.abs(x - cx) < 70 || Math.abs(y - cy) < 70) continue; // pas sur les allées
-      if (blocked.some((r) => overlaps(r, x, y, 70))) continue;
-      const r = 18 + rand() * 16;
-      g.fillStyle(C.shadow, 0.18).fillCircle(x + 8, y + 10, r);
-      g.fillStyle(C.tree, 1).fillCircle(x, y, r);
-      g.fillStyle(C.treeLight, 1).fillCircle(x - r * 0.3, y - r * 0.3, r * 0.55);
-      placed++;
-    }
-  }
-
-  private drawHeadquarters(r: Rect): void {
-    const g = this.scene.add.graphics();
-    const facade = 56;
-    const roofH = r.h - facade;
-    g.fillStyle(C.shadow, 0.25).fillRoundedRect(r.x + 14, r.y + 16, r.w, r.h, 10);
-    // Façade avec fenêtres et porte
-    g.fillStyle(C.wall, 1).fillRect(r.x, r.y + roofH, r.w, facade);
-    g.fillStyle(C.wallShade, 1).fillRect(r.x, r.y + r.h - 8, r.w, 8);
+  private drawShell(g: Phaser.GameObjects.Graphics): void {
+    const outer = pad(BUILDING, 14);
+    g.fillStyle(C.shadow, 0.35).fillRect(outer.x + 10, outer.y + 12, outer.w, outer.h);
+    g.fillStyle(C.wall, 1).fillRect(outer.x, outer.y, outer.w, outer.h);
+    g.fillStyle(C.wallTop, 1).fillRect(outer.x, outer.y, outer.w, 3);
+    // Fenêtres sur la façade nord et sur la rue
     g.fillStyle(C.window, 1);
-    for (let i = 0; i < 6; i++) {
-      const wx = r.x + 14 + i * 34;
-      if (i === 2 || i === 3) continue;
-      g.fillRect(wx, r.y + roofH + 12, 22, 22);
+    for (let x = outer.x + 60; x < outer.x + outer.w - 60; x += 120) {
+      g.fillRect(x, outer.y + 6, 60, 6);
+      if (x < ENTRANCE.x - 80 || x > ENTRANCE.x + ENTRANCE.w + 20) g.fillRect(x, outer.y + outer.h - 12, 60, 6);
     }
-    g.fillStyle(C.door, 1).fillRect(r.x + r.w / 2 - 20, r.y + roofH + 14, 40, facade - 22);
-    // Toit vu de dessus
-    g.fillStyle(C.roof, 1).fillRoundedRect(r.x - 6, r.y, r.w + 12, roofH, { tl: 10, tr: 10, bl: 0, br: 0 });
-    g.fillStyle(C.roofLight, 1).fillRect(r.x + 10, r.y + roofH / 2 - 3, r.w - 20, 6);
-    this.text(r.x + r.w / 2, r.y + roofH / 2 - 26, 'Cabinet', 22, C.textLight);
+    for (const zone of ZONES) floor(g, pad(zone.rect, ZONE_PAD), 'corridor');
+    floor(g, ENTRANCE, 'corridor');
+    // Paillasson et enseigne
+    g.fillStyle(0x6b5b4b, 1).fillRect(ENTRANCE.x + 6, ENTRANCE.y + 34, ENTRANCE.w - 12, 14);
   }
 
-  private drawEmptySlot(r: Slot): void {
-    const g = this.slotLayer;
-    g.fillStyle(C.slotFill, 0.18).fillRoundedRect(r.x, r.y, r.w, r.h, 12);
-    g.lineStyle(4, C.slotLine, 0.85);
-    const dash = 16;
-    const gap = 10;
-    for (let x = r.x + 12; x < r.x + r.w - 12; x += dash + gap) {
-      const len = Math.min(dash, r.x + r.w - 12 - x);
-      g.lineBetween(x, r.y, x + len, r.y).lineBetween(x, r.y + r.h, x + len, r.y + r.h);
-    }
-    for (let y = r.y + 12; y < r.y + r.h - 12; y += dash + gap) {
-      const len = Math.min(dash, r.y + r.h - 12 - y);
-      g.lineBetween(r.x, y, r.x, y + len).lineBetween(r.x + r.w, y, r.x + r.w, y + len);
-    }
-    const cx = r.x + r.w / 2;
-    const cy = r.y + r.h / 2;
-    g.fillStyle(C.slotFill, 0.9).fillCircle(cx, cy, 24);
-    g.fillStyle(C.tree, 1).fillRect(cx - 12, cy - 3, 24, 6).fillRect(cx - 3, cy - 12, 6, 24);
-  }
-
-  private drawLockedZone(r: Rect, name: string, level: number): void {
+  private drawLockedZone(zone: Zone): void {
+    const r = pad(zone.rect, ZONE_PAD);
     const g = this.scene.add.graphics();
-    g.fillStyle(C.locked, 0.5).fillRoundedRect(r.x, r.y, r.w, r.h, 24);
-    const cx = r.x + r.w / 2;
-    const cy = r.y + r.h / 2;
-    g.fillStyle(0xffffff, 0.92).fillCircle(cx, cy - 30, 44);
-    g.lineStyle(7, C.locked, 1).beginPath().arc(cx, cy - 40, 14, Math.PI, 0).strokePath();
-    g.fillStyle(C.locked, 1).fillRoundedRect(cx - 20, cy - 40, 40, 30, 5);
-    const title = this.text(cx, cy + 38, name, 26, C.textLight);
-    const hint = this.text(cx, cy + 72, `Bureau principal niv. ${level}`, 20, C.textLight, false);
-    this.lockLayer.add([g, title, hint]);
+    g.fillStyle(C.locked, 0.82).fillRect(r.x, r.y, r.w, r.h);
+    // Panneau « À louer » avec cadenas, placé du côté du petit bureau pour être vu dès le départ
+    const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+    const cx = clamp(START_VIEW.x, r.x + 130, r.x + r.w - 130);
+    const cy = clamp(START_VIEW.y, r.y + 100, r.y + r.h - 100);
+    g.fillStyle(C.shadow, 0.4).fillRoundedRect(cx - 114, cy - 76, 236, 164, 14);
+    g.fillStyle(0xfaf7f0, 1).fillRoundedRect(cx - 118, cy - 80, 236, 164, 14);
+    g.fillStyle(0xdc2626, 1).fillRoundedRect(cx - 118, cy - 80, 236, 38, { tl: 14, tr: 14, bl: 0, br: 0 });
+    g.lineStyle(6, C.wall, 1).beginPath().arc(cx, cy - 14, 11, Math.PI, 0).strokePath();
+    g.fillStyle(C.wall, 1).fillRoundedRect(cx - 17, cy - 14, 34, 24, 5);
+    const title = this.text(cx, cy - 61, 'À LOUER', 20, C.textLight);
+    const name = this.text(cx, cy + 32, zone.name, 19, C.text);
+    const hint = this.text(cx, cy + 60, `Bureau principal niv. ${zone.unlockLevel}`, 15, '#475569', false);
+    this.overlay.add([g, title, name, hint]);
   }
 }
