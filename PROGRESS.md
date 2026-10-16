@@ -5,7 +5,7 @@
 ## Étapes
 - [x] 01 Socle et déploiement
 - [x] 02 Cœur métier (économie, recrutement)
-- [ ] 03 Carte et caméra
+- [x] 03 Carte et caméra
 - [ ] 04 HUD et panneaux (prototype jouable)
 - [ ] 05 Bâtiments et construction
 - [ ] 06 Profils, sauvegarde et progression hors ligne
@@ -15,6 +15,14 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Étape 3 terminée (16/10/2026). La carte est navigable ; l'économie n'est pas encore affichée (étape 4).
+- `src/data/map.ts` : monde 2400 × 1800, 4 zones (Cabinet ouvert ; Aile Est, Aile Nord, Jardins ouverts aux niveaux 2, 3, 4 du Bureau principal), 13 emplacements + le Bureau principal.
+- `src/game/` : `geometry.ts` (fonctions pures : tap, zoom, limites, sélection, inertie), `CameraController.ts`, `InputController.ts` (glisser, pincer, molette, tap), `MapRenderer.ts` (dessin vectoriel Phaser : sol, allées, arbres, Bureau principal, emplacements en pointillés, zones verrouillées avec cadenas), `MapScene.ts`.
+- Événements sur `game.events` pour l'interface : `building:selected` (id ou null), `slot:selected`, `zone:selected`, et `camera:recenter` à émettre.
+- Bouton HTML « Recentrer » en bas à droite.
+- `npm run check` : typage OK, 7 fichiers / 48 tests OK, build OK.
+- Vérifié en Chromium headless (émulation iPhone 13 et bureau 1280 × 800) : tap sur le cabinet = surbrillance, glissement au doigt, pincement, molette, glissement souris, recentrage ; aucune erreur console, pas de zoom ni défilement de la page.
+
 Étape 2 terminée (16/10/2026). Pas encore d'interface pour jouer : le moteur existe et est testé, l'affichage arrive aux étapes 3 et 4.
 - `src/data/` : `balance.ts` (constantes), `staff.ts` (collaborateurs), `upgrades.ts` (améliorations du clic).
 - `src/core/` : `state.ts`, `economy.ts` (revenu/s, clic, coûts, familles de multiplicateurs dans `getMultipliers`), `recruitment.ts` (capacité, refus motivés, démission), `actions.ts` (`applyAction` pur), `store.ts` (`simulate` à pas fixes de 250 ms + `GameStore`), `format.ts`.
@@ -31,10 +39,16 @@
 - Coût de l'associé : `ceil(25 000 × 4^(associés − 1))` avec associés = nombre actuel (joueur compris).
 - Bonus du Bureau principal pas encore appliqué : il viendra avec les bâtiments (étape 5).
 - `simulate` recalcule le revenu à chaque pas de 250 ms (un effet temporaire peut expirer en cours de route) ; le temps restant (< 250 ms) est gardé pour le tick suivant.
+- Graphismes dessinés en vectoriel avec `Phaser.GameObjects.Graphics` (pas de fichiers image) : léger et net à tous les zooms.
+- Zoom de 0,5 à 2 (relevé automatiquement si l'écran est plus grand que le monde), zoom initial 0,65 ; caméra bornée par nos propres fonctions (`clampScrollAxis`) plutôt que `camera.setBounds`, pour qu'elles soient testées.
+- Tap = moins de 8 px et moins de 250 ms, un seul doigt. Inertie seulement si le doigt bougeait encore au lâcher (< 80 ms).
 - Un test d'architecture interdit à `src/core/` d'importer Phaser, le DOM ou le stockage.
 
 ## À vérifier à la main (iPhone, navigateur)
 - Ouvrir le site publié sur iPhone (Safari) : pas de zoom ni de défilement de la page, bandeau sous l'encoche.
+- iPhone : pincement fluide et centré entre les doigts, inertie agréable (ni trop longue ni trop courte), aucun tap accidentel en fin de glissement.
+- iPhone : rotation portrait ↔ paysage sans déformation ni zone vide ; bouton Recentrer atteignable au pouce.
+- Trackpad Mac : le pincement du trackpad zoome la carte (il arrive comme une molette avec ctrl).
 
 ## Idées / plus tard
 _(Hors périmètre de l'étape en cours.)_
