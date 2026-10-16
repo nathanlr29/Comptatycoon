@@ -7,7 +7,7 @@
  */
 
 /** Taille d'une case à l'écran (px du monde Phaser) et hauteur des murs. */
-export const ISO = { tileW: 64, tileH: 32, wallH: 84, partitionH: 30 } as const;
+export const ISO = { tileW: 64, tileH: 32, wallH: 84, partitionH: 22 } as const;
 
 export interface ScreenPoint {
   x: number;

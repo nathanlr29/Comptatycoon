@@ -1,5 +1,4 @@
 import { EXPANSION_LEVELS, MAX_FIRM_LEVEL } from './expansion';
-import type { ZoneId } from './map';
 import type { StaffRole } from './staff';
 
 /** Bâtiments et pièces constructibles (docs/GDD.md §6). Valeurs d'équilibrage de départ. */
@@ -35,8 +34,6 @@ export interface BuildingDefinition {
   /** Niveau minimal du Bureau principal pour construire. */
   requiresHq: number;
   effect: BuildingEffect;
-  /** Locaux où placer la pièce en priorité (sinon le premier emplacement libre). */
-  preferredZones?: ZoneId[];
   /** Coûts d'amélioration explicites (index = niveau actuel − 1) ; sinon cost × 5^niveau. */
   upgradeCosts?: number[];
 }
@@ -83,7 +80,6 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
   socialWing: {
     type: 'socialWing',
-    preferredZones: ['north'],
     name: 'Locaux du Pôle Social',
     description: 'Accueillera le Pôle Social : paie et DSN.',
     cost: 15_000,
@@ -93,7 +89,6 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
   legalWing: {
     type: 'legalWing',
-    preferredZones: ['north'],
     name: 'Locaux du Pôle Juridique',
     description: 'Accueillera le Pôle Juridique : statuts, AG, formalités.',
     cost: 40_000,
@@ -103,7 +98,6 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
   advisoryWing: {
     type: 'advisoryWing',
-    preferredZones: ['north'],
     name: 'Locaux Conseil & Audit',
     description: 'Accueillera le Pôle Conseil & Audit.',
     cost: 250_000,
@@ -113,27 +107,26 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
   garden: {
     type: 'garden',
-    preferredZones: ['garden'],
     name: 'Coin plantes',
     description: 'Un coin de verdure qui plaît aux clients.',
     cost: 1_000,
     maxLevel: 1,
-    requiresHq: 1,
+    // Sa place n'existe qu'à « L’étage complet » (src/data/office.ts).
+    requiresHq: 4,
     effect: { reputationOnBuild: 3 },
   },
   fountain: {
     type: 'fountain',
-    preferredZones: ['garden'],
     name: 'Fontaine d’intérieur',
     description: 'Le signe d’un cabinet qui réussit.',
     cost: 10_000,
     maxLevel: 1,
-    requiresHq: 1,
+    requiresHq: 4,
     effect: { reputationOnBuild: 3 },
   },
 };
 
-/** Types que le joueur peut construire sur un emplacement libre (le Bureau principal existe déjà). */
+/** Types que le joueur peut aménager depuis le menu (le Bureau principal existe déjà). */
 export const CONSTRUCTIBLE: BuildingType[] = [
   'openSpace',
   'serverRoom',
@@ -144,12 +137,6 @@ export const CONSTRUCTIBLE: BuildingType[] = [
   'garden',
   'fountain',
 ];
-
-/**
- * Emplacements réservés aux pièces. Les autres emplacements du plan (start-1, start-2, east-1, east-2, north-1)
- * sont des zones de bureaux pour les employés visibles.
- */
-export const ROOM_SLOT_IDS: readonly string[] = ['east-3', 'north-2', 'north-3', 'garden-1', 'garden-2', 'garden-3'];
 
 /** Durée de chantier : 10 s × niveau visé², plafonnée à 10 min. */
 export const CONSTRUCTION = { baseMs: 10_000, maxMs: 600_000, upgradeCostGrowth: 5, reputationPerBuild: 1 } as const;

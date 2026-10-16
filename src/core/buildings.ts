@@ -1,5 +1,5 @@
-import { BUILDINGS, CONSTRUCTION, ROOM_SLOT_IDS, type BuildingDefinition, type BuildingType } from '../data/buildings';
-import { SLOTS, getZone, isZoneUnlocked, type Slot } from '../data/map';
+import { BUILDINGS, CONSTRUCTION, type BuildingDefinition, type BuildingType } from '../data/buildings';
+import { ROOMS } from '../data/office';
 import type { RefusalReason } from './refusals';
 import type { BuildingState, GameState } from './state';
 
@@ -30,12 +30,14 @@ export function getConstructionMs(targetLevel: number): number {
   return Math.min(CONSTRUCTION.maxMs, CONSTRUCTION.baseMs * targetLevel ** 2);
 }
 
-/** Premier emplacement libre d'un local ouvert, en commençant par les locaux préférés de la pièce. */
-export function findFreeSlot(state: GameState, type: BuildingType): Slot | undefined {
-  const hqLevel = getHqLevel(state);
-  const free = SLOTS.filter((s) => ROOM_SLOT_IDS.includes(s.id) && isZoneUnlocked(getZone(s.zone), hqLevel) && !getBuildingAt(state, s.id));
-  const preferred = BUILDINGS[type].preferredZones ?? [];
-  return free.find((s) => preferred.includes(s.zone)) ?? free[0];
+/**
+ * Place de la pièce si elle est libre et existe à ce niveau du cabinet : chaque type de pièce a sa place
+ * fixe sur le plan (`ROOMS` de src/data/office.ts), dont l'identifiant est le type lui-même.
+ */
+export function findFreeSlot(state: GameState, type: BuildingType): string | undefined {
+  const room = ROOMS.find((r) => r.type === type);
+  if (!room || getHqLevel(state) < room.minStage || getBuildingAt(state, type)) return undefined;
+  return type;
 }
 
 export function canBuild(state: GameState, type: BuildingType): PlaceCheck {
@@ -47,7 +49,7 @@ export function canBuild(state: GameState, type: BuildingType): PlaceCheck {
   const slot = findFreeSlot(state, type);
   if (!slot) return { ok: false, reason: 'no_space', ...base };
   if (state.money < def.cost) return { ok: false, reason: 'insufficient_funds', ...base };
-  return { ok: true, slotId: slot.id, ...base };
+  return { ok: true, slotId: slot, ...base };
 }
 
 export function canUpgrade(state: GameState, buildingId: string): BuildCheck {

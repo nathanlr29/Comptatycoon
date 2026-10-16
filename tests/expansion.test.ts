@@ -4,7 +4,7 @@ import { getBaseIncomePerSecond } from '../src/core/economy';
 import { simulate } from '../src/core/store';
 import { canExpand, getFirmLevel, getNextExpansion } from '../src/core/expansion';
 import { EXPANSION_LEVELS, MAX_FIRM_LEVEL } from '../src/data/expansion';
-import { ZONES } from '../src/data/map';
+import { OFFICE_STAGES } from '../src/data/office';
 import { makeState, T0 } from './helpers';
 
 const expand = { type: 'upgradeBuilding', buildingId: 'hq' } as const;
@@ -15,7 +15,7 @@ describe('données d’agrandissement', () => {
   it('suit les prix du Bureau principal (GDD §6) et ouvre les locaux dans l’ordre', () => {
     expect(EXPANSION_LEVELS.map((l) => l.cost)).toEqual([0, 500, 5_000, 50_000, 500_000]);
     expect(EXPANSION_LEVELS.map((l) => l.level)).toEqual([1, 2, 3, 4, 5]);
-    for (const zone of ZONES) expect(EXPANSION_LEVELS.find((l) => l.zone === zone.id)?.level, zone.id).toBe(zone.unlockLevel);
+    expect(EXPANSION_LEVELS.map((l) => l.name)).toEqual(OFFICE_STAGES.map((s) => s.name));
   });
 
   it('les conditions d’équipe ne baissent jamais et restent atteignables', () => {

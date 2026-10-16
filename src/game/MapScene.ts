@@ -1,18 +1,19 @@
 import Phaser from 'phaser';
-import { getExpansionLevel } from '../data/expansion';
-import { HQ_SLOT, START_VIEW, WORLD, getZone, type Rect } from '../data/map';
-import { CameraController } from './CameraController';
-import { playReveal } from './expansionView';
-import { hitTest, screenToWorld } from './geometry';
-import { InputController } from './InputController';
-import { MapRenderer } from './MapRenderer';
-import { StaffLayer } from './characters/StaffLayer';
-import { tempSeats } from './characters/tempSeats';
 import type { GameStore } from '../core/store';
+import { getStage } from '../data/office';
+import { CameraController } from './CameraController';
+import { officeSeats } from './characters/officeSeats';
+import { StaffLayer } from './characters/StaffLayer';
+import { playReveal } from './expansionView';
+import { screenToWorld } from './geometry';
+import { InputController } from './InputController';
+import { isoQuad } from './iso';
+import { OfficeRenderer } from './OfficeRenderer';
+import { builtRoomTypes, officeViewKey, toOfficeView, worksProgress, type OfficeView } from './officeView';
 
 /** Ce que l'interface peut écouter sur `game.events`. */
 export const MAP_EVENTS = {
-  /** id du bâtiment sélectionné, ou null pour désélection. */
+  /** id du bâtiment (pièce) sélectionné, ou null pour désélection. */
   buildingSelected: 'building:selected',
   /** À émettre par l'interface pour recentrer la caméra. */
   recenter: 'camera:recenter',
@@ -20,43 +21,33 @@ export const MAP_EVENTS = {
   clearSelection: 'selection:clear',
 } as const;
 
+/** Zoom maximal quand on cadre tout le cabinet (le petit bureau ne doit pas paraître énorme). */
+const FIT_MAX_ZOOM = 1.25;
+
+/** Scène du cabinet en fausse 3D (docs/GDD.md §6) : plan, mobilier et employés. */
 export class MapScene extends Phaser.Scene {
   private camera!: CameraController;
-  private mapView!: MapRenderer;
-  private staffView!: StaffLayer;
-  private hqLevel = 1;
+  private office!: OfficeRenderer;
+  private staff!: StaffLayer;
+  private view: OfficeView | null = null;
+  private viewKey = '';
 
   constructor(private readonly store: GameStore) {
     super('map');
   }
 
   create(): void {
-    this.mapView = new MapRenderer(this);
-    this.hqLevel = this.readHqLevel();
-    this.mapView.render(this.hqLevel);
-    this.staffView = new StaffLayer(this);
-    this.staffView.setSeats(tempSeats(this.hqLevel));
-    this.staffView.sync(this.store.getState());
-
-    this.camera = new CameraController(this.cameras.main);
-    this.camera.centerOn(START_VIEW.x, START_VIEW.y);
+    this.office = new OfficeRenderer(this);
+    this.staff = new StaffLayer(this);
+    this.camera = new CameraController(this.cameras.main, this.office.bounds());
+    this.refresh();
+    this.camera.fit(FIT_MAX_ZOOM);
     new InputController(this, this.camera, (sx, sy) => this.select(sx, sy));
 
     const onResize = (size: Phaser.Structs.Size) => this.camera.resize(size.width, size.height);
-    const onRecenter = () => this.camera.centerOn(START_VIEW.x, START_VIEW.y);
-    const onClear = () => this.mapView.setHighlight(null);
-    // Ne redessine la carte que si le niveau du cabinet change ; un agrandissement se révèle.
-    const unsubscribe = this.store.subscribe(() => {
-      const level = this.readHqLevel();
-      if (level !== this.hqLevel) {
-        const grew = level === this.hqLevel + 1;
-        this.hqLevel = level;
-        if (grew) this.reveal(level);
-        else this.mapView.render(level);
-        this.staffView.setSeats(tempSeats(level));
-      }
-      this.staffView.sync(this.store.getState());
-    });
+    const onRecenter = () => this.camera.fit(FIT_MAX_ZOOM);
+    const onClear = () => this.office.setHighlight(null);
+    const unsubscribe = this.store.subscribe(() => this.refresh());
     this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
     this.game.events.on(MAP_EVENTS.recenter, onRecenter);
     this.game.events.on(MAP_EVENTS.clearSelection, onClear);
@@ -72,30 +63,38 @@ export class MapScene extends Phaser.Scene {
     this.camera.update(delta);
   }
 
-  private select(sx: number, sy: number): void {
-    const p = screenToWorld(this.camera.view(), sx, sy);
-    if (p.x < 0 || p.y < 0 || p.x > WORLD.width || p.y > WORLD.height) return;
-
-    if (hitTest([HQ_SLOT], p.x, p.y)) return this.emitSelection(MAP_EVENTS.buildingSelected, 'hq', HQ_SLOT);
-    this.emitSelection(MAP_EVENTS.buildingSelected, null, null);
+  /** Redessine le plan seulement si le niveau ou les pièces changent ; les effectifs suivent à chaque état. */
+  private refresh(): void {
+    const state = this.store.getState();
+    const view = toOfficeView(state);
+    const key = officeViewKey(view);
+    if (key !== this.viewKey) {
+      const grew = this.view !== null && view.stage > this.view.stage;
+      this.viewKey = key;
+      this.view = view;
+      this.office.render(view);
+      this.staff.setSeats(officeSeats(view.stage, builtRoomTypes(view)));
+      this.camera.setBounds(this.office.bounds());
+      if (grew) this.reveal(view.stage);
+    }
+    this.office.updateWorks(worksProgress(state, Date.now()));
+    this.staff.sync(state);
   }
 
-  /** Dessine le nouveau niveau et le révèle (local loué, ou bureau de direction rénové). */
-  private reveal(level: number): void {
-    const zone = getExpansionLevel(level)?.zone ?? null;
-    const cover = this.mapView.render(level, zone);
-    const focus = zone ? getZone(zone).rect : HQ_SLOT;
+  /** Nouveau niveau : la caméra recadre le cabinet agrandi et son contour pulse. */
+  private reveal(stage: number): void {
     const cam = this.cameras.main;
     const from = { x: cam.midPoint.x, y: cam.midPoint.y };
-    playReveal(this, { cover, focus }, (x, y) => this.camera.centerOn(x, y), from);
+    this.camera.fit(FIT_MAX_ZOOM);
+    const { w, h } = getStage(stage).size;
+    playReveal(this, { focus: this.office.center(), outline: isoQuad(0, 0, w, h) }, (x, y) => this.camera.centerOn(x, y), from);
   }
 
-  private readHqLevel(): number {
-    return this.store.getState().buildings.find((b) => b.id === 'hq')?.level ?? 1;
-  }
-
-  private emitSelection(event: string, id: string | null, rect: Rect | null): void {
-    this.mapView.setHighlight(rect);
-    this.game.events.emit(event, id);
+  private select(sx: number, sy: number): void {
+    const p = screenToWorld(this.camera.view(), sx, sy);
+    const type = this.office.roomAt(p.x, p.y);
+    const id = type ? (this.store.getState().buildings.find((b) => b.type === type)?.id ?? null) : null;
+    this.office.setHighlight(id ? type : null);
+    this.game.events.emit(MAP_EVENTS.buildingSelected, id);
   }
 }

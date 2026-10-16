@@ -4,8 +4,8 @@ import { canBuild, findFreeSlot, getBuildingVisual, getConstructionMs, getUpgrad
 import { getIncomePerSecond } from '../src/core/economy';
 import { simulate } from '../src/core/store';
 import type { BuildingState, GameState } from '../src/core/state';
-import { BUILDINGS, ROOM_SLOT_IDS, type BuildingType } from '../src/data/buildings';
-import { SLOTS, getZone, isZoneUnlocked } from '../src/data/map';
+import { BUILDINGS, CONSTRUCTIBLE, type BuildingType } from '../src/data/buildings';
+import { ROOMS } from '../src/data/office';
 import { makeState, T0 } from './helpers';
 
 const staff = { intern: 4, junior: 0, senior: 0, manager: 0 };
@@ -30,8 +30,10 @@ describe('aménagement depuis le menu', () => {
     expect(canBuild(firm(1), 'advisoryWing')).toMatchObject({ ok: false, reason: 'requires_hq' });
   });
 
-  it('n’a aucune place pour une pièce dans le petit bureau de départ', () => {
-    expect(canBuild(firm(1), 'openSpace')).toMatchObject({ ok: false, reason: 'no_space' });
+  it('le petit bureau de départ a déjà la place de l’open space et de la salle serveurs', () => {
+    expect(canBuild(firm(1), 'openSpace')).toMatchObject({ ok: true, slotId: 'openSpace' });
+    expect(canBuild(firm(1), 'serverRoom')).toMatchObject({ ok: true });
+    expect(canBuild(firm(1), 'meetingRoom')).toMatchObject({ ok: false, reason: 'requires_hq' });
   });
 
   it('refuse un deuxième exemplaire', () => {
@@ -39,22 +41,16 @@ describe('aménagement depuis le menu', () => {
     expect(canBuild(state, 'openSpace')).toMatchObject({ ok: false, reason: 'already_owned' });
   });
 
-  it('place la pièce dans un emplacement libre d’un local ouvert', () => {
+  it('chaque pièce a sa place fixe sur le plan, qui existe au niveau de cabinet demandé', () => {
+    for (const type of CONSTRUCTIBLE) {
+      const place = ROOMS.find((r) => r.type === type);
+      expect(place, type).toBeDefined();
+      expect(BUILDINGS[type].requiresHq, type).toBeGreaterThanOrEqual(place!.minStage);
+      expect(findFreeSlot(firm(BUILDINGS[type].requiresHq), type), type).toBe(type);
+    }
     const { state } = build(firm(4), 'fountain');
-    const slot = SLOTS.find((s) => s.id === room(state, 'fountain')?.slotId);
-    expect(slot?.zone).toBe('garden');
-    const wing = build(state, 'socialWing').state;
-    expect(SLOTS.find((s) => s.id === room(wing, 'socialWing')?.slotId)?.zone).toBe('north');
-  });
-
-  it('refuse « Agrandissez le cabinet » quand tous les emplacements ouverts sont pris', () => {
-    let state = firm(2);
-    const open = SLOTS.filter((s) => ROOM_SLOT_IDS.includes(s.id) && isZoneUnlocked(getZone(s.zone), 2)).length;
-    expect(open).toBe(1);
-    const types: BuildingType[] = ['openSpace', 'serverRoom', 'meetingRoom', 'garden', 'fountain', 'socialWing', 'legalWing'];
-    for (const type of types.slice(0, open)) state = build(state, type).state;
-    expect(findFreeSlot(state, 'garden')).toBeUndefined();
-    expect(canBuild(state, types[open]!)).toMatchObject({ ok: false, reason: 'no_space' });
+    expect(room(state, 'fountain')?.slotId).toBe('fountain');
+    expect(findFreeSlot(state, 'fountain')).toBeUndefined();
   });
 
   it('débite le coût et termine les travaux après exactement 10 s', () => {
@@ -69,7 +65,7 @@ describe('aménagement depuis le menu', () => {
   });
 
   it('crédite la réputation bonus d’un décor', () => {
-    const { state } = build(firm(2, { money: 1_000 }), 'garden');
+    const { state } = build(firm(4, { money: 1_000 }), 'garden');
     expect(simulate(state, T0 + 10_000).reputation).toBe(1 + 3);
   });
 });
@@ -107,17 +103,8 @@ describe('amélioration', () => {
 });
 
 describe('locaux et réputation passive', () => {
-  it('ouvre les locaux aux niveaux 2, 3 et 4 du cabinet', () => {
-    const zonesAt = (level: number) => new Set(SLOTS.filter((s) => isZoneUnlocked(getZone(s.zone), level)).map((s) => s.zone));
-    expect(zonesAt(2).has('east')).toBe(true);
-    expect(zonesAt(2).has('north')).toBe(false);
-    expect(zonesAt(3).has('north')).toBe(true);
-    expect(zonesAt(3).has('garden')).toBe(false);
-    expect(zonesAt(4).has('garden')).toBe(true);
-  });
-
   it('une salle de réunion donne 1 point de réputation toutes les 120 s', () => {
-    const state = makeState({ buildings: [hq(2), { id: 'meetingRoom', type: 'meetingRoom', level: 1, slotId: 'east-3' }] });
+    const state = makeState({ buildings: [hq(2), { id: 'meetingRoom', type: 'meetingRoom', level: 1, slotId: 'meetingRoom' }] });
     expect(simulate(state, T0 + 119_750).reputation).toBe(0);
     expect(simulate(state, T0 + 120_000).reputation).toBe(1);
     expect(simulate(state, T0 + 360_000).reputation).toBe(3);

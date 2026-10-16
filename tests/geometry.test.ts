@@ -5,7 +5,8 @@ import {
   clampZoom,
   hitTest,
   isTap,
-  minZoomFor,
+  fitZoom,
+  clampScrollIn,
   screenToWorld,
   scrollForZoomAt,
   ZOOM,
@@ -35,9 +36,17 @@ describe('zoom', () => {
     expect(clampZoom(0.1, ZOOM.min)).toBe(ZOOM.min);
   });
 
-  it('remonte le zoom minimal pour que le monde couvre un grand écran', () => {
-    expect(minZoomFor(390, 844, 2400, 1800)).toBe(ZOOM.min);
-    expect(minZoomFor(1024, 1366, 2400, 1800)).toBeCloseTo(1366 / 1800, 9);
+  it('cadre une zone entière dans la vue', () => {
+    expect(fitZoom(390, 844, 780, 400)).toBeCloseTo(0.5, 9);
+    expect(fitZoom(1000, 500, 500, 500)).toBeCloseTo(1, 9);
+  });
+
+  it('borne le défilement à une zone qui ne commence pas en 0', () => {
+    // Zone de x = -500 à 500, vue de 200 px au zoom 1 : le bord gauche visible reste dans la zone.
+    expect(clampScrollIn(-2000, 200, 1, -500, 1000)).toBe(-500);
+    expect(clampScrollIn(2000, 200, 1, -500, 1000)).toBe(300);
+    // Zone plus petite que la vue : centrée.
+    expect(clampScrollIn(123, 2000, 1, -500, 1000)).toBe(-1000);
   });
 
   it('garde le même point du monde sous les doigts en zoomant', () => {

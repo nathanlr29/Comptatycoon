@@ -4,8 +4,6 @@
  * (`stage` de src/data/office.ts, refonte « Vue intérieure ») : c'est le plan qui porte les postes de travail.
  * Rien d'un niveau n'est dessiné avant d'être acheté.
  */
-import type { ZoneId } from './map';
-
 export interface ExpansionLevel {
   /** Niveau du cabinet atteint en achetant cette étape (1 = départ). */
   level: number;
@@ -17,8 +15,6 @@ export interface ExpansionLevel {
   minStaff: number;
   /** Associés requis, joueur compris. */
   minPartners: number;
-  /** Local loué à ce niveau, s'il y en a un. */
-  zone: ZoneId | null;
   /** Ce que le niveau ajoute, en phrases courtes pour le menu. */
   adds: string[];
 }
@@ -34,7 +30,6 @@ export const EXPANSION_LEVELS: readonly ExpansionLevel[] = [
     cost: 0,
     minStaff: 0,
     minPartners: 1,
-    zone: 'start',
     adds: [],
   },
   {
@@ -44,7 +39,6 @@ export const EXPANSION_LEVELS: readonly ExpansionLevel[] = [
     cost: 500,
     minStaff: 5,
     minPartners: 1,
-    zone: 'east',
     adds: ['Local voisin, postes et coin café', 'Production +10 %'],
   },
   {
@@ -54,7 +48,6 @@ export const EXPANSION_LEVELS: readonly ExpansionLevel[] = [
     cost: 5_000,
     minStaff: 12,
     minPartners: 1,
-    zone: 'north',
     adds: ['Plateau, postes et accueil', 'Production +10 %'],
   },
   {
@@ -64,7 +57,6 @@ export const EXPANSION_LEVELS: readonly ExpansionLevel[] = [
     cost: 50_000,
     minStaff: 20,
     minPartners: 2,
-    zone: 'garden',
     adds: ['L’étage entier et ses postes', 'Production +10 %'],
   },
   {
@@ -74,7 +66,6 @@ export const EXPANSION_LEVELS: readonly ExpansionLevel[] = [
     cost: 500_000,
     minStaff: 35,
     minPartners: 3,
-    zone: null,
     adds: ['Le siège et ses postes', 'Bureau de direction', 'Production +10 %'],
   },
 ];

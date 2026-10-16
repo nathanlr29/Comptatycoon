@@ -1,5 +1,10 @@
 /** Fonctions pures de la carte : gestes, zoom, sélection. Testées sans Phaser. */
-import type { Rect } from '../data/map';
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 export const GESTURE = {
   /** Au-delà de ce déplacement (px écran), le geste est un glissement. */
@@ -8,7 +13,7 @@ export const GESTURE = {
   tapMaxDuration: 250,
 } as const;
 
-export const ZOOM = { min: 0.5, max: 2, initial: 0.65 } as const;
+export const ZOOM = { min: 0.35, max: 2, initial: 0.9 } as const;
 
 export interface GestureSample {
   /** Distance maximale parcourue depuis le point de départ, en px écran. */
@@ -21,14 +26,6 @@ export interface GestureSample {
 /** Un tap sélectionne ; un glissement ou un pincement ne sélectionne jamais. */
 export function isTap(g: GestureSample): boolean {
   return !g.multiTouch && g.maxDistance <= GESTURE.tapMaxDistance && g.durationMs <= GESTURE.tapMaxDuration;
-}
-
-/**
- * Zoom minimal : jamais sous ZOOM.min, et assez grand pour que le monde
- * couvre toujours l'écran (pas de bande vide sur tablette ou en paysage).
- */
-export function minZoomFor(viewW: number, viewH: number, worldW: number, worldH: number): number {
-  return Math.min(ZOOM.max, Math.max(ZOOM.min, viewW / worldW, viewH / worldH));
 }
 
 export function clampZoom(zoom: number, minZoom: number): number {
@@ -96,4 +93,14 @@ export function clampScrollAxis(scroll: number, viewSize: number, zoom: number, 
 /** Scroll qui centre la vue sur le point (x, y) du monde. */
 export function scrollToCenter(v: Pick<CameraView, 'width' | 'height'>, x: number, y: number): { scrollX: number; scrollY: number } {
   return { scrollX: x - v.width / 2, scrollY: y - v.height / 2 };
+}
+
+/** Zoom qui fait tenir entièrement un rectangle de taille (w, h) dans la vue. */
+export function fitZoom(viewW: number, viewH: number, w: number, h: number): number {
+  return Math.min(viewW / w, viewH / h);
+}
+
+/** Comme `clampScrollAxis`, pour une zone qui commence en `start` au lieu de 0. */
+export function clampScrollIn(scroll: number, viewSize: number, zoom: number, start: number, size: number): number {
+  return clampScrollAxis(scroll - start, viewSize, zoom, size) + start;
 }

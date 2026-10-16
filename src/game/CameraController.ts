@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
-import { WORLD } from '../data/map';
-import { applyFriction, clampScrollAxis, clampZoom, minZoomFor, scrollForZoomAt, scrollToCenter, ZOOM } from './geometry';
+import { applyFriction, clampScrollIn, clampZoom, fitZoom, scrollForZoomAt, scrollToCenter, ZOOM } from './geometry';
+
+export interface Bounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 /** Caméra de la carte : déplacement, zoom, inertie, limites. Coordonnées écran en px CSS. */
 export class CameraController {
@@ -8,9 +14,27 @@ export class CameraController {
   private vy = 0;
   private minZoom: number = ZOOM.min;
 
-  constructor(private readonly camera: Phaser.Cameras.Scene2D.Camera) {
+  constructor(
+    private readonly camera: Phaser.Cameras.Scene2D.Camera,
+    private bounds: Bounds,
+  ) {
     this.updateMinZoom();
     camera.setZoom(clampZoom(ZOOM.initial, this.minZoom));
+  }
+
+  /** Change la zone visitable (le cabinet s'agrandit). */
+  setBounds(bounds: Bounds): void {
+    this.bounds = bounds;
+    this.updateMinZoom();
+    this.camera.setZoom(clampZoom(this.camera.zoom, this.minZoom));
+    this.setScroll(this.camera.scrollX, this.camera.scrollY);
+  }
+
+  /** Cadre toute la zone visitable, sans dépasser `maxZoom`. */
+  fit(maxZoom: number): void {
+    const b = this.bounds;
+    this.camera.setZoom(clampZoom(Math.min(maxZoom, fitZoom(this.camera.width, this.camera.height, b.width, b.height)), this.minZoom));
+    this.centerOn(b.x + b.width / 2, b.y + b.height / 2);
   }
 
   get zoom(): number {
@@ -71,14 +95,16 @@ export class CameraController {
   }
 
   private updateMinZoom(): void {
-    this.minZoom = minZoomFor(this.camera.width, this.camera.height, WORLD.width, WORLD.height);
+    // On peut dézoomer jusqu'à voir tout le cabinet (avec du fond autour), jamais en dessous de ZOOM.min.
+    const b = this.bounds;
+    this.minZoom = Math.min(1, Math.max(ZOOM.min, fitZoom(this.camera.width, this.camera.height, b.width, b.height)));
   }
 
   private setScroll(x: number, y: number): void {
     const cam = this.camera;
     cam.setScroll(
-      clampScrollAxis(x, cam.width, cam.zoom, WORLD.width),
-      clampScrollAxis(y, cam.height, cam.zoom, WORLD.height),
+      clampScrollIn(x, cam.width, cam.zoom, this.bounds.x, this.bounds.width),
+      clampScrollIn(y, cam.height, cam.zoom, this.bounds.y, this.bounds.height),
     );
   }
 }
