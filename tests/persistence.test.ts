@@ -55,6 +55,15 @@ describe('schéma de sauvegarde', () => {
     expect(parsed.ok && parsed.save.state.upgrades).toEqual(['dualScreen']);
   });
 
+  it('lit les pôles et portefeuilles, avec des valeurs par défaut s’ils manquent', () => {
+    const { departments: _d, portfolios: _p, ...older } = played;
+    const parsed = validateSave({ schemaVersion: 1, savedAt: T0, state: older });
+    expect(parsed.ok && [parsed.save.state.departments, parsed.save.state.portfolios]).toEqual([[], 0]);
+    const full = validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, departments: ['social', 'nope'], portfolios: 2 } });
+    expect(full.ok && [full.save.state.departments, full.save.state.portfolios]).toEqual([['social'], 2]);
+    expect(validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, portfolios: -1 } }).ok).toBe(false);
+  });
+
   it('migre une sauvegarde v0 (sans version ni statistiques) vers v1', () => {
     const { stats: _omit, ...v0State } = played;
     const parsed = validateSave({ savedAt: T0, state: v0State });

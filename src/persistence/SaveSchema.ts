@@ -1,3 +1,4 @@
+import { DEPARTMENT_IDS, type DepartmentId } from '../data/departments';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
 import type { BuildingState, GameState, TimedEffect } from '../core/state';
@@ -65,6 +66,12 @@ function upgradeIds(value: unknown, path: string): UpgradeId[] {
   return ids.filter((id): id is UpgradeId => (UPGRADE_IDS as string[]).includes(id));
 }
 
+/** Pôles : absents des anciennes sauvegardes (liste vide), identifiants inconnus ignorés. */
+function departmentIds(value: unknown, path: string): DepartmentId[] {
+  if (value === undefined) return [];
+  return arr(value, path, str).filter((id): id is DepartmentId => (DEPARTMENT_IDS as string[]).includes(id));
+}
+
 function building(value: unknown, path: string): BuildingState {
   const b = obj(value, path);
   return {
@@ -97,6 +104,8 @@ function readState(value: unknown): GameState {
     staff,
     partners: int(s.partners, 'state.partners', 1),
     upgrades: upgradeIds(s.upgrades, 'state.upgrades'),
+    departments: departmentIds(s.departments, 'state.departments'),
+    portfolios: s.portfolios === undefined ? 0 : int(s.portfolios, 'state.portfolios', 0),
     buildings: arr(s.buildings, 'state.buildings', building),
     effects: arr(s.effects, 'state.effects', effect),
     lastSimulatedAt: num(s.lastSimulatedAt, 'state.lastSimulatedAt', 0),

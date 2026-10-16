@@ -23,7 +23,8 @@
 - `ui/Modal.ts`, `ui/saveDialogs.ts` (exporter, importer, renommer, supprimer en retapant le nom), `ui/SettingsPanel.ts` (bouton engrenage au-dessus de « Recentrer » : changer de cabinet, exporter, importer, réinitialiser avec double confirmation). Textes dans `src/data/saveTexts.ts`. Changer de cabinet sauvegarde puis recharge la page.
 - Stockage refusé (mode privé) : message et bouton « Jouer sans sauvegarde ».
 - Reste : terminer pendant l'absence les chantiers de l'étape 5, quand elle sera fusionnée.
-- `npm run check` : typage OK, 10 fichiers / 86 tests OK, build OK.
+- Le schéma lit aussi `departments` et `portfolios` (vides / 0 s'ils manquent) ; les identifiants d'amélioration ou de pôle inconnus sont ignorés sans rejeter la partie.
+- `npm run check` : typage OK, 101 tests OK, build OK.
 - Vérifié en Chromium headless (émulation iPhone 13, puis paysage 844 × 390) : création d'un cabinet, sauvegarde après achat (clé principale + secours), absence simulée de 10 h → 8 h créditées (0,5 €/s → +14,4 k€), Paramètres, export, changer de cabinet, import, menu ⋯, sauvegarde corrompue → message, aucun débordement horizontal, aucune erreur console.
 
 Licenciements et nouvelles améliorations (16/10/2026, demande de Nathan, hors étapes).
