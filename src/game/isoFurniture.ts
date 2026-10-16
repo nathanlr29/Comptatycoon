@@ -4,6 +4,7 @@ import { deskRect, type Desk, type Furniture, type FurnitureType } from '../data
 import { depthOf, isoQuad, isoToScreen } from './iso';
 import { box, groundShadow, poly } from './isoDraw';
 import { COLORS, shade } from './palette';
+import { standingDeskBase } from './perkFurniture';
 
 type G = Phaser.GameObjects.Graphics;
 
@@ -149,14 +150,16 @@ export function drawFurniture(scene: Phaser.Scene, f: Furniture): G[] {
 }
 
 /** Poste de travail : bureau avec écran décalé (pour ne pas cacher le visage) et clavier. La personne est dessinée derrière. */
-export function drawDesk(scene: Phaser.Scene, d: Desk, fancy = false): G[] {
+export function drawDesk(scene: Phaser.Scene, d: Desk, fancy = false, standing = false): G[] {
   const { x, y, w, h } = deskRect(d);
   return [
     piece(scene, x, y, w, h, (g) => {
       const top = fancy ? COLORS.deskWood : COLORS.deskTop;
       groundShadow(g, x, y, w, h);
-      // Pieds pleins aux deux bouts, puis le plateau
-      if (d.facing === 's') {
+      // Pieds pleins aux deux bouts (ou piètement électrique assis-debout), puis le plateau
+      if (standing) {
+        standingDeskBase(g, x, y, w, h, d.facing);
+      } else if (d.facing === 's') {
         box(g, x + 0.04, y + 0.05, 0.07, h - 0.1, 0, 20, COLORS.metal, false);
         box(g, x + w - 0.11, y + 0.05, 0.07, h - 0.1, 0, 20, COLORS.metal, false);
       } else {

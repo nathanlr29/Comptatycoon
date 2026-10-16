@@ -1,8 +1,11 @@
 import type { BuildingType } from './buildings';
 import type { StaffRole } from './staff';
+import { PERK_CATALOG, type PerkId } from './perks';
 
 /** Équipements, logiciels, technologies, formations et certifications à achat unique (docs/GDD.md §3 bis). */
-export type UpgradeId =
+export type UpgradeId = BaseUpgradeId | PerkId;
+
+type BaseUpgradeId =
   | 'dualScreen'
   | 'scanner'
   | 'internTraining1'
@@ -41,7 +44,7 @@ export type UpgradeId =
   | 'managerTraining3';
 
 /** Rubriques de l'onglet « Améliorations », dans l'ordre d'affichage. */
-export type UpgradeCategory = 'equipment' | 'software' | 'tech' | 'training' | 'certification';
+export type UpgradeCategory = 'equipment' | 'software' | 'tech' | 'training' | 'certification' | 'comfort';
 
 export const UPGRADE_CATEGORIES: { id: UpgradeCategory; label: string }[] = [
   { id: 'equipment', label: 'Équipement' },
@@ -49,6 +52,7 @@ export const UPGRADE_CATEGORIES: { id: UpgradeCategory; label: string }[] = [
   { id: 'tech', label: 'Technologies (Salle serveurs)' },
   { id: 'training', label: 'Formations' },
   { id: 'certification', label: 'Certifications et labels' },
+  { id: 'comfort', label: 'Confort et avantages' },
 ];
 
 /** Effets multiplicatifs d'une amélioration ; un champ absent vaut ×1. */
@@ -58,6 +62,16 @@ export interface UpgradeEffect {
   clickIncomeShare?: number;
   global?: number;
   roles?: Partial<Record<StaffRole, number>>;
+  /** Confort des équipes (src/data/perks.ts) : facteur sur la fréquence des démissions (0,9 = − 10 %). */
+  resignation?: number;
+  /** Facteur sur le prix d'embauche des collaborateurs (associés exclus). */
+  hireCost?: number;
+  /** Durée d'absence créditée en plus (ms). */
+  offlineBonusMs?: number;
+  /** Facteur sur le délai entre deux pauses café. */
+  coffeeCooldown?: number;
+  /** Places d'encadrement en plus par associé. */
+  staffPerPartner?: number;
 }
 
 export interface UpgradeDefinition {
@@ -77,13 +91,17 @@ export interface UpgradeDefinition {
   reputationGain?: number;
   /** Palier d'une série : à partir du 2ᵉ, la ligne n'apparaît qu'une fois le palier précédent (`requires`) acquis. */
   tier?: number;
+  /** Niveau du cabinet requis. */
+  minFirmLevel?: number;
+  /** Collaborateurs requis (associés exclus). */
+  minStaff?: number;
 }
 
 type Def = Omit<UpgradeDefinition, 'id'>;
 const SERVER = (level: number) => ({ type: 'serverRoom' as const, level });
 
 /** Dans l'ordre de coût croissant (l'onglet les regroupe ensuite par rubrique). */
-const CATALOG: Record<UpgradeId, Def> = {
+const BASE_CATALOG: Record<BaseUpgradeId, Def> = {
   dualScreen: { name: 'Double écran', description: 'Saisie deux fois plus rapide.', cost: 50, category: 'equipment', effect: { click: 2, clickIncomeShare: 0.01 }, effectText: 'Saisie × 2 · chaque clic + 1 % du revenu/s' },
   scanner: { name: 'Scanner de documents', description: 'Les pièces papier sont numérisées en un seul passage.', cost: 150, category: 'equipment', effect: { roles: { intern: 2 } }, effectText: 'Alternants × 2' },
   internTraining1: { name: 'Formation tableur', description: 'Tableaux croisés et RECHERCHEV : les alternants ne recopient plus à la main.', cost: 300, category: 'training', tier: 1, effect: { roles: { intern: 1.5 } }, effectText: 'Alternants × 1,5' },
@@ -122,5 +140,8 @@ const CATALOG: Record<UpgradeId, Def> = {
   managerTraining3: { name: 'Executive MBA', description: 'Stratégie, finance d’entreprise, leadership : vos managers pensent en associés.', cost: 50_000_000, category: 'training', tier: 3, requires: 'managerTraining2', effect: { roles: { manager: 2 } }, effectText: 'Managers × 2' },
 };
 
+const CATALOG: Record<UpgradeId, Def> = { ...BASE_CATALOG, ...PERK_CATALOG };
+
 export const UPGRADES = Object.fromEntries(Object.entries(CATALOG).map(([id, def]) => [id, { id, ...def }])) as Record<UpgradeId, UpgradeDefinition>;
-export const UPGRADE_IDS = Object.keys(CATALOG) as UpgradeId[];
+/** Toutes rubriques confondues, par coût croissant. */
+export const UPGRADE_IDS = (Object.keys(CATALOG) as UpgradeId[]).sort((a, b) => CATALOG[a].cost - CATALOG[b].cost);

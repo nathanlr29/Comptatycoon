@@ -20,6 +20,14 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Confort des équipes (16/10/2026, demande de Nathan : « bureau assis-debout, billard, CSE et autres », fil « Confort des équipes »).
+- 11 avantages (GDD §3 ter) dans un onglet « Confort » du panneau Recruter, avec un bilan en tête (« Démissions − 41 % · recrutement − 5 % »). De 300 € (corbeille de fruits) à 400 000 € (séminaire annuel). Conditions nouvelles : niveau du cabinet (`minFirmLevel`, « Cabinet niv. N requis ») et effectif (`minStaff`, refus `team_too_small` ; le CSE demande 11 collaborateurs comme en vrai).
+- Effets réels, lus dans `core/perks.ts` (`getPerkEffects`) : démissions moins fréquentes (`getEventWeight`, plancher 0,25), embauche moins chère (`getHireCost`), absence + 4 h (`getOfflineCapMs`), pause café plus tôt (`getCoffeeCooldownMs`), + 2 places par associé (`getStaffPerPartner`, aussi pour le départ d'un associé). La production passe par `effect.global` comme les autres améliorations.
+- Visuels (`game/perkFurniture.ts`, places dans `data/perks.ts` › `PERK_ITEMS`, hors de `office.ts`) : guéridon de fruits, baby-foot, tableau du CSE qui se couvre d'une feuille par avantage, billard, coin sieste, écran de visio, photo de groupe au mur ouest ; bureaux assis-debout = nouveau piètement de tous les postes de collaborateurs. Rien n'est dessiné avant l'achat ; un test vérifie que chaque place est libre (pièces, postes, mobilier) à tous les niveaux.
+- Sauvegarde : aucun nouveau champ (les avantages sont dans `upgrades`).
+- Captures : /mnt/project-files/visuels/confort/.
+- À vérifier sur iPhone : onglets « Équipe / Confort » au pouce, lisibilité du bilan, objets reconnaissables au zoom.
+
 Graphismes et textures (16/10/2026, demande de Nathan, hors étapes).
 - Matières des sols (`game/isoTextures.ts`, `FloorKind` dans `palette.ts`) : parquet en lattes décalées (bureau principal, pôle juridique), moquette en dalles croisées (open space, salle de réunion, pôles social et conseil), grand carrelage à joints (espace commun), faux plancher perforé (salle serveur), pelouse avec allée gravillonnée (jardin), dallage en quinconce (fontaine). Murs : papier peint rayé, soubassement lambrissé, ombre douce au pied des murs ; cloisons avec chapeau en bois.
 - Cycle jour / nuit à l'heure réelle du joueur (`game/daylight.ts`, pur et testé ; `game/lighting.ts`) : ciel en dégradé et silhouette de la ville dans les fenêtres, étoiles et fenêtres allumées le soir, taches de soleil au sol le jour, pénombre bleutée et halo chaud des lampes de bureau la nuit, fond de scène assorti. Mise à jour toutes les 20 s. Aucune règle du jeu n'en dépend.
@@ -140,6 +148,7 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 
 ## Idées / plus tard
 - Économie : charges (salaires et loyer) pour distinguer chiffre d'affaires et bénéfice ; contrats clients à durée limitée ; dépenses du réseau (talents achetés avec les contacts) ; objectifs propres aux parties après une cession.
+- Confort des équipes, suite : salle de sport, crèche d'entreprise, salle de jeux vidéo et conciergerie dans les places réservées des niveaux 6 et 7 (fil « Locaux et parking ») ; plantes vertes et éclairage naturel ; prime d'intéressement ; événement « Pot de départ » évité par le CSE.
 - Améliorations : spécialisations de collaborateurs (un senior « fiscaliste » ou « auditeur » choisi à l'embauche), améliorations de pièces (cafétéria, salle de formation qui réduit le prix des formations), séminaire annuel temporaire (× 2 pendant 60 s, rechargeable), abonnements logiciels avec coût récurrent, objectifs liés aux rubriques (« obtenir ISO 9001 »).
 _(Hors périmètre de l'étape en cours.)_
 - Mode café, suites possibles : jauge de moral de l'équipe (baisse avec le travail, remonte à la pause), mini-jeu « café parfait » (toucher au bon moment pour un bonus), croissants du vendredi (événement), tasses personnalisées par employé, objectif « Première pause café ».

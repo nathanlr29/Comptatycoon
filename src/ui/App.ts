@@ -5,6 +5,10 @@ import { BUILDINGS, type BuildingType } from '../data/buildings';
 import { DEPARTMENT_IDS, DEPARTMENTS, type DepartmentId } from '../data/departments';
 import { canTakeCoffeeBreak, getCoffeeBreakEnd, getCoffeeMachine, isCoffeeUnlocked } from '../core/coffee';
 import { canExpand, getFirmLevel } from '../core/expansion';
+import { getPerkEffects } from '../core/perks';
+import { getStaffPerPartner } from '../core/recruitment';
+import { perkSummaryText } from '../data/perks';
+import type { UpgradeId } from '../data/upgrades';
 import { getExpansionLevel } from '../data/expansion';
 import { clickLabel, clockText, COFFEE_TEXTS, durationText, multiplierText } from '../data/texts';
 import { canSellFirm } from '../core/prestige';
@@ -49,6 +53,8 @@ export class App {
   private readonly panel = new Panel(document.body);
   private readonly dock: ActionDock;
   private readonly recruitment: RecruitmentPanel;
+  /** « Recruter » : l'équipe, puis le confort des équipes (avantages qui retiennent et attirent). */
+  private readonly team: Tabs;
   private readonly upgrades: UpgradesPanel;
   /** « Améliorer » : améliorations, onglet Développement (pôles) et Cession. */
   private readonly growth: Tabs;
@@ -78,17 +84,23 @@ export class App {
   ) {
     this.dock = new ActionDock(query('#dock'), {
       onClick: () => this.click(),
-      onOpenRecruitment: () => this.show('Recrutement', this.recruitment),
+      onOpenRecruitment: () => this.show('Recrutement', this.team),
       onOpenUpgrades: () => this.show('Améliorer', this.growth),
     });
     this.recruitment = new RecruitmentPanel((role) => {
       const result = role === 'partner' ? store.dispatch({ type: 'hirePartner' }, Date.now()) : store.dispatch({ type: 'hire', role }, Date.now());
-      if (result.ok && role === 'partner') this.notifications.show('Nouvel associé', '+15 places d’encadrement', 'success');
+      if (result.ok && role === 'partner') this.notifications.show('Nouvel associé', `+${getStaffPerPartner(store.getState())} places d’encadrement`, 'success');
     }, (role) => {
       if (role === 'partner') store.dispatch({ type: 'dismissPartner' }, Date.now());
       else store.dispatch({ type: 'dismiss', role }, Date.now());
     });
-    this.upgrades = new UpgradesPanel((id) => store.dispatch({ type: 'buyUpgrade', id }, Date.now()));
+    const buyUpgrade = (id: UpgradeId) => store.dispatch({ type: 'buyUpgrade', id }, Date.now());
+    this.upgrades = new UpgradesPanel(buyUpgrade, ['equipment', 'software', 'tech', 'training', 'certification']);
+    const comfort = new UpgradesPanel(buyUpgrade, ['comfort'], (state) => perkSummaryText(getPerkEffects(state)));
+    this.team = new Tabs([
+      { label: 'Équipe', view: this.recruitment },
+      { label: 'Confort', view: comfort },
+    ]);
     const development = new DevelopmentPanel(departmentViews, (id) => this.buyDevelopment(id));
     this.growth = new Tabs([
       { label: 'Améliorations', view: this.upgrades },

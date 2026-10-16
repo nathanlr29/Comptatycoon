@@ -29,6 +29,8 @@ export function refusalText(reason: RefusalReason, threshold = 0): string {
       return 'Vous restez le dernier associé';
     case 'team_too_large':
       return 'Trop de collaborateurs à encadrer';
+    case 'team_too_small':
+      return `${threshold} collaborateurs requis`;
     case 'no_space':
       return 'Agrandissez le cabinet';
     case 'requires_hq':
@@ -42,6 +44,11 @@ export function refusalText(reason: RefusalReason, threshold = 0): string {
     case 'unknown':
       return 'Impossible';
   }
+}
+
+/** « Cabinet niv. 3 requis » (niveau d'agrandissement). */
+export function firmLevelText(level: number): string {
+  return `Cabinet niv. ${level} requis`;
 }
 
 export function requiresText(name: string): string {

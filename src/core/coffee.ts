@@ -1,5 +1,6 @@
 import { COFFEE, MAX_COFFEE_LEVEL, getCoffeeMachineDef, type CoffeeMachine } from '../data/coffee';
 import { getFirmLevel } from './expansion';
+import { getPerkEffects } from './perks';
 import type { RefusalReason } from './refusals';
 import type { GameState } from './state';
 
@@ -31,10 +32,15 @@ export function canTakeCoffeeBreak(state: GameState, now: number): CoffeeCheck {
   return { ok: true, machine: getCoffeeMachine(state) };
 }
 
+/** Délai entre deux pauses avec cette machine, raccourci par le Coin sieste. */
+export function getCoffeeCooldownMs(state: GameState, machine: CoffeeMachine = getCoffeeMachine(state)): number {
+  return Math.round(machine.cooldownMs * getPerkEffects(state).coffeeCooldown);
+}
+
 export function takeCoffeeBreak(state: GameState, machine: CoffeeMachine, now: number): GameState {
   const effects = state.effects.filter((e) => e.id !== COFFEE.effectId);
   effects.push({ id: COFFEE.effectId, incomeMultiplier: machine.multiplier, expiresAt: now + machine.durationMs });
-  return { ...state, effects, coffee: { ...state.coffee, readyAt: now + machine.cooldownMs } };
+  return { ...state, effects, coffee: { ...state.coffee, readyAt: now + getCoffeeCooldownMs(state, machine) } };
 }
 
 export function canUpgradeCoffeeMachine(state: GameState): CoffeeUpgradeCheck {

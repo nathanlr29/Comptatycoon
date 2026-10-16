@@ -3,6 +3,7 @@ import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { resolveTaxAudit } from './departments';
 import { getDifficulty } from './difficulty';
 import { getBaseIncomePerSecond } from './economy';
+import { getPerkEffects } from './perks';
 import { pickWeighted, type Rng } from './random';
 import { getStaffCount, resign } from './recruitment';
 import type { GameState } from './state';
@@ -36,9 +37,10 @@ export function scheduleNextEvent(now: number, rng: Rng): number {
   return now + minIntervalMs + Math.floor(rng() * (maxIntervalMs - minIntervalMs + 1));
 }
 
-/** Poids du tirage, ajusté par le mode de difficulté. */
+/** Poids du tirage, ajusté par le mode de difficulté et, pour les démissions, par le confort des équipes. */
 export function getEventWeight(state: GameState, id: EventId): number {
-  return EVENT_WEIGHTS[id] * (getDifficulty(state).eventWeights[id] ?? 1);
+  const comfort = id === 'resignation' ? getPerkEffects(state).resignation : 1;
+  return EVENT_WEIGHTS[id] * (getDifficulty(state).eventWeights[id] ?? 1) * comfort;
 }
 
 export function pickEvent(state: GameState, rng: Rng): EventId | undefined {

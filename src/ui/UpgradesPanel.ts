@@ -3,7 +3,7 @@ import type { GameState } from '../core/state';
 import { canBuyUpgrade, isUpgradeListed } from '../core/upgrades';
 import { BUILDINGS } from '../data/buildings';
 import { UPGRADE_CATEGORIES, UPGRADES, UPGRADE_IDS, type UpgradeCategory, type UpgradeId } from '../data/upgrades';
-import { refusalText, requiresBuildingText, requiresText } from '../data/texts';
+import { firmLevelText, refusalText, requiresBuildingText, requiresText } from '../data/texts';
 import { h, setText } from './dom';
 
 interface Row {
@@ -12,14 +12,25 @@ interface Row {
   reason: HTMLElement;
 }
 
-/** Achats uniques, regroupés par rubrique (équipement, logiciels, technologies, formations, certifications). */
+/**
+ * Achats uniques, regroupés par rubrique. Un panneau montre les rubriques demandées
+ * (onglet « Améliorations » : équipement à certifications ; onglet « Confort » : confort et avantages).
+ */
 export class UpgradesPanel {
   readonly el = h('div', { class: 'list' });
   private readonly rows = new Map<UpgradeId, Row>();
   private readonly headings = new Map<UpgradeCategory, HTMLElement>();
+  private readonly categories: typeof UPGRADE_CATEGORIES;
+  private readonly summaryEl = h('p', { class: 'list__summary' });
 
-  constructor(onBuy: (id: UpgradeId) => void) {
-    for (const category of UPGRADE_CATEGORIES) {
+  constructor(
+    onBuy: (id: UpgradeId) => void,
+    categories: readonly UpgradeCategory[] = UPGRADE_CATEGORIES.map((c) => c.id),
+    private readonly summary?: (state: GameState) => string,
+  ) {
+    this.categories = UPGRADE_CATEGORIES.filter((c) => categories.includes(c.id));
+    if (summary) this.el.append(this.summaryEl);
+    for (const category of this.categories) {
       const heading = h('h3', { class: 'list__heading' });
       this.headings.set(category.id, heading);
       this.el.append(heading);
@@ -51,7 +62,8 @@ export class UpgradesPanel {
   }
 
   render(state: GameState): void {
-    for (const category of UPGRADE_CATEGORIES) {
+    if (this.summary) setText(this.summaryEl, this.summary(state));
+    for (const category of this.categories) {
       const ids = UPGRADE_IDS.filter((id) => UPGRADES[id].category === category.id);
       const owned = ids.filter((id) => state.upgrades.includes(id)).length;
       setText(this.headings.get(category.id)!, `${category.label} · ${owned} / ${ids.length}`);
@@ -68,6 +80,8 @@ export class UpgradesPanel {
       if (!check.ok && !owned) {
         if (check.reason === 'missing_prerequisite' && def.requires) reason = requiresText(UPGRADES[def.requires].name);
         else if (check.reason === 'missing_building' && def.requiresBuilding) reason = requiresBuildingText(BUILDINGS[def.requiresBuilding.type], def.requiresBuilding.level);
+        else if (check.reason === 'requires_hq') reason = firmLevelText(def.minFirmLevel ?? 1);
+        else if (check.reason === 'team_too_small') reason = refusalText(check.reason, def.minStaff);
         else reason = refusalText(check.reason, def.minReputation);
       }
       setText(row.reason, reason);

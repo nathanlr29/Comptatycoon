@@ -8,10 +8,10 @@ import { FlatBaker, type Rect } from './bake';
 import { daylightAt, localHour } from './daylight';
 import { box, poly, tiles } from './isoDraw';
 import { drawDesk, drawFurniture } from './isoFurniture';
+import { drawPerkItem, visiblePerkItems } from './perkFurniture';
 import { floor, gravelPath, wallDecor, wallFootShadow } from './isoTextures';
 import { LightingLayer } from './lighting';
 import { COLORS, ROOM_FLOORS, shade } from './palette';
-
 
 type Obj = Phaser.GameObjects.Graphics | Phaser.GameObjects.Image;
 type G = Phaser.GameObjects.Graphics;
@@ -80,11 +80,15 @@ export class OfficeRenderer {
     };
 
     const stage = getStage(view.stage);
+    const perks = view.perks ?? [];
+    const standing = perks.includes('standingDesks');
+    // Les bureaux assis-debout remplacent les postes : la clé change, les postes réapparaissent surélevés.
+    const desks = standing ? ':standing' : '';
     group(`shell:${stage.stage}`, () => this.drawShell(stage.size.w, stage.size.h, stage.entranceX));
     const furniture: Furniture[] = [];
     for (const s of OFFICE_STAGES.filter((s) => s.stage <= stage.stage)) {
       furniture.push(...s.furniture);
-      group(`stage:${s.stage}`, () => [...s.desks.flatMap((d) => drawDesk(this.scene, d)), ...s.furniture.flatMap((f) => drawFurniture(this.scene, f))]);
+      group(`stage:${s.stage}${desks}`, () => [...s.desks.flatMap((d) => drawDesk(this.scene, d, false, standing)), ...s.furniture.flatMap((f) => drawFurniture(this.scene, f))]);
     }
     this.bars.clear();
     const rooms = new Map(view.rooms.map((r) => [r.type, r]));
@@ -94,8 +98,9 @@ export class OfficeRenderer {
       // La clé change à la fin des travaux : la pièce terminée apparaît en douceur.
       const done = r.visual !== 'works';
       if (done) furniture.push(...this.roomFurniture(room, r.level));
-      group(`room:${room.type}:${done ? 'done' : 'works'}`, () => (done ? this.drawRoom(room, r, stage.size) : this.drawWorks(room, stage.size)));
+      group(`room:${room.type}:${done ? `done${desks}` : 'works'}`, () => (done ? this.drawRoom(room, r, stage.size, standing) : this.drawWorks(room, stage.size)));
     }
+    for (const { key, item } of visiblePerkItems(perks, stage.stage)) group(key, () => drawPerkItem(this.scene, item, perks));
     this.known = keys;
     this.setHighlight(null);
     this.lighting.setLayout(stage.size, visibleDesks(stage.stage, builtRoomTypes(view)));
@@ -216,7 +221,7 @@ export class OfficeRenderer {
     return out;
   }
 
-  private drawRoom(room: RoomLayout, view: RoomView, size: { w: number; h: number }): Obj[] {
+  private drawRoom(room: RoomLayout, view: RoomView, size: { w: number; h: number }, standing = false): Obj[] {
     const { x, y, w, h } = room.rect;
     const level = view.level;
     const out: Obj[] = [];
@@ -234,7 +239,7 @@ export class OfficeRenderer {
     if (room.type === 'headquarters' && level >= 2) out.push(this.layer(DEPTH.backWalls + 0.2, (g) => this.diploma(g)));
     out.push(...this.partitions(room, size));
     const fancy = room.type === 'headquarters' && level >= 3;
-    for (const d of room.desks) out.push(...drawDesk(this.scene, d, fancy));
+    for (const d of room.desks) out.push(...drawDesk(this.scene, d, fancy, standing && !d.reserved));
     for (const f of this.roomFurniture(room, level)) out.push(...drawFurniture(this.scene, f));
     if (view.visual === 'upgradable') out.push(this.badge(room));
     return out;

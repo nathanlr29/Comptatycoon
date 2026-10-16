@@ -2,6 +2,7 @@ import { getBuildingVisual, getConstructionProgress, type BuildingVisual } from 
 import type { GameState } from '../core/state';
 import { DEPARTMENTS } from '../data/departments';
 import { ROOMS, type RoomType } from '../data/office';
+import { PERK_CATALOG, type PerkId } from '../data/perks';
 
 const ROOM_TYPES = new Set<string>(ROOMS.map((r) => r.type));
 
@@ -15,6 +16,8 @@ export interface RoomView {
 export interface OfficeView {
   stage: number;
   rooms: RoomView[];
+  /** Confort des équipes acheté : chaque avantage a son objet sur le plan (src/data/perks.ts). */
+  perks?: PerkId[];
 }
 
 export function toOfficeView(state: GameState): OfficeView {
@@ -27,7 +30,8 @@ export function toOfficeView(state: GameState): OfficeView {
     const type = DEPARTMENTS[id].room;
     if (!rooms.some((r) => r.type === type)) rooms.push({ type, level: 1, visual: 'built' });
   }
-  return { stage, rooms };
+  const perks = state.upgrades.filter((id): id is PerkId => id in PERK_CATALOG);
+  return { stage, rooms, perks };
 }
 
 /** Pièces terminées (leurs postes accueillent des employés). */
@@ -44,5 +48,5 @@ export function worksProgress(state: GameState, now: number): Map<string, number
 
 /** Clé qui change seulement quand le visuel doit changer. */
 export function officeViewKey(view: OfficeView): string {
-  return `${view.stage}|${view.rooms.map((r) => `${r.type}:${r.level}:${r.visual}`).sort().join(',')}`;
+  return `${view.stage}|${view.rooms.map((r) => `${r.type}:${r.level}:${r.visual}`).sort().join(',')}|${[...(view.perks ?? [])].sort().join(',')}`;
 }

@@ -66,6 +66,26 @@ Onglet « Améliorations », en cinq rubriques : Équipement, Logiciels, Technol
 
 Ordres de grandeur : chaque série de formations multiplie sa catégorie par 4,5 ; toutes les améliorations ensemble multiplient la production globale par environ 4,9. Les paliers chers visent la fin de partie (5ᵉ et 6ᵉ associés, Pôle Conseil & Audit).
 
+## 3 ter. Confort des équipes (achats uniques)
+Onglet « Confort » du panneau Recruter. Achats uniques rangés dans `state.upgrades` (rubrique `comfort`, `src/data/perks.ts`). Chaque avantage a un objet sur le plan qui n'apparaît qu'une fois acheté.
+
+| Avantage | Coût | Conditions | Effet | Visuel |
+|---|---|---|---|---|
+| Corbeille de fruits | 300 € | — | Démissions − 10 % | Guéridon et fruits (niv. 1) |
+| Baby-foot | 2 500 € | Cabinet niv. 2 | Production + 3 %, démissions − 10 % | Baby-foot |
+| Mutuelle renforcée | 6 000 € | Cabinet niv. 2 | Démissions − 15 %, recrutement − 5 % | Tableau d'affichage, feuille bleue |
+| Bureaux assis-debout | 9 000 € | Sièges ergonomiques | Production + 8 % | Tous les postes passent sur piètement électrique |
+| CSE | 15 000 € | Cabinet niv. 2, 11 collaborateurs | Démissions − 15 %, + 3 réputation | Bandeau « CSE » du tableau |
+| Titres-restaurant | 30 000 € | CSE | Démissions − 10 %, recrutement − 10 % | Feuille jaune au tableau |
+| Table de billard | 45 000 € | Cabinet niv. 3 | Production + 10 %, démissions − 10 % | Billard |
+| Chèques-vacances | 70 000 € | CSE | Production + 5 %, démissions − 10 % | Feuille turquoise au tableau |
+| Coin sieste | 90 000 € | Cabinet niv. 3 | Délai de la pause café × 0,75 | Tapis, poufs, lampe |
+| Télétravail 2 j / semaine | 150 000 € | Cabinet niv. 4, Sauvegarde cloud | Absence comptée + 4 h, démissions − 15 % | Écran de visio sur pied |
+| Séminaire annuel | 400 000 € | CSE, cabinet niv. 3, réputation 30 | + 2 places d'encadrement par associé, + 5 réputation | Photo de groupe au mur |
+
+- Démissions : facteur sur le poids de l'événement Démission (§8), produit des avantages, jamais sous 0,25.
+- Recrutement : facteur sur le prix d'embauche des collaborateurs (pas des associés ni des indemnités).
+
 ## 4. Collaborateurs
 | Catégorie | Coût initial | Production | Condition | Compte dans la capacité |
 |---|---|---|---|---|
