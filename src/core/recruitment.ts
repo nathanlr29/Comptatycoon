@@ -11,7 +11,8 @@ export type RefusalReason =
   | 'missing_prerequisite'
   | 'nobody_to_dismiss'
   | 'last_partner'
-  | 'team_too_large';
+  | 'team_too_large'
+  | 'max_level';
 export type Check = { ok: true; cost: number } | { ok: false; reason: RefusalReason; cost: number };
 
 /** Collaborateurs comptés dans la capacité d'encadrement (associés exclus). */

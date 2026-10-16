@@ -2,11 +2,15 @@ import type Phaser from 'phaser';
 import type { GameStore } from '../core/store';
 import type { GameState } from '../core/state';
 import { DEPARTMENT_IDS, DEPARTMENTS, type DepartmentId } from '../data/departments';
-import { getZone, type ZoneId } from '../data/map';
+import { canExpand, getFirmLevel } from '../core/expansion';
+import { getExpansionLevel } from '../data/expansion';
 import { clickLabel } from '../data/texts';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
 import { BuildingInfo } from './BuildingInfo';
+import { h } from './dom';
+import { ExpansionPanel } from './ExpansionPanel';
+import { ICONS } from './icons';
 import { HUD } from './HUD';
 import { NotificationManager } from './NotificationManager';
 import { Panel } from './Panel';
@@ -38,7 +42,9 @@ export class App {
   private readonly upgrades: UpgradesPanel;
   /** « Améliorer » : améliorations et onglet Développement (pôles). */
   private readonly growth: Tabs;
-  private readonly buildingInfo = new BuildingInfo();
+  private readonly buildingInfo = new BuildingInfo(() => this.show('Agrandir le cabinet', this.expansion));
+  private readonly expansion = new ExpansionPanel(() => this.expand());
+  private readonly expandButton = h('button', { class: 'expand-button', type: 'button', 'aria-label': 'Agrandir le cabinet' });
   private openView: View | null = null;
 
   constructor(
@@ -64,12 +70,12 @@ export class App {
       { label: 'Développement', view: development },
     ]);
 
+    this.expandButton.innerHTML = ICONS.expand;
+    this.expandButton.append(h('span', { text: 'Agrandir' }));
+    this.expandButton.addEventListener('click', () => this.show('Agrandir le cabinet', this.expansion));
+    query('.map-controls').prepend(this.expandButton);
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
-    game.events.on(MAP_EVENTS.zoneSelected, (id: ZoneId) => {
-      const zone = getZone(id);
-      this.notifications.show(zone.name, `Se débloque au niveau ${zone.unlockLevel} du Bureau principal.`);
-    });
 
     store.subscribe((state) => this.render(state));
     this.render(store.getState());
@@ -87,6 +93,15 @@ export class App {
   private click(): number | null {
     const result = this.store.dispatch({ type: 'click' }, Date.now());
     return result.ok && result.amount !== undefined ? result.amount : null;
+  }
+
+  /** Agrandit le cabinet puis ferme le menu pour laisser voir le nouveau local apparaître. */
+  private expand(): void {
+    const result = this.store.dispatch({ type: 'upgradeBuilding', buildingId: 'hq' }, Date.now());
+    if (!result.ok) return;
+    const level = getExpansionLevel(getFirmLevel(this.store.getState()));
+    this.panel.close();
+    if (level) this.notifications.show('Cabinet agrandi', level.name, 'success');
   }
 
   private onBuildingSelected(id: string | null): void {
@@ -107,8 +122,8 @@ export class App {
   private render(state: GameState): void {
     const now = Date.now();
     this.hud.render(state, now);
-    const hq = state.buildings.find((b) => b.id === 'hq');
-    this.dock.setLabel(clickLabel(hq?.level ?? 1));
+    this.dock.setLabel(clickLabel(getFirmLevel(state)));
+    this.expandButton.classList.toggle('expand-button--ready', canExpand(state).ok);
     this.openView?.render(state, now);
   }
 }

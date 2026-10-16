@@ -2,6 +2,7 @@ import { BALANCE } from '../data/balance';
 import { STAFF, STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADES } from '../data/upgrades';
 import { getDepartmentBonuses } from './departments';
+import { getFirmMultiplier } from './expansion';
 import type { GameState } from './state';
 
 /**
@@ -22,7 +23,7 @@ export interface Multipliers {
 export function getMultipliers(state: GameState): Multipliers {
   const role = Object.fromEntries(STAFF_ROLES.map((r) => [r, 1])) as Record<StaffRole, number>;
   let click = 1;
-  let global = 1;
+  let global = getFirmMultiplier(state);
   for (const id of state.upgrades) {
     const effect = UPGRADES[id].effect;
     click *= effect.click ?? 1;

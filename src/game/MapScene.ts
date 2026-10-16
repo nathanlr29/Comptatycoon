@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
-import { HQ_SLOT, SLOTS, START_VIEW, WORLD, ZONES, isZoneUnlocked, type Rect } from '../data/map';
+import { getExpansionLevel } from '../data/expansion';
+import { HQ_SLOT, START_VIEW, WORLD, getZone, type Rect } from '../data/map';
 import { CameraController } from './CameraController';
+import { playReveal } from './expansionView';
 import { hitTest, screenToWorld } from './geometry';
 import { InputController } from './InputController';
 import { MapRenderer } from './MapRenderer';
@@ -12,10 +14,6 @@ import type { GameStore } from '../core/store';
 export const MAP_EVENTS = {
   /** id du bâtiment sélectionné, ou null pour désélection. */
   buildingSelected: 'building:selected',
-  /** id d'un emplacement libre d'une zone ouverte. */
-  slotSelected: 'slot:selected',
-  /** id d'une zone verrouillée touchée. */
-  zoneSelected: 'zone:selected',
   /** À émettre par l'interface pour recentrer la caméra. */
   recenter: 'camera:recenter',
   /** À émettre par l'interface quand le panneau de sélection se ferme. */
@@ -47,11 +45,14 @@ export class MapScene extends Phaser.Scene {
     const onResize = (size: Phaser.Structs.Size) => this.camera.resize(size.width, size.height);
     const onRecenter = () => this.camera.centerOn(START_VIEW.x, START_VIEW.y);
     const onClear = () => this.mapView.setHighlight(null);
-    // Ne redessine la carte que si le niveau du Bureau principal change.
+    // Ne redessine la carte que si le niveau du cabinet change ; un agrandissement se révèle.
     const unsubscribe = this.store.subscribe(() => {
       const level = this.readHqLevel();
       if (level !== this.hqLevel) {
-        this.mapView.render((this.hqLevel = level));
+        const grew = level === this.hqLevel + 1;
+        this.hqLevel = level;
+        if (grew) this.reveal(level);
+        else this.mapView.render(level);
         this.staffView.setSeats(tempSeats(level));
       }
       this.staffView.sync(this.store.getState());
@@ -75,20 +76,18 @@ export class MapScene extends Phaser.Scene {
     const p = screenToWorld(this.camera.view(), sx, sy);
     if (p.x < 0 || p.y < 0 || p.x > WORLD.width || p.y > WORLD.height) return;
 
-    const lockedZone = hitTest(
-      ZONES.filter((z) => !isZoneUnlocked(z, this.hqLevel)).map((z) => ({ ...z.rect, id: z.id })),
-      p.x,
-      p.y,
-    );
-    if (lockedZone) return this.emitSelection(MAP_EVENTS.zoneSelected, lockedZone.id, null);
-
     if (hitTest([HQ_SLOT], p.x, p.y)) return this.emitSelection(MAP_EVENTS.buildingSelected, 'hq', HQ_SLOT);
-
-    // Pas de surbrillance tant qu'on ne peut rien construire (étape 5).
-    const slot = hitTest(SLOTS, p.x, p.y);
-    if (slot) return this.emitSelection(MAP_EVENTS.slotSelected, slot.id, null);
-
     this.emitSelection(MAP_EVENTS.buildingSelected, null, null);
+  }
+
+  /** Dessine le nouveau niveau et le révèle (local loué, ou bureau de direction rénové). */
+  private reveal(level: number): void {
+    const zone = getExpansionLevel(level)?.zone ?? null;
+    const cover = this.mapView.render(level, zone);
+    const focus = zone ? getZone(zone).rect : HQ_SLOT;
+    const cam = this.cameras.main;
+    const from = { x: cam.midPoint.x, y: cam.midPoint.y };
+    playReveal(this, { cover, focus }, (x, y) => this.camera.centerOn(x, y), from);
   }
 
   private readHqLevel(): number {

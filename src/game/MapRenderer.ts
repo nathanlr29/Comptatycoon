@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { BUILDING, HQ_SLOT, KITCHEN, RECEPTION, SLOTS, START_VIEW, WORLD, ZONES, isZoneUnlocked, type Rect, type Zone, type ZoneId } from '../data/map';
+import { BUILDING, HQ_SLOT, KITCHEN, RECEPTION, WORLD, ZONES, isZoneUnlocked, type Rect, type Zone, type ZoneId } from '../data/map';
+import { drawNeighbourRoof } from './expansionView';
 import { floor, roomWalls } from './furniture';
 import { staffSlots } from './characters/tempSeats';
 import { MAP_COLORS as C } from './palette';
-import { drawFreeSlot, drawKitchen, drawLevelBadge, drawReception, drawRoom } from './rooms';
+import { drawKitchen, drawLevelBadge, drawReception, drawRoom } from './rooms';
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 /** Débord des sols de chaque local sur l'espace entre locaux (le reste forme les murs). */
@@ -21,7 +22,7 @@ function pad(r: Rect, p: number): Rect {
   return { x: r.x - p, y: r.y - p, w: r.w + 2 * p, h: r.h + 2 * p };
 }
 
-/** Dessine le plan intérieur : rue, murs, locaux, pièces, locaux à louer. */
+/** Dessine le plan intérieur : rue, murs, locaux loués, pièces et postes de travail. */
 export class MapRenderer {
   private readonly dynamic: Phaser.GameObjects.Graphics;
   private readonly overlay: Phaser.GameObjects.Container;
@@ -39,24 +40,26 @@ export class MapRenderer {
     this.highlight = scene.add.graphics();
   }
 
-  /** Redessine ce qui dépend du niveau du Bureau principal. */
-  render(hqLevel: number): void {
+  /**
+   * Redessine ce qui dépend du niveau du cabinet (= niveau du Bureau principal).
+   * Avec `revealing`, renvoie à part le toit qui recouvrait ce local pour l'effacer en fondu.
+   */
+  render(hqLevel: number, revealing: ZoneId | null = null): Phaser.GameObjects.Graphics | null {
     const g = this.dynamic;
     g.clear();
     this.overlay.removeAll(true);
     const open = (id: ZoneId) => ZONES.some((z) => z.id === id && isZoneUnlocked(z, hqLevel));
     for (const door of DOORS) if (door.between.every(open)) floor(g, door.rect, 'corridor');
     // Open space provisoire : les postes et leurs occupants viennent de StaffLayer.
-    const furnished = new Set(staffSlots(hqLevel).map((s) => s.id));
-    for (const slot of SLOTS) {
-      if (furnished.has(slot.id)) {
-        floor(g, slot, 'carpet');
-        roomWalls(g, slot);
-      } else if (open(slot.zone)) drawFreeSlot(g, slot);
+    for (const slot of staffSlots(hqLevel)) {
+      floor(g, slot, 'carpet');
+      roomWalls(g, slot);
     }
     drawRoom(g, 'headquarters', hqLevel, HQ_SLOT);
     this.label(HQ_SLOT, 'Bureau principal', hqLevel);
-    for (const zone of ZONES) if (!isZoneUnlocked(zone, hqLevel)) this.drawLockedZone(zone);
+    for (const zone of ZONES) if (!isZoneUnlocked(zone, hqLevel)) this.overlay.add(this.cover(zone));
+    const revealed = ZONES.find((z) => z.id === revealing);
+    return revealed ? this.cover(revealed).setDepth(11) : null;
   }
 
   setHighlight(rect: Rect | null): void {
@@ -118,22 +121,10 @@ export class MapRenderer {
     g.fillStyle(0x6b5b4b, 1).fillRect(ENTRANCE.x + 6, ENTRANCE.y + 34, ENTRANCE.w - 12, 14);
   }
 
-  private drawLockedZone(zone: Zone): void {
-    const r = pad(zone.rect, ZONE_PAD);
+  /** Local pas encore loué : recouvert par le toit voisin, sans panneau ni condition. */
+  private cover(zone: Zone): Phaser.GameObjects.Graphics {
     const g = this.scene.add.graphics();
-    g.fillStyle(C.locked, 0.82).fillRect(r.x, r.y, r.w, r.h);
-    // Panneau « À louer » avec cadenas, placé du côté du petit bureau pour être vu dès le départ
-    const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-    const cx = clamp(START_VIEW.x, r.x + 130, r.x + r.w - 130);
-    const cy = clamp(START_VIEW.y, r.y + 100, r.y + r.h - 100);
-    g.fillStyle(C.shadow, 0.4).fillRoundedRect(cx - 114, cy - 76, 236, 164, 14);
-    g.fillStyle(0xfaf7f0, 1).fillRoundedRect(cx - 118, cy - 80, 236, 164, 14);
-    g.fillStyle(0xdc2626, 1).fillRoundedRect(cx - 118, cy - 80, 236, 38, { tl: 14, tr: 14, bl: 0, br: 0 });
-    g.lineStyle(6, C.wall, 1).beginPath().arc(cx, cy - 14, 11, Math.PI, 0).strokePath();
-    g.fillStyle(C.wall, 1).fillRoundedRect(cx - 17, cy - 14, 34, 24, 5);
-    const title = this.text(cx, cy - 61, 'À LOUER', 20, C.textLight);
-    const name = this.text(cx, cy + 32, zone.name, 19, C.text);
-    const hint = this.text(cx, cy + 60, `Bureau principal niv. ${zone.unlockLevel}`, 15, '#475569', false);
-    this.overlay.add([g, title, name, hint]);
+    drawNeighbourRoof(g, pad(zone.rect, ZONE_PAD + 1));
+    return g;
   }
 }
