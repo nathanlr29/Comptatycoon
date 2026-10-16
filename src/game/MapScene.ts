@@ -4,6 +4,8 @@ import { CameraController } from './CameraController';
 import { hitTest, screenToWorld } from './geometry';
 import { InputController } from './InputController';
 import { MapRenderer } from './MapRenderer';
+import { StaffLayer } from './characters/StaffLayer';
+import { tempSeats } from './characters/tempSeats';
 import type { GameStore } from '../core/store';
 
 /** Ce que l'interface peut écouter sur `game.events`. */
@@ -23,6 +25,7 @@ export const MAP_EVENTS = {
 export class MapScene extends Phaser.Scene {
   private camera!: CameraController;
   private mapView!: MapRenderer;
+  private staffView!: StaffLayer;
   private hqLevel = 1;
 
   constructor(private readonly store: GameStore) {
@@ -33,6 +36,9 @@ export class MapScene extends Phaser.Scene {
     this.mapView = new MapRenderer(this);
     this.hqLevel = this.readHqLevel();
     this.mapView.render(this.hqLevel);
+    this.staffView = new StaffLayer(this);
+    this.staffView.setSeats(tempSeats(this.hqLevel));
+    this.staffView.sync(this.store.getState());
 
     this.camera = new CameraController(this.cameras.main);
     this.camera.centerOn(START_VIEW.x, START_VIEW.y);
@@ -44,7 +50,11 @@ export class MapScene extends Phaser.Scene {
     // Ne redessine la carte que si le niveau du Bureau principal change.
     const unsubscribe = this.store.subscribe(() => {
       const level = this.readHqLevel();
-      if (level !== this.hqLevel) this.mapView.render((this.hqLevel = level));
+      if (level !== this.hqLevel) {
+        this.mapView.render((this.hqLevel = level));
+        this.staffView.setSeats(tempSeats(level));
+      }
+      this.staffView.sync(this.store.getState());
     });
     this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
     this.game.events.on(MAP_EVENTS.recenter, onRecenter);
