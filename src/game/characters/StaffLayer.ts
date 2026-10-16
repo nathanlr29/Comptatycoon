@@ -9,6 +9,7 @@ import { getTeam, type TeamMember } from '../../core/team';
 import type { GameState } from '../../core/state';
 import { LOOKS_PER_ROLE } from './looks';
 import { assignSeats, lookIndex, type Seat } from './seating';
+import { OverflowBadge } from './OverflowBadge';
 import { animationKey, ensureCharacterTexture, textureScale } from './sprites';
 
 const APPEAR_MS = 320;
@@ -22,8 +23,10 @@ export class StaffLayer {
   private signature = '';
   private readonly motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   private readonly onMotionChange = () => this.applyMotion();
+  private readonly overflow: OverflowBadge;
 
   constructor(private readonly scene: Phaser.Scene) {
+    this.overflow = new OverflowBadge(scene);
     this.motion.addEventListener('change', this.onMotionChange);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.motion.removeEventListener('change', this.onMotionChange));
   }
@@ -32,6 +35,11 @@ export class StaffLayer {
   setSeats(seats: Seat[]): void {
     this.seats = seats;
     this.place(false);
+  }
+
+  /** Point de l'entrée (coordonnées monde) où s'affiche « +N » pour les personnes sans poste visible. */
+  setEntrance(x: number, y: number): void {
+    this.overflow.moveTo(x, y);
   }
 
   /** À appeler à chaque changement d'état : ne fait rien si les effectifs n'ont pas bougé. */
@@ -56,6 +64,7 @@ export class StaffLayer {
       if (existing) existing.setPosition(seat.x, seat.y).setDepth(seat.depth);
       else this.spawn(member, seat, animate);
     }
+    this.overflow.show(this.team.length - this.seating.size);
   }
 
   private spawn(member: TeamMember, seat: Seat, animate: boolean): void {
