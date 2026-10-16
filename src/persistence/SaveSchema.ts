@@ -59,10 +59,10 @@ function arr<T>(value: unknown, path: string, item: (v: unknown, p: string) => T
   return value.map((v, i) => item(v, `${path}[${i}]`));
 }
 
-function upgradeId(value: unknown, path: string): UpgradeId {
-  const id = str(value, path);
-  if (!(UPGRADE_IDS as string[]).includes(id)) throw new SchemaError(`${path} : amélioration inconnue « ${id} »`);
-  return id as UpgradeId;
+/** Les améliorations inconnues (retirées du jeu, ou version plus récente) sont ignorées sans rejeter la partie. */
+function upgradeIds(value: unknown, path: string): UpgradeId[] {
+  const ids = arr(value, path, str);
+  return ids.filter((id): id is UpgradeId => (UPGRADE_IDS as string[]).includes(id));
 }
 
 function building(value: unknown, path: string): BuildingState {
@@ -96,7 +96,7 @@ function readState(value: unknown): GameState {
     reputation: num(s.reputation, 'state.reputation', 0),
     staff,
     partners: int(s.partners, 'state.partners', 1),
-    upgrades: arr(s.upgrades, 'state.upgrades', upgradeId),
+    upgrades: upgradeIds(s.upgrades, 'state.upgrades'),
     buildings: arr(s.buildings, 'state.buildings', building),
     effects: arr(s.effects, 'state.effects', effect),
     lastSimulatedAt: num(s.lastSimulatedAt, 'state.lastSimulatedAt', 0),

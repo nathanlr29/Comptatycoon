@@ -48,8 +48,11 @@ describe('schéma de sauvegarde', () => {
     expect(missing).toEqual({ ok: false, error: 'state.money : nombre attendu' });
     const wrong = validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, staff: { ...played.staff, junior: '2' } } });
     expect(wrong).toEqual({ ok: false, error: 'state.staff.junior : nombre attendu' });
-    const unknown = validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, upgrades: ['cheat'] } });
-    expect(unknown.ok).toBe(false);
+  });
+
+  it('ignore une amélioration inconnue sans rejeter la partie', () => {
+    const parsed = validateSave({ schemaVersion: 1, savedAt: T0, state: { ...played, upgrades: ['dualScreen', 'removed'] } });
+    expect(parsed.ok && parsed.save.state.upgrades).toEqual(['dualScreen']);
   });
 
   it('migre une sauvegarde v0 (sans version ni statistiques) vers v1', () => {
