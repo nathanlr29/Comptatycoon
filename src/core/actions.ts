@@ -7,6 +7,7 @@ import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
 import { canBuild, canUpgrade, startBuild, startUpgrade } from './buildings';
 import { canExpand } from './expansion';
+import { canTakeCoffeeBreak, canUpgradeCoffeeMachine, takeCoffeeBreak, upgradeCoffeeMachine } from './coffee';
 import { canClaimObjective, claimObjective } from './objectives';
 import { discoverSecret } from './secrets';
 import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
@@ -28,7 +29,9 @@ export type GameAction =
   | { type: 'upgradeBuilding'; buildingId: string }
   | { type: 'claimObjective'; id: string }
   /** Easter egg : enregistré une fois, récompense symbolique au plus. */
-  | { type: 'discoverSecret'; id: SecretId };
+  | { type: 'discoverSecret'; id: SecretId }
+  | { type: 'coffeeBreak' }
+  | { type: 'upgradeCoffeeMachine' };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -135,5 +138,15 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
     }
     case 'discoverSecret':
       return { state: discoverSecret(state, action.id), result: { ok: true } };
+    case 'coffeeBreak': {
+      const check = canTakeCoffeeBreak(state, now);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: takeCoffeeBreak(state, check.machine, now), result: { ok: true } };
+    }
+    case 'upgradeCoffeeMachine': {
+      const check = canUpgradeCoffeeMachine(state);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: upgradeCoffeeMachine(state, check), result: { ok: true } };
+    }
   }
 }

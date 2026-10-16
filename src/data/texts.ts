@@ -37,6 +37,8 @@ export function refusalText(reason: RefusalReason, threshold = 0): string {
       return 'Travaux en cours';
     case 'max_level':
       return 'Niveau maximum atteint';
+    case 'cooling_down':
+      return 'Le café coule encore';
     case 'unknown':
       return 'Impossible';
   }
@@ -115,4 +117,34 @@ export const OBJECTIVE_TEXTS = {
   reward: (parts: string[]) => `Récompense : ${parts.join(' et ')}`,
   reputation: (n: number) => `${n} de réputation`,
   claimed: 'Objectif atteint',
+} as const;
+
+/** Compte à rebours compact : « 3:05 », « 0:24 ». */
+export function clockText(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** Multiplicateur à la française : « 1,5 », « 2 ». */
+export function multiplierText(m: number): string {
+  return String(Math.round(m * 100) / 100).replace('.', ',');
+}
+
+/** Mode café (docs/GDD.md §8 bis). */
+export const COFFEE_TEXTS = {
+  button: 'Café',
+  title: 'Pause café',
+  intro: 'Toute l’équipe file à la machine et revient pleine d’énergie.',
+  start: 'Lancer la pause café',
+  effect: (multiplier: string, duration: string) => `Revenu ×${multiplier} pendant ${duration}`,
+  cooldown: (duration: string) => `Une pause toutes les ${duration}`,
+  active: (seconds: number) => `En pause · encore ${seconds}\u00a0s`,
+  waiting: (duration: string) => `Prochaine pause dans ${duration}`,
+  machineHeading: 'Machine à café',
+  current: 'Machine actuelle',
+  next: 'Machine suivante',
+  maxed: 'Vous avez la meilleure machine du quartier.',
+  started: (multiplier: string, duration: string) => ({ title: 'Pause café !', body: `Revenu ×${multiplier} pendant ${duration}` }),
+  upgraded: (name: string) => ({ title: 'Nouvelle machine', body: name }),
+  banner: (multiplier: string, seconds: number) => `Pause café ×${multiplier} · ${seconds}\u00a0s`,
 } as const;

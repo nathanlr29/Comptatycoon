@@ -8,11 +8,16 @@ import Phaser from 'phaser';
 import { getTeam, type TeamMember } from '../../core/team';
 import type { GameState } from '../../core/state';
 import { LOOKS_PER_ROLE } from './looks';
+import { depthOf, isoToScreen, screenToIso } from '../iso';
+import type { CoffeeSpot } from './coffeeSpots';
 import { assignSeats, lookIndex, type Seat } from './seating';
 import { OverflowBadge } from './OverflowBadge';
 import { animationKey, ensureCharacterTexture, textureScale } from './sprites';
 
 const APPEAR_MS = 320;
+/** Vitesse de marche vers la machine à café (cases par seconde) et durée maximale d'un trajet. */
+const WALK_TILES_PER_S = 3;
+const WALK_MAX_MS = 2600;
 
 export class StaffLayer {
   private readonly sprites = new Map<string, Phaser.GameObjects.Sprite>();
@@ -24,6 +29,8 @@ export class StaffLayer {
   private readonly motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   private readonly onMotionChange = () => this.applyMotion();
   private readonly overflow: OverflowBadge;
+  /** Personnes parties à la machine à café (elles ne reprennent pas leur siège avant la fin de la pause). */
+  private readonly away = new Set<string>();
 
   constructor(private readonly scene: Phaser.Scene) {
     this.overflow = new OverflowBadge(scene);
@@ -61,10 +68,71 @@ export class StaffLayer {
       const seat = seatIndex === undefined ? undefined : this.seats[seatIndex];
       if (!seat) continue;
       const existing = this.sprites.get(member.id);
+      if (existing && this.away.has(member.id)) continue;
       if (existing) existing.setPosition(seat.x, seat.y).setDepth(seat.depth);
       else this.spawn(member, seat, animate);
     }
     this.overflow.show(this.team.length - this.seating.size);
+  }
+
+  /**
+   * Pause café : quelques personnes quittent leur bureau pour la machine, puis reviennent à la fin.
+   * À appeler à chaque changement d'état ; ne fait rien tant que la pause ne commence ni ne finit.
+   */
+  setCoffeeBreak(active: boolean, spots: readonly CoffeeSpot[]): void {
+    if (active && this.away.size === 0) {
+      const walkers = this.team.filter((m) => m.role !== 'partner' && this.sprites.has(m.id)).slice(0, spots.length);
+      walkers.forEach((m, i) => {
+        const sprite = this.sprites.get(m.id);
+        const spot = spots[i];
+        if (!sprite || !spot) return;
+        this.away.add(m.id);
+        sprite.stop();
+        sprite.setFrame(1);
+        this.walk(sprite, spot.ix, spot.iy);
+      });
+    } else if (!active && this.away.size > 0) {
+      for (const id of this.away) {
+        const sprite = this.sprites.get(id);
+        const seat = this.seats[this.seating.get(id) ?? -1];
+        if (!sprite || !seat) continue;
+        const target = screenToIso(seat.x, seat.y);
+        this.walk(sprite, target.x, target.y, () => {
+          sprite.setPosition(seat.x, seat.y).setDepth(seat.depth);
+          this.animate(sprite);
+        });
+      }
+      this.away.clear();
+    }
+  }
+
+  /** Trajet en ligne droite sur la grille, la profondeur suit pour passer devant ou derrière le mobilier. */
+  private walk(sprite: Phaser.GameObjects.Sprite, tx: number, ty: number, done?: () => void): void {
+    this.scene.tweens.killTweensOf(sprite);
+    const from = screenToIso(sprite.x, sprite.y);
+    const pos = { x: from.x, y: from.y };
+    const put = () => {
+      const p = isoToScreen(pos.x, pos.y);
+      sprite.setPosition(p.x, p.y).setDepth(depthOf(pos.x, pos.y) + 1);
+    };
+    if (this.motion.matches) {
+      pos.x = tx;
+      pos.y = ty;
+      put();
+      done?.();
+      return;
+    }
+    const distance = Math.hypot(tx - from.x, ty - from.y);
+    this.scene.tweens.add({
+      targets: pos,
+      x: tx,
+      y: ty,
+      duration: Math.min(WALK_MAX_MS, (distance / WALK_TILES_PER_S) * 1000),
+      delay: Phaser.Math.Between(0, 400),
+      ease: 'Sine.InOut',
+      onUpdate: put,
+      onComplete: () => done?.(),
+    });
   }
 
   private spawn(member: TeamMember, seat: Seat, animate: boolean): void {
@@ -84,6 +152,7 @@ export class StaffLayer {
 
   private release(id: string, sprite: Phaser.GameObjects.Sprite, animate: boolean): void {
     this.sprites.delete(id);
+    this.away.delete(id);
     sprite.stop();
     this.scene.tweens.killTweensOf(sprite);
     const recycle = () => {
@@ -110,6 +179,6 @@ export class StaffLayer {
   }
 
   private applyMotion(): void {
-    for (const sprite of this.sprites.values()) this.animate(sprite);
+    for (const [id, sprite] of this.sprites) if (!this.away.has(id)) this.animate(sprite);
   }
 }

@@ -1,4 +1,5 @@
 import { BUILDINGS, type BuildingType } from '../data/buildings';
+import { MAX_COFFEE_LEVEL } from '../data/coffee';
 import { EVENT_TIMING } from '../data/events';
 import { OBJECTIVES } from '../data/objectives';
 import { DEPARTMENT_IDS, type DepartmentId } from '../data/departments';
@@ -124,6 +125,13 @@ function effect(value: unknown, path: string): TimedEffect {
   };
 }
 
+/** Mode café : absent des anciennes sauvegardes (cafetière de départ, pause disponible). */
+function coffee(value: unknown, path: string): GameState['coffee'] {
+  if (value === undefined) return { machine: 1, readyAt: 0 };
+  const c = obj(value, path);
+  return { machine: Math.min(int(c.machine, `${path}.machine`, 1), MAX_COFFEE_LEVEL), readyAt: num(c.readyAt, `${path}.readyAt`, 0) };
+}
+
 /** Valide champ par champ et reconstruit un état propre (les champs inconnus sont ignorés). */
 function readState(value: unknown): GameState {
   const s = obj(value, 'state');
@@ -144,6 +152,7 @@ function readState(value: unknown): GameState {
     nextEventAt: num(s.nextEventAt, 'state.nextEventAt', 0),
     claimedObjectives: objectiveIds(s.claimedObjectives, 'state.claimedObjectives'),
     secrets: secretIds(s.secrets, 'state.secrets'),
+    coffee: coffee(s.coffee, 'state.coffee'),
     reputationProgress: s.reputationProgress === undefined ? 0 : num(s.reputationProgress, 'state.reputationProgress', 0),
     lastSimulatedAt: num(s.lastSimulatedAt, 'state.lastSimulatedAt', 0),
     createdAt: num(s.createdAt, 'state.createdAt', 0),
