@@ -1,6 +1,7 @@
 import { BALANCE } from '../data/balance';
 import { STAFF, STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADES } from '../data/upgrades';
+import { getDepartmentBonuses } from './departments';
 import type { GameState } from './state';
 
 /**
@@ -14,6 +15,8 @@ export interface Multipliers {
   role: Record<StaffRole, number>;
   /** Part du revenu/s ajoutée à chaque clic (technologies). */
   clickIncomeShare: number;
+  /** Production fixe en €/s (Pôle Social), ajoutée avant le multiplicateur global. */
+  flatIncome: number;
 }
 
 export function getMultipliers(state: GameState): Multipliers {
@@ -26,7 +29,10 @@ export function getMultipliers(state: GameState): Multipliers {
     global *= effect.global ?? 1;
     for (const r of STAFF_ROLES) role[r] *= effect.roles?.[r] ?? 1;
   }
-  return { global, click, role, clickIncomeShare: 0 };
+  const departments = getDepartmentBonuses(state);
+  global *= departments.global;
+  for (const r of STAFF_ROLES) role[r] *= departments.role[r];
+  return { global, click, role, clickIncomeShare: 0, flatIncome: departments.flatIncome };
 }
 
 export function getReputationMultiplier(state: GameState): number {
@@ -44,7 +50,7 @@ export function getBaseIncomePerSecond(state: GameState): number {
   const m = getMultipliers(state);
   let staffIncome = 0;
   for (const role of STAFF_ROLES) staffIncome += state.staff[role] * STAFF[role].income * m.role[role];
-  return staffIncome * m.global * getReputationMultiplier(state);
+  return (staffIncome + m.flatIncome) * m.global * getReputationMultiplier(state);
 }
 
 /** Revenu passif en €/s à l'instant `now`, tous multiplicateurs compris. */
