@@ -44,6 +44,8 @@ export interface GameState {
   claimedObjectives: string[];
   /** Secrets (easter eggs) découverts, dans l'ordre de découverte. */
   secrets: SecretId[];
+  /** Mode café (docs/GDD.md §8 bis) : niveau de la machine et heure (ms) de la prochaine pause possible. */
+  coffee: { machine: number; readyAt: number };
   /** Horodatage (ms) jusqu'auquel la production a été créditée. */
   lastSimulatedAt: number;
   createdAt: number;
@@ -66,6 +68,7 @@ export function createInitialState(now: number): GameState {
     nextEventAt: now + EVENT_TIMING.firstAfterMs,
     claimedObjectives: [],
     secrets: [],
+    coffee: { machine: 1, readyAt: 0 },
     lastSimulatedAt: now,
     createdAt: now,
     stats: { totalEarned: 0, clicks: 0 },

@@ -10,4 +10,5 @@ export const ICONS = {
   hire: svg('<circle cx="10" cy="8" r="3.5"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/>'),
   upgrade: svg('<path d="M12 19V6M6 11l6-6 6 6"/><path d="M5 20h14"/>'),
   expand: svg('<path d="M4 20V9l6-4 6 4v11"/><path d="M16 12h4v8M2 20h20M8 20v-5h4v5"/>'),
+  coffee: svg('<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3.5c0 1 1 1.5 1 2.5M12 3.5c0 1 1 1.5 1 2.5"/>'),
 } as const;

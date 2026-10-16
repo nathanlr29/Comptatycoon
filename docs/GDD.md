@@ -164,6 +164,23 @@ Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat 
 - Aucun effet ne peut rendre un solde, un effectif ou une réputation négatif.
 - Chaque événement produit une notification lisible (titre, effet chiffré).
 
+## 8 bis. Mode café (pause café)
+- Disponible dès le niveau 2 du cabinet (« Le local voisin », où apparaît la machine à café). Avant, le bouton n'est pas affiché.
+- Bouton « Café » sur la carte (au-dessus de « Agrandir ») → panneau « Pause café ». Le joueur lance la pause quand il veut : c'est un coup de pouce actif, à combiner avec une Période fiscale (les effets se multiplient).
+- Pendant la pause, le revenu passif est multiplié (effet temporaire, comme la Période fiscale) et jusqu'à 4 collaborateurs quittent leur bureau pour la machine, puis reviennent à la fin.
+- Le délai court depuis le début de la pause. Il s'écoule aussi pendant l'absence, mais la pause ne compte jamais dans le rattrapage hors ligne.
+- Machines (achat dans le panneau, une à une) :
+
+| Machine | Prix | Revenu | Durée | Une pause toutes les |
+|---|---|---|---|---|
+| Cafetière filtre | fournie | ×1,5 | 30 s | 5 min |
+| Machine à capsules | 2 500 € | ×1,75 | 30 s | 4 min |
+| Expresso à grain | 40 000 € | ×2 | 40 s | 3 min 30 s |
+| Comptoir de barista | 600 000 € | ×2,5 | 45 s | 3 min |
+
+- Gain moyen pour un joueur qui relance dès que possible : +5 % (cafetière) à +38 % (barista) du revenu passif.
+- Sauvegarde : `coffee: { machine, readyAt }` ; absent des anciennes parties → cafetière, pause disponible.
+
 ## 9. Objectifs
 Liste fixe de 12 à 15 objectifs affichés un ou deux à la fois, avec récompense (argent ou réputation). Exemples : recruter 5 alternants ; atteindre 10 €/s ; construire l'Open space ; recruter un deuxième associé ; débloquer un département ; atteindre 1 000 €/s ; Bureau principal niv. 5. Ils donnent le fil conducteur des premières minutes (pas de tutoriel séparé en V1).
 

@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import { getCoffeeBreakEnd } from '../core/coffee';
 import type { GameStore } from '../core/store';
 import { getStage } from '../data/office';
 import { CameraController } from './CameraController';
+import { coffeeSpots, type CoffeeSpot } from './characters/coffeeSpots';
 import { officeSeats } from './characters/officeSeats';
 import { StaffLayer } from './characters/StaffLayer';
 import { playReveal } from './expansionView';
@@ -31,6 +33,7 @@ export class MapScene extends Phaser.Scene {
   private staff!: StaffLayer;
   private view: OfficeView | null = null;
   private viewKey = '';
+  private spots: CoffeeSpot[] = [];
 
   constructor(private readonly store: GameStore) {
     super('map');
@@ -77,11 +80,13 @@ export class MapScene extends Phaser.Scene {
       const stage = getStage(view.stage);
       const door = isoToScreen(stage.entranceX, stage.size.h + 0.8);
       this.staff.setEntrance(door.x, door.y);
+      this.spots = coffeeSpots(view.stage);
       this.camera.setBounds(this.office.bounds());
       if (grew) this.reveal(view.stage);
     }
     this.office.updateWorks(worksProgress(state, Date.now()));
     this.staff.sync(state);
+    this.staff.setCoffeeBreak(getCoffeeBreakEnd(state, Date.now()) !== null, this.spots);
   }
 
   /** Nouveau niveau : la caméra recadre le cabinet agrandi et son contour pulse. */

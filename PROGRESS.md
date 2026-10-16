@@ -20,6 +20,13 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Mode café (16/10/2026, demande de Nathan, fil « Mode café »).
+- Bouton « Café » sur la carte dès le niveau 2 du cabinet (compte à rebours, pastille quand la pause est prête) → panneau « Pause café » (`ui/CoffeePanel.ts`) : lancer la pause, machine actuelle, machine suivante à acheter. Bandeau « Pause café ×1,5 · 27 s » sous celui de la Période fiscale.
+- Règles dans `core/coffee.ts` + `data/coffee.ts` (GDD §8 bis) : effet temporaire `coffeeBreak` dans `state.effects` (donc jamais compté hors ligne, cumulable avec la Période fiscale), délai compté depuis le début de la pause, 4 machines de ×1,5 / 30 s / 5 min à ×2,5 / 45 s / 3 min. Actions `coffeeBreak` et `upgradeCoffeeMachine`, refus `cooling_down`.
+- Carte : jusqu'à 4 collaborateurs marchent jusqu'à la machine à café du local voisin puis regagnent leur bureau (`StaffLayer.setCoffeeBreak`, places dans `characters/coffeeSpots.ts`) ; déplacement instantané si `prefers-reduced-motion`.
+- Sauvegarde : champ `coffee: { machine, readyAt }` lu par `SaveSchema.readState()` avec valeur par défaut (pas de nouvelle version de schéma).
+- À vérifier sur iPhone : bouton « Café » atteignable au pouce au-dessus de « Agrandir », lisibilité du compte à rebours, trajet des personnages fluide.
+
 Nouvelles améliorations (16/10/2026, demande de Nathan : agents d'amélioration, fil « Nouvelles améliorations »).
 - 36 achats uniques au lieu de 11 (GDD §3 bis), de 50 € à 50 M€, en cinq rubriques dans l'onglet « Améliorations » : Équipement, Logiciels, Technologies (Salle serveurs), Formations, Certifications et labels, avec « acquis / total » par rubrique.
 - Formations : une série de trois paliers par catégorie (× 1,5, × 1,5, × 2) ; un palier n'apparaît qu'après le précédent (`isUpgradeListed`). Certifications : production globale et réputation à l'achat (`reputationGain`). Technologies de l'ancien §7 (Automatisation, Assistant IA) enfin branchées, avec Sauvegarde cloud et Agents IA : `requiresBuilding` (Salle serveurs niv. N terminée), refus `missing_building` « Nécessite : Salle serveurs niv. 2 ».
@@ -30,7 +37,6 @@ Easter eggs (16/10/2026, demande de Nathan, fil « Easter eggs »). Rien n'est a
 - 9 secrets (`data/secrets.ts`, règles pures dans `core/secrets.ts`, gestes dans `ui/Secrets.ts`) : 5 appuis rapides sur le solde (balance équilibrée, +0,01 €), 7 sur l'effectif (une phrase de collaborateur au hasard), code Konami au clavier, saisons du calendrier (1er avril, 1er au 20 mai, 31 décembre : message et libellé du bouton d'action), 1 chance sur 20 qu'une Période fiscale soit « la liasse 2065 sous la machine à café » (même effet), 1 000 et 10 000 saisies.
 - Aucun effet sur l'équilibrage : seule récompense, 0,01 € une fois. Action `discoverSecret`. Sauvegarde : champ `secrets` (liste vide s'il manque, identifiants inconnus ignorés), sans changement de version.
 - `npm run check` : typage OK, 20 fichiers / 185 tests OK, build OK. Vérifié en Chromium (iPhone 13, horloge au 1er avril) : libellé « Lettrer un poisson », appuis sur le solde et l'effectif, Konami, liste dans les Paramètres, aucune erreur console. À vérifier sur iPhone : les appuis rapides sur le HUD ne zooment pas la page.
-
 Clic utile toute la partie (16/10/2026, demande de Nathan : à 9 k€/s, un clic ne rapportait que 12 €).
 - Chaque clic ajoute une part du revenu/s actuel : Double écran +1 %, Raccourcis clavier +1 %, Logiciel OCR +2 %, nouvelle **Application de saisie mobile** (75 000 €, après l'OCR, clic ×2 et +3 %). Total 7 % ; l'Assistant comptable IA (§7) ajoutera 5 %. À 9 000 €/s : 654 € par clic au lieu de 12 €.
 - `UpgradeEffect.clickIncomeShare` (parts additionnées dans `getMultipliers`) ; `getClickValue` inchangé, le texte flottant affiche toujours le montant crédité. Sauvegarde : aucun nouveau champ.
@@ -116,5 +122,6 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 ## Idées / plus tard
 - Améliorations : spécialisations de collaborateurs (un senior « fiscaliste » ou « auditeur » choisi à l'embauche), améliorations de pièces (cafétéria, salle de formation qui réduit le prix des formations), séminaire annuel temporaire (× 2 pendant 60 s, rechargeable), abonnements logiciels avec coût récurrent, objectifs liés aux rubriques (« obtenir ISO 9001 »).
 _(Hors périmètre de l'étape en cours.)_
+- Mode café, suites possibles : jauge de moral de l'équipe (baisse avec le travail, remonte à la pause), mini-jeu « café parfait » (toucher au bon moment pour un bonus), croissants du vendredi (événement), tasses personnalisées par employé, objectif « Première pause café ».
 - Importer un cabinet du même nom qu'un existant : ajouter un suffixe (« (2) ») pour les distinguer.
 - Index des cabinets illisible : le reconstruire à partir des clés `comptatycoon:save:*` au lieu de repartir d'une liste vide.

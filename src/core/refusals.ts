@@ -13,4 +13,5 @@ export type RefusalReason =
   | 'requires_hq'
   | 'under_construction'
   | 'max_level'
+  | 'cooling_down'
   | 'unknown';

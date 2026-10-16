@@ -3,12 +3,14 @@ import type { GameStore } from '../core/store';
 import type { GameState } from '../core/state';
 import { BUILDINGS, type BuildingType } from '../data/buildings';
 import { DEPARTMENT_IDS, DEPARTMENTS, type DepartmentId } from '../data/departments';
+import { canTakeCoffeeBreak, getCoffeeBreakEnd, getCoffeeMachine, isCoffeeUnlocked } from '../core/coffee';
 import { canExpand, getFirmLevel } from '../core/expansion';
 import { getExpansionLevel } from '../data/expansion';
-import { clickLabel, durationText } from '../data/texts';
+import { clickLabel, clockText, COFFEE_TEXTS, durationText, multiplierText } from '../data/texts';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
 import { BuildingInfo } from './BuildingInfo';
+import { CoffeePanel } from './CoffeePanel';
 import { h } from './dom';
 import { ExpansionPanel } from './ExpansionPanel';
 import { ICONS } from './icons';
@@ -59,6 +61,9 @@ export class App {
   /** Niveau du cabinet au dernier rendu, pour annoncer la fin des travaux d'agrandissement. */
   private firmLevel = Number.POSITIVE_INFINITY;
   private readonly expandButton = h('button', { class: 'expand-button', type: 'button', 'aria-label': 'Agrandir le cabinet' });
+  private readonly coffee = new CoffeePanel({ onBreak: () => this.coffeeBreak(), onUpgrade: () => this.upgradeCoffee() });
+  private readonly coffeeTime = h('span', { class: 'coffee-button__time' });
+  private readonly coffeeButton = h('button', { class: 'expand-button coffee-button', type: 'button', 'aria-label': COFFEE_TEXTS.title, hidden: true });
   private openView: View | null = null;
   private readonly liveInfo: LiveInfo;
   private readonly secrets: Secrets;
@@ -89,7 +94,10 @@ export class App {
     this.expandButton.innerHTML = ICONS.expand;
     this.expandButton.append(h('span', { text: 'Agrandir' }));
     this.expandButton.addEventListener('click', () => this.openFirm(0));
-    query('.map-controls').prepend(this.expandButton);
+    this.coffeeButton.innerHTML = ICONS.coffee;
+    this.coffeeButton.append(this.coffeeTime);
+    this.coffeeButton.addEventListener('click', () => this.show(COFFEE_TEXTS.title, this.coffee));
+    query('.map-controls').prepend(this.coffeeButton, this.expandButton);
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
 
@@ -111,6 +119,32 @@ export class App {
   private click(): number | null {
     const result = this.store.dispatch({ type: 'click' }, Date.now());
     return result.ok && result.amount !== undefined ? result.amount : null;
+  }
+
+  private coffeeBreak(): void {
+    if (!this.store.dispatch({ type: 'coffeeBreak' }, Date.now()).ok) return;
+    const machine = getCoffeeMachine(this.store.getState());
+    const t = COFFEE_TEXTS.started(multiplierText(machine.multiplier), durationText(machine.durationMs));
+    this.panel.close();
+    this.notifications.show(t.title, t.body, 'success');
+  }
+
+  private upgradeCoffee(): void {
+    if (!this.store.dispatch({ type: 'upgradeCoffeeMachine' }, Date.now()).ok) return;
+    const t = COFFEE_TEXTS.upgraded(getCoffeeMachine(this.store.getState()).name);
+    this.notifications.show(t.title, t.body, 'success');
+  }
+
+  /** Bouton café : caché avant le local voisin, compte à rebours pendant la pause puis jusqu'à la suivante. */
+  private renderCoffeeButton(state: GameState, now: number): void {
+    this.coffeeButton.hidden = !isCoffeeUnlocked(state);
+    if (this.coffeeButton.hidden) return;
+    const end = getCoffeeBreakEnd(state, now);
+    const ready = canTakeCoffeeBreak(state, now).ok;
+    const label = end !== null ? clockText(end - now) : ready ? COFFEE_TEXTS.button : clockText(state.coffee.readyAt - now);
+    if (this.coffeeTime.textContent !== label) this.coffeeTime.textContent = label;
+    this.coffeeButton.classList.toggle('expand-button--ready', ready);
+    this.coffeeButton.classList.toggle('coffee-button--active', end !== null);
   }
 
   /** Lance les travaux d'agrandissement ; le nouveau local apparaît à leur fin (voir `render`). */
@@ -188,6 +222,7 @@ export class App {
     this.announceFinishedRooms(state);
     this.dock.setLabel(this.secrets.clickLabel(now) ?? clickLabel(firmLevel));
     this.expandButton.classList.toggle('expand-button--ready', canExpand(state).ok);
+    this.renderCoffeeButton(state, now);
     this.openView?.render(state, now);
   }
 }
