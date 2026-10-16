@@ -1,5 +1,6 @@
 import { BALANCE } from '../data/balance';
 import { applyAction, type ActionResult, type GameAction } from './actions';
+import { accrueReputation, completeConstructions } from './buildings';
 import { getIncomePerSecond } from './economy';
 import type { GameState } from './state';
 
@@ -15,21 +16,20 @@ export function simulate(state: GameState, now: number): GameState {
   const steps = Math.floor((now - state.lastSimulatedAt) / step);
   if (steps <= 0) return state;
 
-  let money = state.money;
+  let current = state;
   let earned = 0;
   let t = state.lastSimulatedAt;
   for (let i = 0; i < steps; i++) {
-    const gain = (getIncomePerSecond(state, t) * step) / 1000;
-    money += gain;
+    const gain = (getIncomePerSecond(current, t) * step) / 1000;
     earned += gain;
     t += step;
+    current = completeConstructions(accrueReputation({ ...current, money: current.money + gain }, step), t);
   }
   return {
-    ...state,
-    money,
+    ...current,
     lastSimulatedAt: t,
-    effects: state.effects.filter((e) => e.expiresAt > t),
-    stats: { ...state.stats, totalEarned: state.stats.totalEarned + earned },
+    effects: current.effects.filter((e) => e.expiresAt > t),
+    stats: { ...current.stats, totalEarned: current.stats.totalEarned + earned },
   };
 }
 

@@ -1,7 +1,10 @@
+import type { BuildingType } from '../data/buildings';
 import type { StaffRole } from '../data/staff';
 import type { UpgradeId } from '../data/upgrades';
 import { getClickValue } from './economy';
-import { canDismiss, canDismissPartner, canHire, canHirePartner, type RefusalReason } from './recruitment';
+import { canBuild, canUpgrade, startBuild, startUpgrade } from './buildings';
+import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
+import type { RefusalReason } from './refusals';
 import { canBuyUpgrade } from './upgrades';
 import type { GameState } from './state';
 
@@ -11,7 +14,9 @@ export type GameAction =
   | { type: 'hirePartner' }
   | { type: 'dismiss'; role: StaffRole }
   | { type: 'dismissPartner' }
-  | { type: 'buyUpgrade'; id: UpgradeId };
+  | { type: 'buyUpgrade'; id: UpgradeId }
+  | { type: 'build'; slotId: string; building: BuildingType }
+  | { type: 'upgradeBuilding'; buildingId: string };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -71,6 +76,16 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
         state: { ...state, money: state.money - check.cost, upgrades: [...state.upgrades, action.id] },
         result: { ok: true },
       };
+    }
+    case 'build': {
+      const check = canBuild(state, action.slotId, action.building);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: startBuild(state, action.slotId, action.building, check, now), result: { ok: true } };
+    }
+    case 'upgradeBuilding': {
+      const check = canUpgrade(state, action.buildingId);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: startUpgrade(state, action.buildingId, check, now), result: { ok: true } };
     }
   }
 }

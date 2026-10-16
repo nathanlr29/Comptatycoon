@@ -1,4 +1,4 @@
-import type { RefusalReason } from '../core/recruitment';
+import type { RefusalReason } from '../core/refusals';
 
 /** Libellé de l'action manuelle selon le niveau du Bureau principal (docs/GDD.md §3). */
 export function clickLabel(hqLevel: number): string {
@@ -7,14 +7,14 @@ export function clickLabel(hqLevel: number): string {
   return 'Saisir une facture';
 }
 
-export function refusalText(reason: RefusalReason, minReputation = 0): string {
+export function refusalText(reason: RefusalReason, threshold = 0): string {
   switch (reason) {
     case 'insufficient_funds':
       return 'Fonds insuffisants';
     case 'capacity_full':
       return 'Capacité atteinte : recrutez un associé';
     case 'locked':
-      return `Réputation ${minReputation} requise`;
+      return `Réputation ${threshold} requise`;
     case 'already_owned':
       return 'Acquis';
     case 'missing_prerequisite':
@@ -25,6 +25,18 @@ export function refusalText(reason: RefusalReason, minReputation = 0): string {
       return 'Vous restez le dernier associé';
     case 'team_too_large':
       return 'Trop de collaborateurs à encadrer';
+    case 'zone_locked':
+      return 'Zone verrouillée';
+    case 'slot_taken':
+      return 'Emplacement occupé';
+    case 'requires_hq':
+      return `Bureau principal niv. ${threshold} requis`;
+    case 'under_construction':
+      return 'Chantier en cours';
+    case 'max_level':
+      return 'Niveau maximum';
+    case 'unknown':
+      return 'Impossible';
   }
 }
 

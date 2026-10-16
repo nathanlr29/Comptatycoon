@@ -1,0 +1,16 @@
+/** Raisons pour lesquelles le moteur refuse une action (affichées par l'interface). */
+export type RefusalReason =
+  | 'insufficient_funds'
+  | 'capacity_full'
+  | 'locked'
+  | 'already_owned'
+  | 'missing_prerequisite'
+  | 'nobody_to_dismiss'
+  | 'last_partner'
+  | 'team_too_large'
+  | 'zone_locked'
+  | 'slot_taken'
+  | 'requires_hq'
+  | 'under_construction'
+  | 'max_level'
+  | 'unknown';
