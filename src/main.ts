@@ -1,30 +1,22 @@
-import Phaser from 'phaser';
-import { createInitialState } from './core/state';
-import { GameStore } from './core/store';
-import { MapScene } from './game/MapScene';
-import { App } from './ui/App';
+import { getBrowserStorage, LocalSaveService, requestPersistentStorage } from './persistence/LocalSaveService';
+import { ProfileStore } from './persistence/ProfileStore';
+import { startSession } from './session';
+import { ProfileScreen } from './ui/ProfileScreen';
 import './styles/main.css';
 import './styles/ui.css';
+import './styles/profiles.css';
 
-const store = new GameStore(createInitialState(Date.now()));
+const storage = getBrowserStorage();
+const saves = new LocalSaveService(storage, new ProfileStore(storage));
+void requestPersistentStorage();
 
-const game = new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'game',
-  backgroundColor: '#232c3b',
-  scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
-  input: { mouse: { preventDefaultWheel: true } },
-  scene: [new MapScene(store)],
+// Écran d'accueil d'abord : Phaser n'est démarré qu'une fois le cabinet choisi.
+const screen = new ProfileScreen(document.body, saves, storage !== null, {
+  onPlay: (profileId) => {
+    screen.hide();
+    startSession(profileId, saves);
+  },
 });
-
-new App(store, game);
-
-// Simulation : la production est créditée par pas fixes, quelle que soit la fréquence d'images.
-const loop = () => {
-  store.tick(Date.now());
-  requestAnimationFrame(loop);
-};
-requestAnimationFrame(loop);
 
 // Safari iOS : empêche le zoom de la page par pincement (le canvas gère son propre zoom).
 for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {

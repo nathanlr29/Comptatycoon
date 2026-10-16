@@ -23,7 +23,7 @@ function query(selector: string): HTMLElement {
 /** Interface HTML par-dessus la carte : lit le store, envoie des actions. */
 export class App {
   private readonly hud = new HUD(query('#hud'));
-  private readonly notifications = new NotificationManager(document.body);
+  readonly notifications = new NotificationManager(document.body);
   private readonly panel = new Panel(document.body);
   private readonly dock: ActionDock;
   private readonly recruitment: RecruitmentPanel;
@@ -70,7 +70,7 @@ export class App {
     else if (this.openView === this.buildingInfo) this.panel.close();
   }
 
-  private show(title: string, view: View, fromMap = false): void {
+  show(title: string, view: View, fromMap = false): void {
     if (!fromMap) this.game.events.emit(MAP_EVENTS.clearSelection);
     this.openView = view;
     view.render(this.store.getState(), Date.now());
