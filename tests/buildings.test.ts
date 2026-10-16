@@ -27,7 +27,11 @@ describe('aménagement depuis le menu', () => {
   });
 
   it('refuse sans le niveau de cabinet requis', () => {
-    expect(canBuild(firm(1), 'advisoryWing')).toMatchObject({ ok: false, reason: 'requires_hq' });
+    expect(canBuild(firm(1), 'garden')).toMatchObject({ ok: false, reason: 'requires_hq' });
+  });
+
+  it('refuse d’aménager l’espace d’un pôle : il vient avec le pôle', () => {
+    expect(canBuild(firm(5), 'advisoryWing')).toMatchObject({ ok: false, reason: 'unknown' });
   });
 
   it('le petit bureau de départ a déjà la place de l’open space et de la salle serveurs', () => {

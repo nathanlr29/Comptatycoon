@@ -1,4 +1,4 @@
-import { BUILDINGS, CONSTRUCTION, type BuildingDefinition, type BuildingType } from '../data/buildings';
+import { BUILDINGS, CONSTRUCTIBLE, CONSTRUCTION, type BuildingDefinition, type BuildingType } from '../data/buildings';
 import { ROOMS } from '../data/office';
 import type { RefusalReason } from './refusals';
 import type { BuildingState, GameState } from './state';
@@ -43,7 +43,7 @@ export function findFreeSlot(state: GameState, type: BuildingType): string | und
 export function canBuild(state: GameState, type: BuildingType): PlaceCheck {
   const def = BUILDINGS[type];
   const base = { cost: def.cost, durationMs: getConstructionMs(1) };
-  if (type === 'headquarters') return { ok: false, reason: 'unknown', ...base };
+  if (!CONSTRUCTIBLE.includes(type)) return { ok: false, reason: 'unknown', ...base };
   if (state.buildings.some((b) => b.type === type)) return { ok: false, reason: 'already_owned', ...base };
   if (getHqLevel(state) < def.requiresHq) return { ok: false, reason: 'requires_hq', ...base };
   const slot = findFreeSlot(state, type);

@@ -73,8 +73,8 @@ Niveaux du cabinet = niveaux du Bureau principal = étape du plan dessiné (`src
 | Niv. | Nom | Prix | Équipe requise | Emprise (cases) | Pièces qui y trouvent leur place |
 |---|---|---|---|---|---|
 | 1 | Le petit bureau | départ | — | 8 × 6 | votre bureau, open space, salle serveurs |
-| 2 | Le local voisin | 500 € | 5 collaborateurs | 12 × 9 | salle de réunion, locaux Pôle Social, locaux Pôle Juridique |
-| 3 | Le plateau | 5 000 € | 12 collaborateurs | 16 × 11 | locaux Conseil & Audit |
+| 2 | Le local voisin | 500 € | 5 collaborateurs | 12 × 9 | salle de réunion ; place pour le Pôle Social et le Pôle Juridique |
+| 3 | Le plateau | 5 000 € | 12 collaborateurs | 16 × 11 | place pour le Pôle Conseil & Audit |
 | 4 | L'étage complet | 50 000 € | 20 collaborateurs, 2 associés | 20 × 13 | coin plantes, fontaine |
 | 5 | Le siège | 500 000 € | 35 collaborateurs, 3 associés | 24 × 15 | (grand espace commun) |
 
@@ -89,13 +89,10 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 | Open space | 200 € | 5 | alternants et juniors +25 % | — |
 | Salle de réunion | 2 500 € | 5 | +1 réputation toutes les 120 s | Bureau principal niv. 2 |
 | Salle serveurs | 1 500 € | 3 | production globale +5 % ; requise pour les technologies | — |
-| Locaux Pôle Social | 15 000 € | 1 | permet d'acheter le Pôle Social | Bureau principal niv. 2 |
-| Locaux Pôle Juridique | 40 000 € | 1 | permet d'acheter le Pôle Juridique | Bureau principal niv. 2 |
-| Locaux Conseil & Audit | 250 000 € | 1 | permet d'acheter le Pôle Conseil & Audit | Bureau principal niv. 3 |
 | Coin plantes, fontaine d'intérieur (décor) | 1 000 €, 10 000 € | 1 | +3 réputation à l'aménagement | agrandissement niv. 4 |
 
 
-**Employés visibles** : chaque collaborateur est un personnage dessiné à un poste de travail (siège + bureau + écran), dans le style de la vue. Ordre de placement : vous et vos associés dans votre bureau (postes réservés), puis l'espace commun, puis les pièces achetées qui ont des postes (open space, locaux des pôles). Au-delà des postes visibles, un compteur « +N » près de l'entrée. Personnages fixes ou à petite animation sur place (pas de déplacement, voir §12).
+**Employés visibles** : chaque collaborateur est un personnage dessiné à un poste de travail (siège + bureau + écran), dans le style de la vue. Ordre de placement : vous et vos associés dans votre bureau (postes réservés), puis l'espace commun, puis les pièces achetées qui ont des postes (open space, espaces des pôles ouverts). Au-delà des postes visibles, un compteur « +N » près de l'entrée. Personnages fixes ou à petite animation sur place (pas de déplacement, voir §12).
 
 - Durée de travaux = `10 s × L²` (L = niveau visé), plafonnée à 10 min ; pendant les travaux, la zone concernée montre bâche et barre de progression, jamais la pièce finie. Les travaux se terminent aussi pendant l'absence (effet compté à partir du retour).
 - Coût d'amélioration d'une pièce du niveau L vers L+1 = `ceil(coûtConstruction × 5^L)`. Le niveau se voit dans la pièce (mobilier plus fourni et plus cossu) et sur un badge.
@@ -105,9 +102,9 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 ## 7. Départements et technologies (achats uniques sauf mention)
 | Achat | Coût | Prérequis | Effet |
 |---|---|---|---|
-| Pôle Social (paie, DSN) | 20 000 € | Locaux Pôle Social, réputation ≥ 15 | +150 €/s ; juniors ×1,5 |
-| Pôle Juridique (secrétariat, AG, statuts) | 60 000 € | Locaux Pôle Juridique, réputation ≥ 25 | immunité au contrôle fiscal ; seniors ×1,5 |
-| Pôle Conseil & Audit (fiscal, stratégie, CAC) | 400 000 € | Locaux Conseil & Audit, réputation ≥ 50 | production globale ×2 ; managers ×1,5 |
+| Pôle Social (paie, DSN) | 20 000 € | cabinet niv. 2, réputation ≥ 15 | +150 €/s ; juniors ×1,5 |
+| Pôle Juridique (secrétariat, AG, statuts) | 60 000 € | cabinet niv. 2, réputation ≥ 25 | immunité au contrôle fiscal ; seniors ×1,5 |
+| Pôle Conseil & Audit (fiscal, stratégie, CAC) | 400 000 € | cabinet niv. 3, réputation ≥ 50 | production globale ×2 ; managers ×1,5 |
 | Automatisation de la saisie | 25 000 € | Logiciel OCR (§3 bis), Salle serveurs | alternants et juniors ×2 |
 | Assistant comptable IA | 250 000 € | Automatisation, Salle serveurs niv. 3 | production globale ×1,5 ; chaque clic ajoute 5 % du revenu/s |
 | Rachat de portefeuille clients (**répétable**) | `ceil(10 000 × 1,5^n)` | Pôle Social | production globale +5 % et +2 réputation par rachat |
@@ -115,7 +112,8 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat répétable affiche son compteur.
 
 **Pôles : règles précises.**
-- Ouvrir un pôle : avoir aménagé ses locaux (pièce `socialWing`, `legalWing`, `advisoryWing` au niveau ≥ 1, travaux finis), la réputation requise et l'argent. Achat unique ; +5 réputation (§2).
+- Les pôles s'installent **dans les locaux du cabinet** : pas de locaux séparés à aménager (demande de Nathan, 16/10/2026). Seule condition de place : le niveau du cabinet (`minFirmLevel`, menu « Agrandir le cabinet »), sinon refus « Agrandissez le cabinet ».
+- Ouvrir un pôle : niveau du cabinet suffisant, réputation requise et argent. Achat unique ; +5 réputation (§2). L'espace du pôle (types `socialWing`, `legalWing`, `advisoryWing`, place fixe dans `src/data/office.ts`) apparaît aussitôt dans le cabinet, sans chantier ; il n'est pas dans le menu des pièces.
 - Le +150 €/s du Pôle Social s'ajoute à la production des collaborateurs **avant** les multiplicateurs globaux (bâtiments, pôles, réputation, événement).
 - Les multiplicateurs de catégorie des pôles se multiplient avec ceux des améliorations (§3 bis).
 - Rachat de portefeuille : bonus global additif `1 + 0,05 × n`, puis multiplié avec les autres sources globales.
