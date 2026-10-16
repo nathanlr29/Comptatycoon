@@ -7,6 +7,8 @@ import { canTakeCoffeeBreak, getCoffeeBreakEnd, getCoffeeMachine, isCoffeeUnlock
 import { canExpand, getFirmLevel } from '../core/expansion';
 import { getExpansionLevel } from '../data/expansion';
 import { clickLabel, clockText, COFFEE_TEXTS, durationText, multiplierText } from '../data/texts';
+import { canSellFirm } from '../core/prestige';
+import { contactsBonusText, contactsText, SALE_TEXTS } from '../data/prestige';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
 import { BuildingInfo } from './BuildingInfo';
@@ -23,6 +25,8 @@ import { RoomsPanel } from './RoomsPanel';
 import { Secrets } from './Secrets';
 import { DevelopmentPanel } from './DevelopmentPanel';
 import { departmentViews } from './departmentViews';
+import { Modal } from './Modal';
+import { SalePanel } from './SalePanel';
 import { Tabs } from './Tabs';
 import { UpgradesPanel } from './UpgradesPanel';
 
@@ -46,7 +50,7 @@ export class App {
   private readonly dock: ActionDock;
   private readonly recruitment: RecruitmentPanel;
   private readonly upgrades: UpgradesPanel;
-  /** « Améliorer » : améliorations et onglet Développement (pôles). */
+  /** « Améliorer » : améliorations, onglet Développement (pôles) et Cession. */
   private readonly growth: Tabs;
   private readonly buildingInfo = new BuildingInfo(() => this.openFirm(0));
   private readonly expansion = new ExpansionPanel(() => this.expand());
@@ -89,6 +93,7 @@ export class App {
     this.growth = new Tabs([
       { label: 'Améliorations', view: this.upgrades },
       { label: 'Développement', view: development },
+      { label: SALE_TEXTS.tab, view: new SalePanel(() => this.sell()) },
     ]);
 
     this.expandButton.innerHTML = ICONS.expand;
@@ -114,6 +119,32 @@ export class App {
     }
     if (!isDepartmentId(id)) return;
     if (this.store.dispatch({ type: 'buyDepartment', id }, Date.now()).ok) this.notifications.show(`${DEPARTMENTS[id].name} ouvert`, DEPARTMENTS[id].effectText, 'success');
+  }
+
+  /** Cession du cabinet, après confirmation : la partie repart du petit bureau avec les contacts gagnés. */
+  private sell(): void {
+    const state = this.store.getState();
+    const check = canSellFirm(state);
+    if (!check.ok) return;
+    const total = state.prestige.contacts + check.contacts;
+    Modal.open({
+      title: SALE_TEXTS.confirmTitle,
+      body: [h('p', { text: SALE_TEXTS.confirmBody(contactsText(total), contactsBonusText(total)) }), h('p', { text: SALE_TEXTS.loses })],
+      buttons: [
+        { label: 'Annuler' },
+        {
+          label: SALE_TEXTS.confirm,
+          tone: 'danger',
+          onClick: () => {
+            if (!this.store.dispatch({ type: 'sellFirm' }, Date.now()).ok) return;
+            this.panel.close();
+            this.game.events.emit(MAP_EVENTS.recenter);
+            this.notifications.show(SALE_TEXTS.done, SALE_TEXTS.doneBody(contactsBonusText(total)), 'success', 6000);
+          },
+        },
+      ],
+      dismiss: { label: 'Annuler' },
+    });
   }
 
   private click(): number | null {

@@ -7,6 +7,8 @@ export interface StaffDefinition {
   name: string;
   description: string;
   baseCost: number;
+  /** Hausse du prix par collaborateur déjà présent dans la catégorie (BALANCE.costGrowth par défaut). */
+  costGrowth?: number;
   /** Production en €/s par collaborateur, avant multiplicateurs. */
   income: number;
   minReputation: number;
@@ -34,6 +36,7 @@ export const STAFF: Record<StaffRole, StaffDefinition> = {
     name: 'Senior',
     description: 'Révise les bilans et prépare les liasses fiscales.',
     baseCost: 1_300,
+    costGrowth: 1.2,
     income: 30,
     minReputation: 5,
   },
@@ -41,7 +44,8 @@ export const STAFF: Record<StaffRole, StaffDefinition> = {
     role: 'manager',
     name: 'Manager',
     description: 'Pilote un portefeuille de clients et une équipe.',
-    baseCost: 14_000,
+    baseCost: 20_000,
+    costGrowth: 1.25,
     income: 250,
     minReputation: 20,
   },

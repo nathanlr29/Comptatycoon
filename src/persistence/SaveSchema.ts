@@ -4,9 +4,10 @@ import { EVENT_TIMING } from '../data/events';
 import { OBJECTIVES } from '../data/objectives';
 import { DEPARTMENT_IDS, type DepartmentId } from '../data/departments';
 import { SECRET_IDS, type SecretId } from '../data/secrets';
+import { DEFAULT_DIFFICULTY, DIFFICULTY_IDS, type DifficultyId } from '../data/difficulty';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
-import type { BuildingState, GameState, TimedEffect } from '../core/state';
+import type { BuildingState, GameState, PrestigeState, TimedEffect } from '../core/state';
 
 /** Format stocké : `{ schemaVersion, savedAt, state }` (docs/GDD.md §10). */
 export const SCHEMA_VERSION = 2;
@@ -132,6 +133,25 @@ function coffee(value: unknown, path: string): GameState['coffee'] {
   return { machine: Math.min(int(c.machine, `${path}.machine`, 1), MAX_COFFEE_LEVEL), readyAt: num(c.readyAt, `${path}.readyAt`, 0) };
 }
 
+/** Difficulté : « Classique » pour les parties d'avant les modes ; un mode inconnu est refusé. */
+function difficulty(value: unknown, path: string): DifficultyId {
+  if (value === undefined) return DEFAULT_DIFFICULTY;
+  const id = str(value, path);
+  if (!(DIFFICULTY_IDS as string[]).includes(id)) throw new SchemaError(`${path} : mode inconnu`);
+  return id as DifficultyId;
+}
+
+/** Cessions : absentes des anciennes sauvegardes (aucun contact). */
+function prestige(value: unknown, path: string): PrestigeState {
+  if (value === undefined) return { contacts: 0, sales: 0, pastEarned: 0 };
+  const p = obj(value, path);
+  return {
+    contacts: int(p.contacts, `${path}.contacts`, 0),
+    sales: int(p.sales, `${path}.sales`, 0),
+    pastEarned: num(p.pastEarned, `${path}.pastEarned`, 0),
+  };
+}
+
 /** Valide champ par champ et reconstruit un état propre (les champs inconnus sont ignorés). */
 function readState(value: unknown): GameState {
   const s = obj(value, 'state');
@@ -160,6 +180,8 @@ function readState(value: unknown): GameState {
       totalEarned: num(stats.totalEarned, 'state.stats.totalEarned', 0),
       clicks: int(stats.clicks, 'state.stats.clicks', 0),
     },
+    difficulty: difficulty(s.difficulty, 'state.difficulty'),
+    prestige: prestige(s.prestige, 'state.prestige'),
   };
 }
 

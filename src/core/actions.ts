@@ -10,6 +10,7 @@ import { canExpand } from './expansion';
 import { canTakeCoffeeBreak, canUpgradeCoffeeMachine, takeCoffeeBreak, upgradeCoffeeMachine } from './coffee';
 import { canClaimObjective, claimObjective } from './objectives';
 import { discoverSecret } from './secrets';
+import { canSellFirm, sellFirm } from './prestige';
 import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
 import type { RefusalReason } from './refusals';
 import { canBuyUpgrade } from './upgrades';
@@ -31,7 +32,9 @@ export type GameAction =
   /** Easter egg : enregistré une fois, récompense symbolique au plus. */
   | { type: 'discoverSecret'; id: SecretId }
   | { type: 'coffeeBreak' }
-  | { type: 'upgradeCoffeeMachine' };
+  | { type: 'upgradeCoffeeMachine' }
+  /** Cession du cabinet (docs/GDD.md §14) : nouvelle partie, contacts gardés. */
+  | { type: 'sellFirm' };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -147,6 +150,11 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       const check = canUpgradeCoffeeMachine(state);
       if (!check.ok) return refuse(state, check.reason);
       return { state: upgradeCoffeeMachine(state, check), result: { ok: true } };
+    }
+    case 'sellFirm': {
+      const check = canSellFirm(state);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: sellFirm(state, check.contacts, now), result: { ok: true, amount: check.contacts } };
     }
   }
 }

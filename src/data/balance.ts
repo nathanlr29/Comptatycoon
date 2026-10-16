@@ -17,7 +17,6 @@ export const BALANCE = {
   reputationBonusCap: 2,
   /** Pas de simulation en millisecondes (4 ticks/s). */
   tickMs: 250,
-  /** Absence créditée au maximum (8 h), et durée à partir de laquelle on affiche le récapitulatif. */
-  offlineCapMs: 8 * 3_600_000,
+  /** Durée d'absence à partir de laquelle on affiche le récapitulatif (le plafond dépend du mode, data/difficulty.ts). */
   offlineSummaryMinMs: 60_000,
 } as const;

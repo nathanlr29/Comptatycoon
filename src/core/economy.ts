@@ -3,7 +3,9 @@ import { BUILDINGS } from '../data/buildings';
 import { STAFF, STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADES } from '../data/upgrades';
 import { getDepartmentBonuses } from './departments';
+import { getDifficulty } from './difficulty';
 import { getFirmMultiplier } from './expansion';
+import { getPrestigeMultiplier } from './prestige';
 import type { GameState } from './state';
 
 /**
@@ -55,12 +57,17 @@ export function getEventMultiplier(state: GameState, now: number): number {
   return state.effects.reduce((acc, e) => (e.expiresAt > now ? acc * e.incomeMultiplier : acc), 1);
 }
 
+/** Facteurs propres au cabinet et non à la partie : mode de difficulté (§13) et contacts des cessions (§14). */
+export function getRunMultiplier(state: GameState): number {
+  return getDifficulty(state).income * getPrestigeMultiplier(state);
+}
+
 /** Revenu passif sans les effets temporaires (sert aussi au calcul hors ligne). */
 export function getBaseIncomePerSecond(state: GameState): number {
   const m = getMultipliers(state);
   let staffIncome = 0;
   for (const role of STAFF_ROLES) staffIncome += state.staff[role] * STAFF[role].income * m.role[role];
-  return (staffIncome + m.flatIncome) * m.global * getReputationMultiplier(state);
+  return (staffIncome + m.flatIncome) * m.global * getReputationMultiplier(state) * getRunMultiplier(state);
 }
 
 /** Revenu passif en €/s à l'instant `now`, tous multiplicateurs compris. */
@@ -80,12 +87,12 @@ export function scaledCost(baseCost: number, owned: number, growth: number = BAL
 }
 
 export function getHireCost(state: GameState, role: StaffRole): number {
-  return scaledCost(STAFF[role].baseCost, state.staff[role]);
+  return scaledCost(STAFF[role].baseCost, state.staff[role], STAFF[role].costGrowth);
 }
 
 /** Indemnité pour licencier un collaborateur : part du prix payé pour le dernier recruté. */
 export function getSeveranceCost(state: GameState, role: StaffRole): number {
-  return Math.ceil(scaledCost(STAFF[role].baseCost, Math.max(state.staff[role] - 1, 0)) * BALANCE.severanceShare);
+  return Math.ceil(scaledCost(STAFF[role].baseCost, Math.max(state.staff[role] - 1, 0), STAFF[role].costGrowth) * BALANCE.severanceShare);
 }
 
 /** Indemnité pour le départ d'un associé (même règle, sur le prix du dernier associé). */

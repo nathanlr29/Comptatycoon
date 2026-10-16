@@ -20,6 +20,16 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Difficulté, cession du cabinet et rééquilibrage (16/10/2026, demande de Nathan « nouvelle économie, difficultés », hors étapes).
+- Diagnostic par un joueur simulé (`npm run simulate`, `tests/balance.test.ts` : 2 saisies/s, achète tout dès que possible) : avant ce changement, 1 000 €/s à 9 min, tout le contenu (siège, 3 pôles, 10 M€) à 17 min, puis plus rien à acheter : production plafonnée par le coût des associés, l'argent s'empile par milliards.
+- **Modes de difficulté** (GDD §13) choisis à la fondation, définitifs : Détente (production ×1,5, absence 12 h, contrôles et démissions moitié moins), Classique, Exigeant (×0,7, 4 h, contrôles ×1,6 et pertes ×1,5, démissions ×1,5, contacts ×1,5). `data/difficulty.ts`, `core/difficulty.ts` ; branché dans `getBaseIncomePerSecond` (`getRunMultiplier`), `catchUpOffline`, `pickEvent` (`getEventWeight`), `resolveTaxAudit`. Choix en trois boutons sur l'écran d'accueil, rappelé sur la carte du cabinet et dans Paramètres ; la réinitialisation garde le mode.
+- **Cession du cabinet** (prestige, GDD §14, sorti du « hors V1 ») : au siège, onglet « Cession » du panneau Améliorer ; contacts = `floor(√(CA de la partie / 1 M€) × facteur du mode)`, +10 % de production chacun, pour toujours. Tout repart de zéro sauf contacts, mode et date de fondation. `core/prestige.ts`, `data/prestige.ts`, action `sellFirm`, `ui/SalePanel.ts`, confirmation obligatoire.
+- **Rééquilibrage** : agrandissements 7 500 € / 500 k€ / 25 M€ (au lieu de 5 k / 50 k / 500 k), pôles 50 k€ / 500 k€ / 20 M€ (au lieu de 20 k / 60 k / 400 k), manager 20 000 €, hausse du prix ×1,2 par senior et ×1,25 par manager (`costGrowth` par catégorie dans `data/staff.ts`). Joueur simulé, avec les 36 améliorations : Pôle Social 9,5 min, siège et première cession 23 min (17 min sans ces changements), puis un siège toutes les 10 à 15 min. Un test garde le rythme : premier pôle après 5 min, siège après 15 min. L'accélération vient de l'empilement des multiplicateurs entre 5 et 15 min (revenu ×70) : à reprendre si l'on veut une première partie de plus d'une heure.
+- Sauvegarde : `difficulty` et `prestige` relus par `readState()` (absents = Classique, aucun contact), sans changement de version.
+- `npm run check` : typage OK, 24 fichiers / 218 tests OK (1 rapport de simulation ignoré hors `npm run simulate`), build OK.
+- Vérifié en Chromium (iPhone 13) : fondation en Exigeant, mode sauvegardé et affiché, onglet Cession bloqué puis possible au siège, cession → petit bureau avec 15 contacts, aucun débordement, aucune erreur console.
+- À vérifier sur iPhone : les trois boutons de difficulté au pouce ; la confirmation de cession lisible en paysage.
+
 Mode café (16/10/2026, demande de Nathan, fil « Mode café »).
 - Bouton « Café » sur la carte dès le niveau 2 du cabinet (compte à rebours, pastille quand la pause est prête) → panneau « Pause café » (`ui/CoffeePanel.ts`) : lancer la pause, machine actuelle, machine suivante à acheter. Bandeau « Pause café ×1,5 · 27 s » sous celui de la Période fiscale.
 - Règles dans `core/coffee.ts` + `data/coffee.ts` (GDD §8 bis) : effet temporaire `coffeeBreak` dans `state.effects` (donc jamais compté hors ligne, cumulable avec la Période fiscale), délai compté depuis le début de la pause, 4 machines de ×1,5 / 30 s / 5 min à ×2,5 / 45 s / 3 min. Actions `coffeeBreak` et `upgradeCoffeeMachine`, refus `cooling_down`.
@@ -120,6 +130,7 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 - iPhone : Exporter › Copier fonctionne, et le texte collé dans Importer sur un autre appareil recrée le cabinet.
 
 ## Idées / plus tard
+- Économie : charges (salaires et loyer) pour distinguer chiffre d'affaires et bénéfice ; contrats clients à durée limitée ; dépenses du réseau (talents achetés avec les contacts) ; objectifs propres aux parties après une cession.
 - Améliorations : spécialisations de collaborateurs (un senior « fiscaliste » ou « auditeur » choisi à l'embauche), améliorations de pièces (cafétéria, salle de formation qui réduit le prix des formations), séminaire annuel temporaire (× 2 pendant 60 s, rechargeable), abonnements logiciels avec coût récurrent, objectifs liés aux rubriques (« obtenir ISO 9001 »).
 _(Hors périmètre de l'étape en cours.)_
 - Mode café, suites possibles : jauge de moral de l'équipe (baisse avec le travail, remonte à la pause), mini-jeu « café parfait » (toucher au bon moment pour un bonus), croissants du vendredi (événement), tasses personnalisées par employé, objectif « Première pause café ».

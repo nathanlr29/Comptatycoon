@@ -707,3 +707,20 @@
   cursor: pointer;
   touch-action: manipulation;
 }
+
+/* ---------- Onglet Cession ---------- */
+.sale__network {
+  margin: 0 0 4px;
+  color: var(--money);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.sale {
+  --dept: #a78bfa;
+}
+
+.dept__effects li.sale__loses {
+  color: var(--text-2);
+  font-weight: 400;
+}

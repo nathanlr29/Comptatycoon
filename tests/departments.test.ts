@@ -20,12 +20,12 @@ const firm = (level: number): BuildingState[] => [{ id: 'hq', type: 'headquarter
 const noStaff = { intern: 0, junior: 0, senior: 0, manager: 0 };
 
 function ready(patch: Partial<GameState> = {}): GameState {
-  return makeState({ money: 1e7, reputation: 100, buildings: firm(3), ...patch });
+  return makeState({ money: 1e8, reputation: 100, buildings: firm(3), ...patch });
 }
 
 describe('ouverture des pôles', () => {
   it('débite le coût, ajoute le pôle et +5 réputation', () => {
-    const { state, result } = applyAction(ready({ money: 25_000, reputation: 15 }), { type: 'buyDepartment', id: 'social' }, T0);
+    const { state, result } = applyAction(ready({ money: 55_000, reputation: 15 }), { type: 'buyDepartment', id: 'social' }, T0);
     expect(result).toEqual({ ok: true });
     expect(state.money).toBe(5_000);
     expect(state.reputation).toBe(20);
@@ -52,7 +52,7 @@ describe('ouverture des pôles', () => {
   });
 
   it('l’espace du pôle apparaît dans le cabinet dès son ouverture', () => {
-    const before = ready({ money: 25_000, reputation: 15 });
+    const before = ready({ money: 55_000, reputation: 15 });
     expect(toOfficeView(before).rooms.map((r) => r.type)).not.toContain('socialWing');
     const { state } = applyAction(before, { type: 'buyDepartment', id: 'social' }, T0);
     expect(toOfficeView(state).rooms).toContainEqual({ type: 'socialWing', level: 1, visual: 'built' });
@@ -60,8 +60,8 @@ describe('ouverture des pôles', () => {
 
   it('exige la réputation, puis les fonds', () => {
     expect(canBuyDepartment(ready({ reputation: 49 }), 'advisory')).toMatchObject({ ok: false, reason: 'locked' });
-    expect(canBuyDepartment(ready({ money: 399_999 }), 'advisory')).toMatchObject({ ok: false, reason: 'insufficient_funds' });
-    expect(canBuyDepartment(ready({ money: 400_000, reputation: 50 }), 'advisory')).toEqual({ ok: true, cost: 400_000 });
+    expect(canBuyDepartment(ready({ money: 19_999_999 }), 'advisory')).toMatchObject({ ok: false, reason: 'insufficient_funds' });
+    expect(canBuyDepartment(ready({ money: 20_000_000, reputation: 50 }), 'advisory')).toEqual({ ok: true, cost: 20_000_000 });
   });
 
   it('liste les prérequis manquants en clair', () => {
@@ -76,10 +76,10 @@ describe('ouverture des pôles', () => {
   it('donne le statut complet, fonds compris', () => {
     expect(getDepartmentStatus(makeState({ money: 100, reputation: 30 }), 'legal')).toEqual({
       owned: false,
-      cost: 60_000,
-      missing: [{ kind: 'space', level: 2, name: 'Le local voisin' }, { kind: 'funds', cost: 60_000 }],
+      cost: 500_000,
+      missing: [{ kind: 'space', level: 2, name: 'Le local voisin' }, { kind: 'funds', cost: 500_000 }],
     });
-    expect(getDepartmentStatus(ready(), 'legal')).toEqual({ owned: false, cost: 60_000, missing: [] });
+    expect(getDepartmentStatus(ready(), 'legal')).toEqual({ owned: false, cost: 500_000, missing: [] });
     expect(getDepartmentStatus(ready({ departments: ['legal'], money: 0 }), 'legal').owned).toBe(true);
   });
 });
@@ -131,7 +131,7 @@ describe('rachat de portefeuille clients', () => {
     for (let i = 0; i < 2; i++) state = applyAction(state, { type: 'buyPortfolio' }, T0).state;
     expect(state.portfolios).toBe(2);
     expect(state.reputation).toBe(4);
-    expect(state.money).toBe(1e7 - 10_000 - 15_000);
+    expect(state.money).toBe(1e8 - 10_000 - 15_000);
     expect(getMultipliers(state).global).toBeCloseTo(1.1, 10);
   });
 });

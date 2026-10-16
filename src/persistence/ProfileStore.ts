@@ -1,5 +1,6 @@
 import { getIncomePerSecond } from '../core/economy';
 import type { GameState } from '../core/state';
+import type { DifficultyId } from '../data/difficulty';
 import { STORAGE_PREFIX, type KeyValueStorage } from './SaveService';
 
 export const PROFILE_INDEX_KEY = `${STORAGE_PREFIX}profiles`;
@@ -11,6 +12,8 @@ export const PROFILE_NAME_MAX = 24;
 export interface ProfileSummary {
   money: number;
   incomePerSecond: number;
+  /** Mode choisi à la fondation (absent des index d'avant les modes). */
+  difficulty?: DifficultyId;
 }
 
 export interface ProfileEntry {
@@ -33,7 +36,7 @@ export function normalizeProfileName(name: string): string | null {
 }
 
 export function summarize(state: GameState, now: number): ProfileSummary {
-  return { money: state.money, incomePerSecond: getIncomePerSecond(state, now) };
+  return { money: state.money, incomePerSecond: getIncomePerSecond(state, now), difficulty: state.difficulty };
 }
 
 function defaultId(): string {

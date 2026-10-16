@@ -1,3 +1,4 @@
+import { DEFAULT_DIFFICULTY, type DifficultyId } from '../data/difficulty';
 import { EVENT_TIMING } from '../data/events';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import type { DepartmentId } from '../data/departments';
@@ -20,6 +21,16 @@ export interface BuildingState {
   slotId: string;
   /** Chantier en cours : le niveau visé est atteint à `endsAt` (ms). */
   pending?: { targetLevel: number; endsAt: number };
+}
+
+/** Ce qui survit à la cession du cabinet (docs/GDD.md §14). */
+export interface PrestigeState {
+  /** Contacts du carnet d'adresses : production +10 % chacun. */
+  contacts: number;
+  /** Cabinets cédés. */
+  sales: number;
+  /** Chiffre d'affaires des parties précédentes (la partie en cours est dans `stats.totalEarned`). */
+  pastEarned: number;
 }
 
 /** État complet et sérialisable du jeu : objets simples uniquement. */
@@ -50,9 +61,19 @@ export interface GameState {
   lastSimulatedAt: number;
   createdAt: number;
   stats: { totalEarned: number; clicks: number };
+  /** Choisie à la fondation, fixe ensuite (docs/GDD.md §13). */
+  difficulty: DifficultyId;
+  prestige: PrestigeState;
 }
 
-export function createInitialState(now: number): GameState {
+export interface NewGameOptions {
+  difficulty?: DifficultyId;
+  prestige?: PrestigeState;
+  /** Date de fondation d'origine (gardée après une cession). */
+  createdAt?: number;
+}
+
+export function createInitialState(now: number, options: NewGameOptions = {}): GameState {
   const staff = Object.fromEntries(STAFF_ROLES.map((role) => [role, 0])) as Record<StaffRole, number>;
   return {
     money: 0,
@@ -70,7 +91,9 @@ export function createInitialState(now: number): GameState {
     secrets: [],
     coffee: { machine: 1, readyAt: 0 },
     lastSimulatedAt: now,
-    createdAt: now,
+    createdAt: options.createdAt ?? now,
     stats: { totalEarned: 0, clicks: 0 },
+    difficulty: options.difficulty ?? DEFAULT_DIFFICULTY,
+    prestige: options.prestige ?? { contacts: 0, sales: 0, pastEarned: 0 },
   };
 }

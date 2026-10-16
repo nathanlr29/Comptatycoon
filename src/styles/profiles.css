@@ -412,3 +412,72 @@
   color: var(--text-2);
   font-size: 0.875rem;
 }
+
+/* ---------- Choix de la difficulté (nouveau cabinet) ---------- */
+.difficulty {
+  margin: 4px 0 6px;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.difficulty__legend {
+  margin-bottom: 6px;
+  padding: 0;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+}
+
+.difficulty__options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.difficulty__option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--text-2) 30%, transparent);
+  border-radius: 999px;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.difficulty__input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.difficulty__option:has(.difficulty__input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+}
+
+.difficulty__option:has(.difficulty__input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.difficulty__hint {
+  min-height: 2.6em;
+  margin: 8px 2px 0;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.profiles__form > .profiles__secondary {
+  align-self: flex-end;
+}
