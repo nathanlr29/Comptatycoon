@@ -1,16 +1,28 @@
 import Phaser from 'phaser';
-import { OFFICE_STAGES, ROOMS, getStage, type Furniture, type RoomLayout, type RoomType } from '../data/office';
-import type { OfficeView, RoomView } from './officeView';
+import { OFFICE_STAGES, ROOMS, getStage, visibleDesks, type Furniture, type RoomLayout, type RoomType } from '../data/office';
+import { builtRoomTypes, type OfficeView, type RoomView } from './officeView';
 import type { Bounds } from './CameraController';
 import { DEPTH, ISO, depthOf, isoQuad, isoToScreen, screenBounds, screenToIso } from './iso';
-import { box, poly, tiles, windowNorth, windowWest } from './isoDraw';
+import { AmbientLayer } from './ambient';
+import { FlatBaker, type Rect } from './bake';
+import { daylightAt, localHour } from './daylight';
+import { box, poly, tiles } from './isoDraw';
 import { drawDesk, drawFurniture } from './isoFurniture';
+import { floor, gravelPath, wallDecor, wallFootShadow } from './isoTextures';
+import { LightingLayer } from './lighting';
 import { COLORS, ROOM_FLOORS, shade } from './palette';
 
 
-type Obj = Phaser.GameObjects.Graphics;
+type Obj = Phaser.GameObjects.Graphics | Phaser.GameObjects.Image;
+type G = Phaser.GameObjects.Graphics;
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+/** Cloison basse en placoplâtre, chapeau en bois. */
+function partition(g: G, x: number, y: number, w: number, h: number): void {
+  box(g, x, y, w, h, 0, ISO.partitionH - 3, COLORS.partition);
+  poly(g, isoQuad(x, y, w, h, ISO.partitionH - 3), COLORS.partitionCap);
+}
 
 /** Mobilier en plus dans votre bureau selon son niveau (docs/GDD.md §6). */
 function headquartersExtras(level: number): Furniture[] {
@@ -25,18 +37,33 @@ export class OfficeRenderer {
   private objects: Obj[] = [];
   private known = new Set<string>();
   private view: OfficeView = { stage: 1, rooms: [] };
-  private readonly highlight: Obj;
+  private readonly highlight: G;
   /** Barres de progression des travaux, redessinées sans tout reconstruire. */
-  private readonly bars = new Map<RoomType, Obj>();
+  private readonly bars = new Map<RoomType, G>();
+  private readonly lighting: LightingLayer;
+  private readonly ambient: AmbientLayer;
+  private readonly baker: FlatBaker;
 
   constructor(private readonly scene: Phaser.Scene) {
     this.highlight = scene.add.graphics().setDepth(DEPTH.floor + 0.5);
+    this.lighting = new LightingLayer(scene);
+    this.ambient = new AmbientLayer(scene);
+    this.baker = new FlatBaker(scene);
+    // L'heure réelle fait tourner l'horloge et passer le jour à la nuit.
+    scene.time.addEvent({ delay: 20_000, loop: true, callback: () => this.updateAmbience() });
+  }
+
+  /** Ambiance de l'heure actuelle (ciel, lumière) et horloge murale. */
+  updateAmbience(now = new Date()): void {
+    this.lighting.setDaylight(daylightAt(localHour(now)));
+    this.ambient.tickClock(now);
   }
 
   render(view: OfficeView): void {
     const first = this.known.size === 0;
     for (const o of this.objects) o.destroy();
     this.objects = [];
+    this.baker.release();
     this.view = view;
     const keys = new Set<string>();
     const group = (key: string, build: () => Obj[]) => {
@@ -48,7 +75,9 @@ export class OfficeRenderer {
 
     const stage = getStage(view.stage);
     group(`shell:${stage.stage}`, () => this.drawShell(stage.size.w, stage.size.h, stage.entranceX));
+    const furniture: Furniture[] = [];
     for (const s of OFFICE_STAGES.filter((s) => s.stage <= stage.stage)) {
+      furniture.push(...s.furniture);
       group(`stage:${s.stage}`, () => [...s.desks.flatMap((d) => drawDesk(this.scene, d)), ...s.furniture.flatMap((f) => drawFurniture(this.scene, f))]);
     }
     this.bars.clear();
@@ -58,10 +87,14 @@ export class OfficeRenderer {
       if (!r || room.minStage > stage.stage) continue;
       // La clé change à la fin des travaux : la pièce terminée apparaît en douceur.
       const done = r.visual !== 'works';
+      if (done) furniture.push(...this.roomFurniture(room, r.level));
       group(`room:${room.type}:${done ? 'done' : 'works'}`, () => (done ? this.drawRoom(room, r, stage.size) : this.drawWorks(room, stage.size)));
     }
     this.known = keys;
     this.setHighlight(null);
+    this.lighting.setLayout(stage.size, visibleDesks(stage.stage, builtRoomTypes(view)));
+    this.ambient.render(furniture);
+    this.updateAmbience();
   }
 
   /** Zone visitable par la caméra pour un niveau d'agrandissement. */
@@ -116,41 +149,52 @@ export class OfficeRenderer {
     }
   }
 
-  private layer(depth: number, draw: (g: Obj) => void): Obj {
+  private layer(depth: number, draw: (g: G) => void): G {
     const g = this.scene.add.graphics().setDepth(depth);
     draw(g);
     return g;
   }
 
-  /** Socle, sol commun, murs du fond avec fenêtres, paillasson d'entrée. */
+  /** Socle, sol commun, murs du fond (les fenêtres sont dans lighting.ts), paillasson d'entrée. */
   private drawShell(w: number, h: number, entranceX: number): Obj[] {
-    const floor = this.layer(DEPTH.floor, (g) => {
+    // Sol commun et murs du fond figés en une seule image (rien ne les recouvre entre les deux).
+    const shell = this.baker.bake(DEPTH.floor, screenBounds(w, h, 48), (g) => {
       box(g, -0.35, -0.35, w + 0.7, h + 0.7, -22, 22, COLORS.ground, false);
-      tiles(g, 0, 0, w, h, [COLORS.commonA, COLORS.commonB]);
+      floor(g, 0, 0, w, h, 'tiles', [COLORS.commonA, COLORS.commonB]);
       poly(g, isoQuad(entranceX - 0.5, h - 0.45, 1, 0.45), COLORS.doormat);
       poly(g, isoQuad(entranceX - 0.5, h, 1, 0.35, 0.5), shade(COLORS.commonA, 0.9));
+      this.drawWalls(g, w, h);
     });
-    const walls = this.layer(DEPTH.backWalls, (g) => {
-      const H = ISO.wallH;
-      const t = 0.25;
-      // Mur nord (plan y = 0) et mur ouest (plan x = 0), avec chapeau
-      poly(g, [isoToScreen(0, 0), isoToScreen(w, 0), isoToScreen(w, 0, H), isoToScreen(0, 0, H)], COLORS.wallLit);
-      poly(g, [isoToScreen(0, 0), isoToScreen(0, h), isoToScreen(0, h, H), isoToScreen(0, 0, H)], COLORS.wallShade);
-      poly(g, [isoToScreen(w, -t, 0), isoToScreen(w, 0, 0), isoToScreen(w, 0, H), isoToScreen(w, -t, H)], shade(COLORS.wallLit, 0.75));
-      poly(g, [isoToScreen(-t, h, 0), isoToScreen(0, h, 0), isoToScreen(0, h, H), isoToScreen(-t, h, H)], shade(COLORS.wallShade, 0.85));
-      poly(g, [isoToScreen(-t, -t, H), isoToScreen(w, -t, H), isoToScreen(w, 0, H), isoToScreen(0, 0, H), isoToScreen(0, h, H), isoToScreen(-t, h, H)], COLORS.wallCap);
-      poly(g, [isoToScreen(0, 0), isoToScreen(w, 0), isoToScreen(w, 0, 6), isoToScreen(0, 0, 6)], COLORS.baseboard);
-      poly(g, [isoToScreen(0, 0), isoToScreen(0, h), isoToScreen(0, h, 6), isoToScreen(0, 0, 6)], shade(COLORS.baseboard, 0.9));
-      for (let a = 1; a + 1.2 <= w; a += 2.6) windowNorth(g, a, a + 1.2, 30, 68);
-      for (let a = 1; a + 1.2 <= h; a += 2.6) windowWest(g, a, a + 1.2, 30, 68);
-    });
-    return [floor, walls];
+    // Ombre au pied des murs, au-dessus des sols des pièces
+    const shadow = this.layer(DEPTH.floor + 0.25, (g) => wallFootShadow(g, w, h));
+    return [shell, shadow];
+  }
+
+  private drawWalls(g: G, w: number, h: number): void {
+    const H = ISO.wallH;
+    const t = 0.25;
+    // Mur nord (plan y = 0) et mur ouest (plan x = 0), avec chapeau
+    poly(g, [isoToScreen(0, 0), isoToScreen(w, 0), isoToScreen(w, 0, H), isoToScreen(0, 0, H)], COLORS.wallLit);
+    poly(g, [isoToScreen(0, 0), isoToScreen(0, h), isoToScreen(0, h, H), isoToScreen(0, 0, H)], COLORS.wallShade);
+    wallDecor(g, w, h, H);
+    poly(g, [isoToScreen(w, -t, 0), isoToScreen(w, 0, 0), isoToScreen(w, 0, H), isoToScreen(w, -t, H)], shade(COLORS.wallLit, 0.75));
+    poly(g, [isoToScreen(-t, h, 0), isoToScreen(0, h, 0), isoToScreen(0, h, H), isoToScreen(-t, h, H)], shade(COLORS.wallShade, 0.85));
+    poly(g, [isoToScreen(-t, -t, H), isoToScreen(w, -t, H), isoToScreen(w, 0, H), isoToScreen(0, 0, H), isoToScreen(0, h, H), isoToScreen(-t, h, H)], COLORS.wallCap);
+    poly(g, [isoToScreen(0, 0), isoToScreen(w, 0), isoToScreen(w, 0, 6), isoToScreen(0, 0, 6)], COLORS.baseboard);
+    poly(g, [isoToScreen(0, 0), isoToScreen(0, h), isoToScreen(0, h, 6), isoToScreen(0, 0, 6)], shade(COLORS.baseboard, 0.9));
+  }
+
+  /** Sol d'une pièce, figé en image. */
+  private roomFloor(rect: { x: number; y: number; w: number; h: number }, draw: (g: G) => void): Obj {
+    const { x, y, w, h } = rect;
+    const b: Rect = { x: isoToScreen(x, y + h).x - 4, y: isoToScreen(x, y).y - 4, width: (w + h) * (ISO.tileW / 2) + 8, height: (w + h) * (ISO.tileH / 2) + 8 };
+    return this.baker.bake(DEPTH.floor + 0.2, b, draw);
   }
 
   /** Pièce en travaux : sol nu, bâche sur échafaudage, rubalise et barre de progression. */
   private drawWorks(room: RoomLayout, size: { w: number; h: number }): Obj[] {
     const { x, y, w, h } = room.rect;
-    const out: Obj[] = [this.layer(DEPTH.floor + 0.2, (g) => tiles(g, x, y, w, h, [0xc9c2b6, 0xc0b8ab]))];
+    const out: Obj[] = [this.roomFloor(room.rect, (g) => tiles(g, x, y, w, h, [0xc9c2b6, 0xc0b8ab]))];
     out.push(...this.partitions(room, size));
     out.push(
       this.layer(depthOf(x + w - 0.3, y + h - 0.3), (g) => {
@@ -170,18 +214,37 @@ export class OfficeRenderer {
     const level = view.level;
     const out: Obj[] = [];
     out.push(
-      this.layer(DEPTH.floor + 0.2, (g) => {
-        tiles(g, x, y, w, h, ROOM_FLOORS[room.type]);
-        if (room.type === 'headquarters' && level >= 3) poly(g, isoQuad(0.5, 0.6, 1.8, 1.4), COLORS.rug, 0.9);
+      this.roomFloor(room.rect, (g) => {
+        const { kind, colors } = ROOM_FLOORS[room.type];
+        floor(g, x, y, w, h, kind, colors);
+        if (room.type === 'garden') gravelPath(g, room.door.at + 0.5, y + h / 2, y + h);
+        if (room.type === 'headquarters' && level >= 3) {
+          poly(g, isoQuad(0.5, 0.6, 1.8, 1.4), COLORS.rug, 0.9);
+          g.lineStyle(2, COLORS.gold, 0.8).strokePoints(isoQuad(0.6, 0.7, 1.6, 1.2), true);
+        }
       }),
     );
+    if (room.type === 'headquarters' && level >= 2) out.push(this.layer(DEPTH.backWalls + 0.2, (g) => this.diploma(g)));
     out.push(...this.partitions(room, size));
     const fancy = room.type === 'headquarters' && level >= 3;
     for (const d of room.desks) out.push(...drawDesk(this.scene, d, fancy));
-    const furniture = room.type === 'headquarters' ? [...room.furniture, ...headquartersExtras(level)] : room.furniture;
-    for (const f of furniture) out.push(...drawFurniture(this.scene, f));
+    for (const f of this.roomFurniture(room, level)) out.push(...drawFurniture(this.scene, f));
     if (view.visual === 'upgradable') out.push(this.badge(room));
     return out;
+  }
+
+  private roomFurniture(room: RoomLayout, level: number): Furniture[] {
+    return room.type === 'headquarters' ? [...room.furniture, ...headquartersExtras(level)] : room.furniture;
+  }
+
+  /** Diplôme d'expert-comptable encadré au mur ouest du bureau principal. */
+  private diploma(g: G): void {
+    const q = (y0: number, y1: number, z0: number, z1: number) => [isoToScreen(0, y0, z0), isoToScreen(0, y1, z0), isoToScreen(0, y1, z1), isoToScreen(0, y0, z1)];
+    poly(g, q(2.42, 2.98, 38, 64), COLORS.woodDark);
+    poly(g, q(2.48, 2.92, 41, 61), COLORS.diploma);
+    for (const z of [55, 50, 46]) poly(g, q(2.56, 2.84, z, z + 1.2), COLORS.outline, 0.35);
+    const seal = isoToScreen(0, 2.8, 44);
+    g.fillStyle(COLORS.rug, 1).fillCircle(seal.x, seal.y, 2.2);
   }
 
   /** Pastille « améliorable » au-dessus du coin avant de la pièce. */
@@ -203,13 +266,13 @@ export class OfficeRenderer {
     const segX = (yy: number, door: number | null) => {
       for (let a = x; a < x + w; a++) {
         if (door !== null && a <= door && door < a + 1) continue;
-        out.push(this.layer(depthOf(a + 1, yy + T / 2), (g) => box(g, a, yy - T / 2, 1, T, 0, ISO.partitionH, COLORS.partition)));
+        out.push(this.layer(depthOf(a + 1, yy + T / 2), (g) => partition(g, a, yy - T / 2, 1, T)));
       }
     };
     const segY = (xx: number, door: number | null) => {
       for (let a = y; a < y + h; a++) {
         if (door !== null && a <= door && door < a + 1) continue;
-        out.push(this.layer(depthOf(xx + T / 2, a + 1), (g) => box(g, xx - T / 2, a, T, 1, 0, ISO.partitionH, COLORS.partition)));
+        out.push(this.layer(depthOf(xx + T / 2, a + 1), (g) => partition(g, xx - T / 2, a, T, 1)));
       }
     };
     if (y > 0) segX(y, null);

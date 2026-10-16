@@ -1,3 +1,5 @@
+import type { RoomType } from '../data/office';
+
 /** Couleurs de la vue en fausse 3D, plus chaudes que celles des panneaux (CLAUDE.md › Conventions). */
 export const COLORS = {
   backdrop: 0x1f2633,
@@ -36,22 +38,32 @@ export const COLORS = {
   gold: 0xf2c14e,
   white: 0xffffff,
   books: [0x9a3b3b, 0x1e3a8a, 0x166534, 0xb45309, 0x6b21a8],
+  gravel: 0xd9ccb0,
+  lamp: 0xffa94d,
+  sunlight: 0xfff3d1,
+  sunset: 0xffb06b,
+  skyline: 0x3b4a66,
+  litWindow: 0xffd77a,
+  diploma: 0xfdf8ec,
   accent: 0x38bdf8,
   shadow: 0x0f172a,
 } as const;
 
-/** Sol de chaque pièce : deux teintes en damier. */
-export const ROOM_FLOORS = {
-  headquarters: [0xd8b48a, 0xcfa97d],
-  openSpace: [0xb3c3d3, 0xa9bacb],
-  meetingRoom: [0xc3d0b0, 0xbac8a6],
-  serverRoom: [0xd5dde4, 0xc9d2da],
-  socialWing: [0xa9d6cf, 0x9ecdc5],
-  legalWing: [0xd9b0a6, 0xd0a59a],
-  advisoryWing: [0xb7c7e8, 0xadbee2],
-  garden: [0xc9a678, 0xbf9b6c],
-  fountain: [0xe2ddd3, 0xd8d2c6],
-} as const;
+/** Matière du sol : voir src/game/isoTextures.ts. */
+export type FloorKind = 'tiles' | 'parquet' | 'carpet' | 'raised' | 'grass' | 'stone';
+
+/** Sol de chaque pièce : matière et deux teintes. */
+export const ROOM_FLOORS: Record<RoomType, { kind: FloorKind; colors: readonly [number, number] }> = {
+  headquarters: { kind: 'parquet', colors: [0xcd9a63, 0xc18e58] },
+  openSpace: { kind: 'carpet', colors: [0xaabdd0, 0xa1b5c9] },
+  meetingRoom: { kind: 'carpet', colors: [0xbccba5, 0xb2c29b] },
+  serverRoom: { kind: 'raised', colors: [0xd5dde4, 0xccd5dd] },
+  socialWing: { kind: 'carpet', colors: [0xa4d1c9, 0x9ac8c0] },
+  legalWing: { kind: 'parquet', colors: [0xb4805f, 0xa87556] },
+  advisoryWing: { kind: 'carpet', colors: [0xb5c5e7, 0xabbce0] },
+  garden: { kind: 'grass', colors: [0x92c26c, 0x88b862] },
+  fountain: { kind: 'stone', colors: [0xe4dfd5, 0xd9d3c7] },
+};
 
 /** Assombrit (f < 1) ou éclaircit (f > 1) une couleur 0xRRGGBB. */
 export function shade(color: number, f: number): number {

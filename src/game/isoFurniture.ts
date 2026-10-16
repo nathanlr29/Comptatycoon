@@ -1,7 +1,7 @@
 /** Mobilier en fausse 3D : chaque objet est un Graphics trié en profondeur par son coin avant. */
 import type Phaser from 'phaser';
 import { deskRect, type Desk, type Furniture, type FurnitureType } from '../data/office';
-import { depthOf, isoToScreen } from './iso';
+import { depthOf, isoQuad, isoToScreen } from './iso';
 import { box, groundShadow, poly } from './isoDraw';
 import { COLORS, shade } from './palette';
 
@@ -171,6 +171,24 @@ export function drawDesk(scene: Phaser.Scene, d: Desk, fancy = false): G[] {
         box(g, x + 0.08, y + 0.66, 0.07, 0.2, 24, 15, COLORS.monitor, false);
         box(g, x + 0.12, y + 0.2, 0.14, 0.34, 24, 2, 0xe2e8f0, false);
       }
+      deskClutter(g, d, x, y);
     }),
   ];
+}
+
+const MUGS = [0xdc2626, 0x2563eb, 0xf59e0b, 0x10b981] as const;
+
+/** Dossiers et tasse posés sur le bureau, différents (mais stables) d'un poste à l'autre. */
+function deskClutter(g: G, d: Desk, x: number, y: number): void {
+  const pick = Math.abs(Math.floor(d.x * 7 + d.y * 13)) % 4;
+  const s = d.facing === 's';
+  if (pick === 1 || pick === 3) {
+    const [px, py, pw, ph] = s ? [x + 0.06, y + 0.3, 0.24, 0.16] : [x + 0.3, y + 0.06, 0.16, 0.24];
+    poly(g, isoQuad(px, py, pw, ph, 26), 0xf8fafc);
+    poly(g, isoQuad(px + 0.02, py + 0.01, pw - 0.03, ph - 0.02, 28), pick === 1 ? 0xfde68a : 0xbfdbfe);
+  }
+  if (pick >= 2) {
+    const [mx, my] = s ? [x + 0.58, y + 0.3] : [x + 0.3, y + 0.58];
+    box(g, mx, my, 0.08, 0.08, 24, 7, MUGS[(pick + Math.round(d.x)) % 4] as number, false);
+  }
 }

@@ -40,16 +40,3 @@ export function tiles(g: G, x: number, y: number, w: number, h: number, colors: 
     for (let j = 0; j < h; j++) poly(g, isoQuad(x + i, y + j, Math.min(1, w - i), Math.min(1, h - j)), colors[(i + j) % 2] as number);
   }
 }
-
-/** Fenêtre sur le mur du fond « nord » (plan y = 0), de a à b le long de x. */
-export function windowNorth(g: G, a: number, b: number, z0: number, z1: number): void {
-  poly(g, [isoToScreen(a - 0.06, 0, z0 - 4), isoToScreen(b + 0.06, 0, z0 - 4), isoToScreen(b + 0.06, 0, z1 + 4), isoToScreen(a - 0.06, 0, z1 + 4)], COLORS.windowFrame);
-  poly(g, [isoToScreen(a, 0, z0), isoToScreen(b, 0, z0), isoToScreen(b, 0, z1), isoToScreen(a, 0, z1)], COLORS.window);
-  poly(g, [isoToScreen(a, 0, z1 - 10), isoToScreen(a + (b - a) * 0.4, 0, z1 - 10), isoToScreen(a + (b - a) * 0.25, 0, z0), isoToScreen(a, 0, z0)], COLORS.white, 0.25);
-}
-
-/** Fenêtre sur le mur du fond « ouest » (plan x = 0), de a à b le long de y. */
-export function windowWest(g: G, a: number, b: number, z0: number, z1: number): void {
-  poly(g, [isoToScreen(0, a - 0.06, z0 - 4), isoToScreen(0, b + 0.06, z0 - 4), isoToScreen(0, b + 0.06, z1 + 4), isoToScreen(0, a - 0.06, z1 + 4)], COLORS.windowFrame);
-  poly(g, [isoToScreen(0, a, z0), isoToScreen(0, b, z0), isoToScreen(0, b, z1), isoToScreen(0, a, z1)], shade(COLORS.window, 0.9));
-}
