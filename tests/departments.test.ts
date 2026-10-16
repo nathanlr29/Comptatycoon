@@ -10,10 +10,11 @@ import {
 } from '../src/core/departments';
 import { getBaseIncomePerSecond, getMultipliers } from '../src/core/economy';
 import type { BuildingState, GameState } from '../src/core/state';
+import type { BuildingType } from '../src/data/buildings';
 import { DEPARTMENTS } from '../src/data/departments';
 import { makeState, T0 } from './helpers';
 
-const wing = (type: string, level = 1): BuildingState => ({ id: type, type, level, slotId: 'east-1' });
+const wing = (type: BuildingType, level = 1): BuildingState => ({ id: type, type, level, slotId: 'east-1' });
 const hq: BuildingState = { id: 'hq', type: 'headquarters', level: 1, slotId: 'hq' };
 const noStaff = { intern: 0, junior: 0, senior: 0, manager: 0 };
 

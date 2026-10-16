@@ -3,16 +3,9 @@ import { STAFF, STAFF_ROLES, type StaffRole } from '../data/staff';
 import { getHireCost, getPartnerCost, getPartnerSeveranceCost, getSeveranceCost } from './economy';
 import type { GameState } from './state';
 
-export type RefusalReason =
-  | 'insufficient_funds'
-  | 'capacity_full'
-  | 'locked'
-  | 'already_owned'
-  | 'missing_prerequisite'
-  | 'nobody_to_dismiss'
-  | 'last_partner'
-  | 'team_too_large'
-  | 'max_level';
+import type { RefusalReason } from './refusals';
+
+export type { RefusalReason };
 export type Check = { ok: true; cost: number } | { ok: false; reason: RefusalReason; cost: number };
 
 /** Collaborateurs comptés dans la capacité d'encadrement (associés exclus). */

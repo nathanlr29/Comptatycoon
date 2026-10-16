@@ -8,8 +8,8 @@ import { playReveal } from './expansionView';
 import { screenToWorld } from './geometry';
 import { InputController } from './InputController';
 import { isoQuad } from './iso';
-import { OfficeRenderer, type OfficeView } from './OfficeRenderer';
-import { officeViewKey, toOfficeView } from './officeView';
+import { OfficeRenderer } from './OfficeRenderer';
+import { builtRoomTypes, officeViewKey, toOfficeView, worksProgress, type OfficeView } from './officeView';
 
 /** Ce que l'interface peut écouter sur `game.events`. */
 export const MAP_EVENTS = {
@@ -73,10 +73,11 @@ export class MapScene extends Phaser.Scene {
       this.viewKey = key;
       this.view = view;
       this.office.render(view);
-      this.staff.setSeats(officeSeats(view.stage, view.rooms.map((r) => r.type)));
+      this.staff.setSeats(officeSeats(view.stage, builtRoomTypes(view)));
       this.camera.setBounds(this.office.bounds());
       if (grew) this.reveal(view.stage);
     }
+    this.office.updateWorks(worksProgress(state, Date.now()));
     this.staff.sync(state);
   }
 

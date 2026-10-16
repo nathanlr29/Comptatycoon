@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction } from '../src/core/actions';
 import { getBaseIncomePerSecond } from '../src/core/economy';
+import { simulate } from '../src/core/store';
 import { canExpand, getFirmLevel, getNextExpansion } from '../src/core/expansion';
 import { EXPANSION_LEVELS, MAX_FIRM_LEVEL } from '../src/data/expansion';
 import { OFFICE_STAGES } from '../src/data/office';
@@ -33,12 +34,15 @@ describe('agrandir le cabinet', () => {
     expect(canExpand(makeState({ money: 499, staff: staff(5) }))).toEqual({ ok: false, reason: 'insufficient_funds', cost: 500 });
   });
 
-  it('monte d’un niveau et débite le prix exact', () => {
+  it('débite le prix exact et monte d’un niveau à la fin des travaux (10 s × niveau²)', () => {
     const { state, result } = applyAction(makeState({ money: 600, staff: staff(5) }), expand, T0);
     expect(result.ok).toBe(true);
     expect(state.money).toBe(100);
-    expect(getFirmLevel(state)).toBe(2);
-    expect(getNextExpansion(state)?.name).toBe('Le plateau');
+    expect(getFirmLevel(state)).toBe(1);
+    expect(canExpand(state)).toMatchObject({ ok: false, reason: 'under_construction' });
+    const done = simulate(state, T0 + 40_000);
+    expect(getFirmLevel(done)).toBe(2);
+    expect(getNextExpansion(done)?.name).toBe('Le plateau');
   });
 
   it('demande des associés à partir du niveau 4', () => {

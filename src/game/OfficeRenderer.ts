@@ -1,16 +1,12 @@
 import Phaser from 'phaser';
 import { OFFICE_STAGES, ROOMS, getStage, type Furniture, type RoomLayout, type RoomType } from '../data/office';
+import type { OfficeView, RoomView } from './officeView';
 import type { Bounds } from './CameraController';
 import { DEPTH, ISO, depthOf, isoQuad, isoToScreen, screenBounds, screenToIso } from './iso';
 import { box, poly, tiles, windowNorth, windowWest } from './isoDraw';
 import { drawDesk, drawFurniture } from './isoFurniture';
 import { COLORS, ROOM_FLOORS, shade } from './palette';
 
-/** Ce que la vue affiche : niveau d'agrandissement et pièces achetées. */
-export interface OfficeView {
-  stage: number;
-  rooms: { type: RoomType; level: number }[];
-}
 
 type Obj = Phaser.GameObjects.Graphics;
 
@@ -30,6 +26,8 @@ export class OfficeRenderer {
   private known = new Set<string>();
   private view: OfficeView = { stage: 1, rooms: [] };
   private readonly highlight: Obj;
+  /** Barres de progression des travaux, redessinées sans tout reconstruire. */
+  private readonly bars = new Map<RoomType, Obj>();
 
   constructor(private readonly scene: Phaser.Scene) {
     this.highlight = scene.add.graphics().setDepth(DEPTH.floor + 0.5);
@@ -53,11 +51,14 @@ export class OfficeRenderer {
     for (const s of OFFICE_STAGES.filter((s) => s.stage <= stage.stage)) {
       group(`stage:${s.stage}`, () => [...s.desks.flatMap((d) => drawDesk(this.scene, d)), ...s.furniture.flatMap((f) => drawFurniture(this.scene, f))]);
     }
-    const built = new Map(view.rooms.map((r) => [r.type, r.level]));
+    this.bars.clear();
+    const rooms = new Map(view.rooms.map((r) => [r.type, r]));
     for (const room of ROOMS) {
-      const level = built.get(room.type);
-      if (level === undefined || room.minStage > stage.stage) continue;
-      group(`room:${room.type}`, () => this.drawRoom(room, level, stage.size));
+      const r = rooms.get(room.type);
+      if (!r || room.minStage > stage.stage) continue;
+      // La clé change à la fin des travaux : la pièce terminée apparaît en douceur.
+      const done = r.visual !== 'works';
+      group(`room:${room.type}:${done ? 'done' : 'works'}`, () => (done ? this.drawRoom(room, r, stage.size) : this.drawWorks(room, stage.size)));
     }
     this.known = keys;
     this.setHighlight(null);
@@ -81,6 +82,20 @@ export class OfficeRenderer {
     const types = new Set(this.view.rooms.map((r) => r.type));
     const room = ROOMS.find((r) => types.has(r.type) && p.x >= r.rect.x && p.x <= r.rect.x + r.rect.w && p.y >= r.rect.y && p.y <= r.rect.y + r.rect.h);
     return room?.type ?? null;
+  }
+
+  /** Met à jour les barres de travaux (avancement 0 à 1 par type de pièce). */
+  updateWorks(progress: ReadonlyMap<string, number>): void {
+    for (const [type, g] of this.bars) {
+      const room = ROOMS.find((r) => r.type === type);
+      if (!room) continue;
+      const p = progress.get(type) ?? 1;
+      const { x, y, w, h } = room.rect;
+      const a = isoToScreen(x + w / 2, y + h / 2, 70);
+      g.clear();
+      g.fillStyle(COLORS.shadow, 0.75).fillRoundedRect(a.x - 40, a.y - 7, 80, 14, 7);
+      g.fillStyle(COLORS.accent, 1).fillRoundedRect(a.x - 38, a.y - 5, Math.max(10, 76 * p), 10, 5);
+    }
   }
 
   setHighlight(type: RoomType | null): void {
@@ -132,8 +147,27 @@ export class OfficeRenderer {
     return [floor, walls];
   }
 
-  private drawRoom(room: RoomLayout, level: number, size: { w: number; h: number }): Obj[] {
+  /** Pièce en travaux : sol nu, bâche sur échafaudage, rubalise et barre de progression. */
+  private drawWorks(room: RoomLayout, size: { w: number; h: number }): Obj[] {
     const { x, y, w, h } = room.rect;
+    const out: Obj[] = [this.layer(DEPTH.floor + 0.2, (g) => tiles(g, x, y, w, h, [0xc9c2b6, 0xc0b8ab]))];
+    out.push(...this.partitions(room, size));
+    out.push(
+      this.layer(depthOf(x + w - 0.3, y + h - 0.3), (g) => {
+        box(g, x + 0.4, y + 0.4, w - 0.8, h - 0.8, 0, 46, 0x7c8796);
+        const p = isoQuad(x + 0.25, y + 0.25, w - 0.5, h - 0.5, 2);
+        g.lineStyle(4, 0xfacc15, 1).strokePoints(p, true);
+      }),
+    );
+    const bar = this.layer(DEPTH.overlay - 1, () => undefined);
+    this.bars.set(room.type, bar);
+    out.push(bar);
+    return out;
+  }
+
+  private drawRoom(room: RoomLayout, view: RoomView, size: { w: number; h: number }): Obj[] {
+    const { x, y, w, h } = room.rect;
+    const level = view.level;
     const out: Obj[] = [];
     out.push(
       this.layer(DEPTH.floor + 0.2, (g) => {
@@ -146,7 +180,19 @@ export class OfficeRenderer {
     for (const d of room.desks) out.push(...drawDesk(this.scene, d, fancy));
     const furniture = room.type === 'headquarters' ? [...room.furniture, ...headquartersExtras(level)] : room.furniture;
     for (const f of furniture) out.push(...drawFurniture(this.scene, f));
+    if (view.visual === 'upgradable') out.push(this.badge(room));
     return out;
+  }
+
+  /** Pastille « améliorable » au-dessus du coin avant de la pièce. */
+  private badge(room: RoomLayout): Obj {
+    const { x, y, w, h } = room.rect;
+    const a = isoToScreen(x + w - 0.4, y + h - 0.4, 64);
+    return this.layer(DEPTH.overlay - 1, (g) => {
+      g.fillStyle(COLORS.accent, 1).fillCircle(a.x, a.y, 13);
+      g.lineStyle(3, COLORS.white, 1).strokeCircle(a.x, a.y, 13);
+      g.fillStyle(COLORS.white, 1).fillTriangle(a.x - 6, a.y + 2, a.x + 6, a.y + 2, a.x, a.y - 7).fillRect(a.x - 2.5, a.y + 1, 5, 6);
+    });
   }
 
   /** Cloisons basses découpées par case pour se trier avec le mobilier ; une case laissée libre pour la porte. */
