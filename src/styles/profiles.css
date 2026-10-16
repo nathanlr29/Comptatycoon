@@ -399,3 +399,16 @@
 .settings__button--danger strong {
   color: #f87171;
 }
+
+.settings__secrets h3 {
+  margin: 0 0 6px;
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.settings__secrets ul {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}

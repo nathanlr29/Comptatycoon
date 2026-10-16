@@ -18,6 +18,7 @@ import { NotificationManager } from './NotificationManager';
 import { Panel } from './Panel';
 import { RecruitmentPanel } from './RecruitmentPanel';
 import { RoomsPanel } from './RoomsPanel';
+import { Secrets } from './Secrets';
 import { DevelopmentPanel } from './DevelopmentPanel';
 import { departmentViews } from './departmentViews';
 import { Tabs } from './Tabs';
@@ -60,6 +61,7 @@ export class App {
   private readonly expandButton = h('button', { class: 'expand-button', type: 'button', 'aria-label': 'Agrandir le cabinet' });
   private openView: View | null = null;
   private readonly liveInfo: LiveInfo;
+  private readonly secrets: Secrets;
 
   constructor(
     private readonly store: GameStore,
@@ -91,7 +93,8 @@ export class App {
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
 
-    this.liveInfo = new LiveInfo(store, this.notifications);
+    this.secrets = new Secrets(store, this.notifications, this.hud);
+    this.liveInfo = new LiveInfo(store, this.notifications, (report) => this.secrets.interceptEvent(report));
     store.subscribe((state) => this.render(state));
     this.render(store.getState());
   }
@@ -183,7 +186,7 @@ export class App {
     }
     this.firmLevel = firmLevel;
     this.announceFinishedRooms(state);
-    this.dock.setLabel(clickLabel(getFirmLevel(state)));
+    this.dock.setLabel(this.secrets.clickLabel(now) ?? clickLabel(firmLevel));
     this.expandButton.classList.toggle('expand-button--ready', canExpand(state).ok);
     this.openView?.render(state, now);
   }

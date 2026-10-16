@@ -2,6 +2,7 @@ import { BUILDINGS, type BuildingType } from '../data/buildings';
 import { EVENT_TIMING } from '../data/events';
 import { OBJECTIVES } from '../data/objectives';
 import { DEPARTMENT_IDS, type DepartmentId } from '../data/departments';
+import { SECRET_IDS, type SecretId } from '../data/secrets';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
 import type { BuildingState, GameState, TimedEffect } from '../core/state';
@@ -86,6 +87,12 @@ function objectiveIds(value: unknown, path: string): string[] {
   return arr(value, path, str).filter((id) => OBJECTIVES.some((o) => o.id === id));
 }
 
+/** Secrets : absents des anciennes sauvegardes (liste vide), identifiants inconnus ignorés. */
+function secretIds(value: unknown, path: string): SecretId[] {
+  if (value === undefined) return [];
+  return arr(value, path, str).filter((id): id is SecretId => (SECRET_IDS as string[]).includes(id));
+}
+
 function buildingType(value: unknown, path: string): BuildingType {
   const type = str(value, path);
   if (!(type in BUILDINGS)) throw new SchemaError(`${path} : type de pièce inconnu`);
@@ -136,6 +143,7 @@ function readState(value: unknown): GameState {
     effects: arr(s.effects, 'state.effects', effect),
     nextEventAt: num(s.nextEventAt, 'state.nextEventAt', 0),
     claimedObjectives: objectiveIds(s.claimedObjectives, 'state.claimedObjectives'),
+    secrets: secretIds(s.secrets, 'state.secrets'),
     reputationProgress: s.reputationProgress === undefined ? 0 : num(s.reputationProgress, 'state.reputationProgress', 0),
     lastSimulatedAt: num(s.lastSimulatedAt, 'state.lastSimulatedAt', 0),
     createdAt: num(s.createdAt, 'state.createdAt', 0),

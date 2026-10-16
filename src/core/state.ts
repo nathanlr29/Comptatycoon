@@ -2,6 +2,7 @@ import { EVENT_TIMING } from '../data/events';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import type { DepartmentId } from '../data/departments';
 import type { BuildingType } from '../data/buildings';
+import type { SecretId } from '../data/secrets';
 import type { UpgradeId } from '../data/upgrades';
 
 /** Effet temporaire (ex. Période fiscale). Expire à `expiresAt` (ms). */
@@ -41,6 +42,8 @@ export interface GameState {
   nextEventAt: number;
   /** Objectifs dont la récompense a été réclamée (docs/GDD.md §9). */
   claimedObjectives: string[];
+  /** Secrets (easter eggs) découverts, dans l'ordre de découverte. */
+  secrets: SecretId[];
   /** Horodatage (ms) jusqu'auquel la production a été créditée. */
   lastSimulatedAt: number;
   createdAt: number;
@@ -62,6 +65,7 @@ export function createInitialState(now: number): GameState {
     reputationProgress: 0,
     nextEventAt: now + EVENT_TIMING.firstAfterMs,
     claimedObjectives: [],
+    secrets: [],
     lastSimulatedAt: now,
     createdAt: now,
     stats: { totalEarned: 0, clicks: 0 },
