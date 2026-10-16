@@ -62,3 +62,41 @@ body {
   font-size: 1rem;
   letter-spacing: 0.02em;
 }
+
+.map-controls {
+  position: fixed;
+  right: calc(var(--safe-right) + 12px);
+  bottom: calc(var(--safe-bottom) + 12px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text-2) 30%, transparent);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.icon-button svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.icon-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
