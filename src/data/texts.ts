@@ -25,6 +25,8 @@ export function refusalText(reason: RefusalReason, minReputation = 0): string {
       return 'Vous restez le dernier associé';
     case 'team_too_large':
       return 'Trop de collaborateurs à encadrer';
+    case 'max_level':
+      return 'Niveau maximum atteint';
   }
 }
 
@@ -39,4 +41,18 @@ export function confirmDismissText(amount: string): string {
 
 export function dismissRefusalText(reason: string): string {
   return `Départ impossible : ${reason.toLowerCase()}`;
+}
+
+/** Conditions d'équipe manquantes pour agrandir le cabinet. */
+export function expansionMissingText(staff: number, partners: number): string {
+  const parts: string[] = [];
+  if (staff > 0) parts.push(`${staff} collaborateur${staff > 1 ? 's' : ''} de plus`);
+  if (partners > 0) parts.push(`${partners} associé${partners > 1 ? 's' : ''} de plus`);
+  return `Il faut ${parts.join(' et ')}`;
+}
+
+export function expansionRequirementText(minStaff: number, minPartners: number): string {
+  const parts = [`${minStaff} collaborateurs`];
+  if (minPartners > 1) parts.push(`${minPartners} associés`);
+  return `Équipe requise : ${parts.join(', ')}`;
 }

@@ -4,6 +4,7 @@ import type { UpgradeId } from '../data/upgrades';
 import { canBuyDepartment, canBuyPortfolio } from './departments';
 import { getClickValue } from './economy';
 import { canDismiss, canDismissPartner, canHire, canHirePartner, type RefusalReason } from './recruitment';
+import { canExpand, expandFirm } from './expansion';
 import { canBuyUpgrade } from './upgrades';
 import type { GameState } from './state';
 
@@ -15,7 +16,9 @@ export type GameAction =
   | { type: 'dismissPartner' }
   | { type: 'buyUpgrade'; id: UpgradeId }
   | { type: 'buyDepartment'; id: DepartmentId }
-  | { type: 'buyPortfolio' };
+  | { type: 'buyPortfolio' }
+  /** Agrandir le cabinet = améliorer le Bureau principal (seul `hq` pour l'instant). */
+  | { type: 'upgradeBuilding'; buildingId: 'hq' };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -97,6 +100,11 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
         portfolios: state.portfolios + 1,
       };
       return { state: next, result: { ok: true } };
+    }
+    case 'upgradeBuilding': {
+      const check = canExpand(state);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: expandFirm(state, check.cost), result: { ok: true } };
     }
   }
 }

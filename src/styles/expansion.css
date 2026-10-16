@@ -1,0 +1,91 @@
+/* ---------- Agrandir le cabinet ---------- */
+.expand-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  min-height: 48px;
+  padding: 0 14px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--text-2) 30%, transparent);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  font: 700 0.875rem var(--font);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.expand-button .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.expand-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Pastille quand l'agrandissement suivant est possible. */
+.expand-button--ready {
+  border-color: var(--accent);
+}
+
+.expand-button--ready::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.expansion__level {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.expansion__adds {
+  margin: 0 0 4px;
+  padding-left: 18px;
+  color: var(--money);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.expansion__req {
+  color: var(--text-2);
+  font-size: 0.75rem;
+}
+
+.expansion__status {
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.expansion__step--done .expansion__status {
+  color: var(--money);
+}
+
+.expansion__step--next {
+  outline: 2px solid var(--accent);
+}
+
+.expansion__step--later {
+  opacity: 0.6;
+}
+
+.expansion__step--done .expansion__adds,
+.expansion__step--done .expansion__req {
+  display: none;
+}
+
+.panel-cta {
+  width: 100%;
+  margin-top: 16px;
+}

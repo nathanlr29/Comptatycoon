@@ -67,21 +67,25 @@ Les multiplicateurs d'une même famille se **multiplient** entre eux. Une seule 
 ## 6. Le cabinet en fausse 3D : agrandissements, pièces et employés
 Le jeu se passe **à l'intérieur** du cabinet, en **vue isométrique** (fausse 3D, cases en losange 2:1) : sols, murs du fond pleine hauteur, cloisons basses entre les pièces, murs avant coupés pour voir dedans, mobilier en volume avec ombres. Caméra : glisser, pincer, molette, bornée au cabinet ; le zoom de départ cadre le petit bureau. Données du plan : `src/data/office.ts` ; projection : `src/game/iso.ts`.
 
-**Aucun emplacement vide n'est affiché** (pas de « + », pas de parcelle en pointillés, pas de local « À louer »). Le joueur agrandit le cabinet et achète ses pièces depuis le menu **« Agrandir le cabinet »** ; chaque achat fait apparaître un nouveau visuel à sa place prédéfinie (pas d'éditeur libre).
+**Aucun emplacement vide n'est affiché** (pas de « + », pas de parcelle en pointillés, pas de local « À louer »). Le joueur agrandit le cabinet depuis le menu **« Agrandir le cabinet »** (bouton « Agrandir », ou fiche du Bureau principal) et y achète ses pièces ; chaque achat fait apparaître un nouveau visuel à sa place prédéfinie, avec une courte animation d'apparition (aucune si `prefers-reduced-motion`). Pas d'éditeur libre.
 
-**Niveaux d'agrandissement** = niveaux du Bureau principal (mêmes coûts : 500 €, 5 000 €, 50 000 €, 500 000 €, même effet +10 % de production globale par niveau). Chaque niveau agrandit l'emprise du cabinet et ajoute des postes dans l'espace commun :
-| Niveau | Nom | Emprise (cases) | Pièces qui y trouvent leur place |
-|---|---|---|---|
-| 1 | Le petit bureau | 8 × 6 | votre bureau, open space, salle serveurs |
-| 2 | Le local voisin | 12 × 9 | salle de réunion, locaux Pôle Social, locaux Pôle Juridique |
-| 3 | Le plateau | 16 × 11 | locaux Conseil & Audit |
-| 4 | L'étage complet | 20 × 13 | coin plantes, fontaine |
-| 5 | Le siège | 24 × 15 | (grand espace commun) |
+Niveaux du cabinet = niveaux du Bureau principal = étape du plan dessiné (`src/data/expansion.ts` pour prix et conditions, `src/data/office.ts` pour l'emprise, les postes et les places des pièces) :
+| Niv. | Nom | Prix | Équipe requise | Emprise (cases) | Pièces qui y trouvent leur place |
+|---|---|---|---|---|---|
+| 1 | Le petit bureau | départ | — | 8 × 6 | votre bureau, open space, salle serveurs |
+| 2 | Le local voisin | 500 € | 5 collaborateurs | 12 × 9 | salle de réunion, locaux Pôle Social, locaux Pôle Juridique |
+| 3 | Le plateau | 5 000 € | 12 collaborateurs | 16 × 11 | locaux Conseil & Audit |
+| 4 | L'étage complet | 50 000 € | 20 collaborateurs, 2 associés | 20 × 13 | coin plantes, fontaine |
+| 5 | Le siège | 500 000 € | 35 collaborateurs, 3 associés | 24 × 15 | (grand espace commun) |
+
+Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes dans l'espace commun.
+
+États visuels d'une pièce : en travaux (bâche, rubalise, barre de progression) · aménagée (pièce meublée) · améliorable (badge).
 
 **Pièces** (même règles et chiffres qu'avant ; une pièce n'est proposée que si le niveau d'agrandissement lui laisse la place) :
 | Pièce | Aménagement | Niv. max | Effet par niveau | Condition |
 |---|---|---|---|---|
-| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % ; agrandit le cabinet (tableau ci-dessus) | — |
+| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % par niveau au-delà du 1er ; agrandit le cabinet (menu « Agrandir le cabinet », tableau ci-dessus) | — |
 | Open space | 200 € | 5 | alternants et juniors +25 % | — |
 | Salle de réunion | 2 500 € | 5 | +1 réputation toutes les 120 s | Bureau principal niv. 2 |
 | Salle serveurs | 1 500 € | 3 | production globale +5 % ; requise pour les technologies | — |
