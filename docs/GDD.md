@@ -111,6 +111,13 @@ Un local non loué est dessiné dans le noir (sol nu, murs en pointillés), avec
 
 Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat répétable affiche son compteur.
 
+**Pôles : règles précises.**
+- Ouvrir un pôle : avoir aménagé ses locaux (pièce `socialWing`, `legalWing`, `advisoryWing` au niveau ≥ 1, travaux finis), la réputation requise et l'argent. Achat unique ; +5 réputation (§2).
+- Le +150 €/s du Pôle Social s'ajoute à la production des collaborateurs **avant** les multiplicateurs globaux (bâtiments, pôles, réputation, événement).
+- Les multiplicateurs de catégorie des pôles se multiplient avec ceux des améliorations (§3 bis).
+- Rachat de portefeuille : bonus global additif `1 + 0,05 × n`, puis multiplié avec les autres sources globales.
+- Données : `src/data/departments.ts` (`DEPARTMENTS`, `PORTFOLIO`, `TAX_AUDIT`) ; état : `departments: DepartmentId[]` et `portfolios: number` dans `GameState`.
+
 ## 8. Événements aléatoires
 - Uniquement pendant le jeu actif (onglet visible). Jamais pendant l'absence.
 - Premier événement au plus tôt après 3 min de jeu ; ensuite intervalle aléatoire de 90 à 150 s.

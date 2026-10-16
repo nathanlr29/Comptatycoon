@@ -1,4 +1,5 @@
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
+import type { DepartmentId } from '../data/departments';
 import type { UpgradeId } from '../data/upgrades';
 
 /** Effet temporaire (ex. Période fiscale). Expire à `expiresAt` (ms). */
@@ -23,6 +24,10 @@ export interface GameState {
   /** Associés experts-comptables, joueur compris (≥ 1). */
   partners: number;
   upgrades: UpgradeId[];
+  /** Pôles ouverts (achats uniques). */
+  departments: DepartmentId[];
+  /** Nombre de rachats de portefeuille clients. */
+  portfolios: number;
   buildings: BuildingState[];
   effects: TimedEffect[];
   /** Horodatage (ms) jusqu'auquel la production a été créditée. */
@@ -39,6 +44,8 @@ export function createInitialState(now: number): GameState {
     staff,
     partners: 1,
     upgrades: [],
+    departments: [],
+    portfolios: 0,
     buildings: [{ id: 'hq', type: 'headquarters', level: 1, slotId: 'hq' }],
     effects: [],
     lastSimulatedAt: now,
