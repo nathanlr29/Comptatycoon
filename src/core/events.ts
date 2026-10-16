@@ -1,6 +1,7 @@
 import { EVENT_IDS, EVENT_TIMING, EVENT_WEIGHTS, FISCAL_PERIOD, PRESTIGIOUS_CLIENT, TAX_AUDIT_MIN_STAFF, type EventId } from '../data/events';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { resolveTaxAudit } from './departments';
+import { getDifficulty } from './difficulty';
 import { getBaseIncomePerSecond } from './economy';
 import { pickWeighted, type Rng } from './random';
 import { getStaffCount, resign } from './recruitment';
@@ -35,10 +36,15 @@ export function scheduleNextEvent(now: number, rng: Rng): number {
   return now + minIntervalMs + Math.floor(rng() * (maxIntervalMs - minIntervalMs + 1));
 }
 
+/** Poids du tirage, ajusté par le mode de difficulté. */
+export function getEventWeight(state: GameState, id: EventId): number {
+  return EVENT_WEIGHTS[id] * (getDifficulty(state).eventWeights[id] ?? 1);
+}
+
 export function pickEvent(state: GameState, rng: Rng): EventId | undefined {
   return pickWeighted(
     EVENT_IDS.filter((id) => isEventEligible(state, id)),
-    (id) => EVENT_WEIGHTS[id],
+    (id) => getEventWeight(state, id),
     rng,
   );
 }

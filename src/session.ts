@@ -3,6 +3,7 @@ import { formatDuration, formatMoney } from './core/format';
 import { isAbsence, shouldShowOfflineReport, type OfflineReport } from './core/offline';
 import { createInitialState } from './core/state';
 import { GameStore } from './core/store';
+import { DIFFICULTIES } from './data/difficulty';
 import { saveErrorText, SAVE_TEXTS } from './data/saveTexts';
 import { MapScene } from './game/MapScene';
 import type { LocalSaveService } from './persistence/LocalSaveService';
@@ -127,7 +128,7 @@ export function startSession(profileId: string | null, saves: LocalSaveService):
   requestAnimationFrame(loop);
 
   const profileName = profileId ? (saves.profiles.get(profileId)?.name ?? null) : null;
-  const settings = new SettingsPanel(profileName, {
+  const settings = new SettingsPanel(profileName, DIFFICULTIES[store.getState().difficulty].name, {
     onSwitchProfile: () => {
       save();
       window.location.reload();
@@ -142,7 +143,8 @@ export function startSession(profileId: string | null, saves: LocalSaveService):
         app.notifications.show('Cabinet importé', `« ${profile.name} » est disponible sur l’écran d’accueil.`, 'success', 5000),
       ),
     onReset: () => confirmReset(() => {
-      store.replace(createInitialState(Date.now()));
+      // Tout repart de zéro, contacts compris ; seul le mode choisi à la fondation est gardé.
+      store.replace(createInitialState(Date.now(), { difficulty: store.getState().difficulty }));
       save();
       app.notifications.show('Cabinet réinitialisé', 'La partie repart de zéro.');
     }),

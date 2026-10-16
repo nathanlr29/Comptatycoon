@@ -1,6 +1,7 @@
 import { DEPARTMENTS, DEPARTMENT_IDS, PORTFOLIO, TAX_AUDIT, type DepartmentId } from '../data/departments';
 import { getExpansionLevel } from '../data/expansion';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
+import { getDifficulty } from './difficulty';
 import { getFirmLevel } from './expansion';
 import type { Check } from './recruitment';
 import type { GameState } from './state';
@@ -103,7 +104,7 @@ export interface TaxAuditOutcome {
 /**
  * Effet du contrôle fiscal (docs/GDD.md §8). `incomePerSecond` est fourni par l'appelant
  * (moteur d'événements) pour garder ce module indépendant du calcul du revenu.
- * Sans Pôle Juridique : perte = min(10 % du solde, 300 × revenu/s), réputation −2, jamais négatifs.
+ * Sans Pôle Juridique : perte = min(10 % du solde, 300 × revenu/s) × facteur de difficulté, réputation −2, jamais négatifs.
  */
 export function resolveTaxAudit(state: GameState, incomePerSecond: number): TaxAuditOutcome {
   if (isProtectedFromTaxAudit(state)) {
@@ -111,7 +112,8 @@ export function resolveTaxAudit(state: GameState, incomePerSecond: number): TaxA
     return { state: { ...state, reputation: state.reputation + gain }, protected: true, loss: 0, reputationChange: gain };
   }
   const money = Math.max(state.money, 0);
-  const loss = Math.max(0, Math.min(money * TAX_AUDIT.maxLossShare, incomePerSecond * TAX_AUDIT.maxLossIncomeSeconds));
+  const factor = getDifficulty(state).taxAuditLoss;
+  const loss = Math.max(0, Math.min(money * TAX_AUDIT.maxLossShare * factor, incomePerSecond * TAX_AUDIT.maxLossIncomeSeconds * factor));
   const reputation = Math.max(0, state.reputation - TAX_AUDIT.reputationLoss);
   return {
     state: { ...state, money: state.money - loss, reputation },

@@ -24,12 +24,12 @@ export class SettingsPanel {
   private readonly secrets = h('section', { class: 'settings__secrets', hidden: true });
   private secretsShown = -1;
 
-  constructor(profileName: string | null, handlers: SettingsHandlers) {
+  constructor(profileName: string | null, difficultyName: string, handlers: SettingsHandlers) {
     if (profileName === null) {
       this.el.append(h('p', { class: 'settings__profile', text: SAVE_TEXTS.storageUnavailable }));
       return;
     }
-    setText(this.name, `Cabinet : ${profileName}`);
+    setText(this.name, `Cabinet : ${profileName} · ${difficultyName}`);
     this.el.append(
       this.name,
       row('Changer de cabinet', 'Sauvegarde puis revient à l’écran d’accueil.', handlers.onSwitchProfile),

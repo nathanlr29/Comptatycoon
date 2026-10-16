@@ -78,7 +78,7 @@ describe('amélioration', () => {
   it('suit cost × 5^niveau, et la table explicite pour le Bureau principal', () => {
     expect(getUpgradeCost(BUILDINGS.openSpace, 1)).toBe(1_000);
     expect(getUpgradeCost(BUILDINGS.openSpace, 2)).toBe(5_000);
-    expect([1, 2, 3, 4].map((l) => getUpgradeCost(BUILDINGS.headquarters, l))).toEqual([500, 5_000, 50_000, 500_000]);
+    expect([1, 2, 3, 4].map((l) => getUpgradeCost(BUILDINGS.headquarters, l))).toEqual([500, 7_500, 500_000, 25_000_000]);
   });
 
   it('durée = 10 s × niveau², plafonnée à 10 min', () => {

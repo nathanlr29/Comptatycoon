@@ -1,5 +1,6 @@
 import { BALANCE } from '../data/balance';
 import { accrueReputation, completeConstructions } from './buildings';
+import { getOfflineCapMs } from './difficulty';
 import { getBaseIncomePerSecond } from './economy';
 import type { GameState } from './state';
 
@@ -7,7 +8,7 @@ import type { GameState } from './state';
 export interface OfflineReport {
   /** Temps réellement écoulé depuis `lastSimulatedAt` (0 si l'horloge a reculé). */
   elapsedMs: number;
-  /** Temps pris en compte, plafonné à `BALANCE.offlineCapMs`. */
+  /** Temps pris en compte, plafonné selon le mode de difficulté (`getOfflineCapMs`). */
   creditedMs: number;
   capped: boolean;
   earned: number;
@@ -21,7 +22,7 @@ export interface OfflineOutcome {
 
 /**
  * Rattrape l'absence de `lastSimulatedAt` jusqu'à `now`, en une fois :
- * revenu/s sans multiplicateur d'événement × durée plafonnée à 8 h.
+ * revenu/s sans multiplicateur d'événement × durée plafonnée (8 h en Classique, voir `getOfflineCapMs`).
  * Les chantiers échus pendant la fenêtre créditée s'achèvent à leur heure (le revenu suit leur nouveau niveau),
  * ceux échus après la fenêtre mais avant `now` s'achèvent aussi, sans revenu supplémentaire.
  * Les effets temporaires expirés sont retirés et `lastSimulatedAt` passe à `now`,
@@ -29,7 +30,7 @@ export interface OfflineOutcome {
  */
 export function catchUpOffline(state: GameState, now: number): OfflineOutcome {
   const elapsedMs = Math.max(0, now - state.lastSimulatedAt);
-  const creditedMs = Math.min(elapsedMs, BALANCE.offlineCapMs);
+  const creditedMs = Math.min(elapsedMs, getOfflineCapMs(state));
   const windowEnd = state.lastSimulatedAt + creditedMs;
 
   // Production par tranches : de chantier achevé en chantier achevé, puis jusqu'à la fin de la fenêtre.

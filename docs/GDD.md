@@ -72,10 +72,10 @@ Ordres de grandeur : chaque série de formations multiplie sa catégorie par 4,5
 | Alternant | 15 € | 0,5 €/s | — | oui |
 | Junior | 120 € | 4 €/s | — | oui |
 | Senior | 1 300 € | 30 €/s | réputation ≥ 5 | oui |
-| Manager | 14 000 € | 250 €/s | réputation ≥ 20 | oui |
+| Manager | 20 000 € | 250 €/s | réputation ≥ 20 | oui |
 | Associé expert-comptable | voir ci-dessous | 0 €/s | réputation ≥ 10 | non |
 
-- Coût d'un collaborateur = `ceil(coûtInitial × 1,15^n)` où **n = nombre déjà possédés dans cette catégorie** (le prix baisse donc après une démission ; c'est voulu).
+- Coût d'un collaborateur = `ceil(coûtInitial × hausse^n)` où **n = nombre déjà possédés dans cette catégorie** (le prix baisse donc après une démission ; c'est voulu). Hausse : 1,15 pour alternants et juniors, 1,2 pour les seniors, 1,25 pour les managers (rééquilibrage du 16/10/2026 : à capacité limitée, une hausse unique de 1,15 rendait seniors et managers presque gratuits en milieu de partie).
 - Le joueur est le **premier associé** : 1 associé au départ, gratuit.
 - Coût de l'associé suivant = `ceil(25 000 × 4^(a − 1))`, a = nombre d'associés achetés en plus du premier (+1). Soit 25 000 €, 100 000 €, 400 000 €…
 - **Capacité d'encadrement** = `associés × 15`. Alternants, juniors, seniors et managers comptent ; les associés non.
@@ -89,6 +89,7 @@ Ordres de grandeur : chaque série de formations multiplie sa catégorie par 4,5
 revenu/s = Σ_catégories (effectif × production × multCatégorie)
            × multGlobal (bâtiments, départements, technologies, portefeuilles)
            × multRéputation
+           × multMode (§13) × multRéseau (§14)
            × multÉvénement (1 ou 2)
 ```
 Les multiplicateurs d'une même famille se **multiplient** entre eux. Une seule fonction `getIncomePerSecond(state, now)` dans `core/economy.ts`, utilisée par le HUD, la simulation et le calcul hors ligne.
@@ -103,9 +104,9 @@ Niveaux du cabinet = niveaux du Bureau principal = étape du plan dessiné (`src
 |---|---|---|---|---|---|
 | 1 | Le petit bureau | départ | — | 8 × 6 | votre bureau, open space, salle serveurs |
 | 2 | Le local voisin | 500 € | 5 collaborateurs | 12 × 9 | salle de réunion ; place pour le Pôle Social et le Pôle Juridique |
-| 3 | Le plateau | 5 000 € | 12 collaborateurs | 16 × 11 | place pour le Pôle Conseil & Audit |
-| 4 | L'étage complet | 50 000 € | 20 collaborateurs, 2 associés | 20 × 13 | coin plantes, fontaine |
-| 5 | Le siège | 500 000 € | 35 collaborateurs, 3 associés | 24 × 15 | (grand espace commun) |
+| 3 | Le plateau | 7 500 € | 12 collaborateurs | 16 × 11 | place pour le Pôle Conseil & Audit |
+| 4 | L'étage complet | 500 000 € | 20 collaborateurs, 2 associés | 20 × 13 | coin plantes, fontaine |
+| 5 | Le siège | 25 000 000 € | 35 collaborateurs, 3 associés | 24 × 15 | (grand espace commun) |
 
 Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes dans l'espace commun.
 
@@ -133,9 +134,9 @@ Les technologies (Automatisation de la saisie, Assistant comptable IA…) sont d
 
 | Achat | Coût | Prérequis | Effet |
 |---|---|---|---|
-| Pôle Social (paie, DSN) | 20 000 € | cabinet niv. 2, réputation ≥ 15 | +150 €/s ; juniors ×1,5 |
-| Pôle Juridique (secrétariat, AG, statuts) | 60 000 € | cabinet niv. 2, réputation ≥ 25 | immunité au contrôle fiscal ; seniors ×1,5 |
-| Pôle Conseil & Audit (fiscal, stratégie, CAC) | 400 000 € | cabinet niv. 3, réputation ≥ 50 | production globale ×2 ; managers ×1,5 |
+| Pôle Social (paie, DSN) | 50 000 € | cabinet niv. 2, réputation ≥ 15 | +150 €/s ; juniors ×1,5 |
+| Pôle Juridique (secrétariat, AG, statuts) | 500 000 € | cabinet niv. 2, réputation ≥ 25 | immunité au contrôle fiscal ; seniors ×1,5 |
+| Pôle Conseil & Audit (fiscal, stratégie, CAC) | 20 000 000 € | cabinet niv. 3, réputation ≥ 50 | production globale ×2 ; managers ×1,5 |
 | Rachat de portefeuille clients (**répétable**) | `ceil(10 000 × 1,5^n)` | Pôle Social | production globale +5 % et +2 réputation par rachat |
 
 Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat répétable affiche son compteur.
@@ -157,7 +158,7 @@ Un achat unique déjà fait n'est plus proposé (bouton « Acquis »). Un achat 
 | Événement | Poids | Éligible si | Effet |
 |---|---|---|---|
 | Période fiscale | 40 | toujours | revenu passif ×2 pendant 20 s ; si déjà active, la durée est remise à 20 s (pas de cumul) |
-| Contrôle fiscal | 25 | ≥ 5 collaborateurs | sans Pôle Juridique : perte = `min(10 % du solde, 300 × revenu/s)` et réputation −2 ; avec : notification positive, réputation +1 |
+| Contrôle fiscal | 25 | ≥ 5 collaborateurs | sans Pôle Juridique : perte = `min(10 % du solde, 300 × revenu/s)` × facteur du mode (§13) et réputation −2 ; avec : notification positive, réputation +1 |
 | Démission en cascade | 20 | ≥ 1 collaborateur hors associés | 1 collaborateur part ; catégorie tirée au prorata des effectifs ; jamais un associé |
 | Client prestigieux | 15 | toujours | +3 réputation et prime = 60 × revenu/s |
 
@@ -186,7 +187,7 @@ Liste fixe de 12 à 15 objectifs affichés un ou deux à la fois, avec récompen
 
 ## 10. Temps, absence, sauvegarde
 - `lastSimulatedAt` = horodatage jusqu'où la production a été créditée. Toute avance de temps passe par `core/offline.ts` puis met à jour `lastSimulatedAt` : une période n'est jamais comptée deux fois.
-- Au chargement et au retour d'onglet caché : delta = `now − lastSimulatedAt`, ramené à `[0 ; 8 h]` (horloge reculée → 0).
+- Au chargement et au retour d'onglet caché : delta = `now − lastSimulatedAt`, ramené à `[0 ; plafond]` (horloge reculée → 0). Plafond : 8 h en Classique, 12 h en Détente, 4 h en Exigeant (§13).
 - Production d'absence = revenu/s **sans** multiplicateur d'événement × delta. Les effets temporaires expirés pendant l'absence sont retirés.
 - Récapitulatif affiché si delta > 60 s : durée prise en compte (et mention si plafonnée), gain, nouveau solde.
 - Sauvegarde : toutes les 15 s, après chaque achat, sur `visibilitychange` (caché) et `pagehide`.
@@ -201,7 +202,7 @@ Premier écran du jeu, avant la vue du cabinet.
 
 **Étape 6 (local, sans réseau)**
 - Liste des cabinets de cet appareil (5 au maximum) : nom du cabinet, revenu/s, date de dernière partie. Le dernier joué est en tête avec un grand bouton **Continuer**.
-- **Nouveau cabinet** : saisir un nom (2 à 24 caractères), la partie démarre.
+- **Nouveau cabinet** : saisir un nom (2 à 24 caractères) et choisir la difficulté (§13, Classique par défaut), la partie démarre. La carte d'un cabinet rappelle son mode s'il n'est pas Classique.
 - Par cabinet (menu ⋯) : renommer, exporter, supprimer (confirmation en tapant le nom).
 - Dans le jeu, Paramètres › **Changer de cabinet** sauvegarde puis revient à l'écran d'accueil.
 - Stockage : un index `comptatycoon:profiles` (id, nom, résumé, dates, `ownerUid?`) + une sauvegarde par cabinet `comptatycoon:save:<id>`. Le résumé est mis à jour à chaque sauvegarde pour afficher la liste sans charger les parties.
@@ -218,4 +219,25 @@ Premier écran du jeu, avant la vue du cabinet.
 fr-FR : `1 234 €`, `12,5 k€`, `3,40 M€`, `1,2 Md€`, puis notation scientifique. Revenu/s avec une décimale sous 100 €/s.
 
 ## 12. Hors V1 (ne pas implémenter, ne pas afficher)
-Prestige / revente du cabinet, comptes, cloud, classements, monétisation, publicités, sons (optionnel en étape 8 si simple), éditeur de carte libre, personnages animés qui se déplacent.
+Comptes, cloud, classements, monétisation, publicités, sons (optionnel en étape 8 si simple), éditeur de carte libre, personnages animés qui se déplacent.
+
+## 13. Modes de difficulté
+Choisis à la fondation du cabinet (écran d'accueil), **définitifs** : rappelés dans Paramètres et sur la carte du cabinet. Une réinitialisation garde le mode. Données : `src/data/difficulty.ts` ; règles : `src/core/difficulty.ts`.
+
+| Mode | Production passive | Absence créditée | Contrôle fiscal | Démissions | Contacts à la cession (§14) |
+|---|---|---|---|---|---|
+| Détente | ×1,5 | 12 h | poids ×0,5, perte ×0,5 | poids ×0,5 | ×1 |
+| Classique (défaut) | ×1 | 8 h | inchangé | inchangé | ×1 |
+| Exigeant | ×0,7 | 4 h | poids ×1,6, perte ×1,5 | poids ×1,5 | ×1,5 |
+
+- Le facteur de production s'applique avec le réseau (§14) après la réputation : `revenu/s = … × multRéputation × multMode × multRéseau × multÉvénement`. Le gain de base du clic (1 €) n'est pas modifié ; la part du revenu/s ajoutée au clic suit le revenu.
+- Les anciennes sauvegardes sans mode sont relues en Classique (aucun changement de version de schéma).
+
+## 14. Cession du cabinet (prestige)
+Onglet **« Cession »** du panneau « Améliorer ». Quand le cabinet a atteint **Le siège** (niveau 5), le joueur peut le céder à un confrère et repartir du petit bureau en gardant son **réseau** : des contacts qui augmentent la production pour toujours.
+- Contacts gagnés = `floor(√(chiffre d'affaires de la partie / 1 000 000) × facteur du mode)` : 10 contacts à 100 M€, 31 à 1 Md€, 100 à 10 Md€. Cession refusée si elle rapporte 0 contact.
+- Chaque contact : production +10 % (bonus additif `1 + 0,1 × contacts`, multiplié avec les autres sources).
+- Gardés : contacts, nombre de cessions, chiffre d'affaires cumulé des parties précédentes, mode de difficulté, date de fondation. Tout le reste repart de zéro (argent, équipe, associés, améliorations, pièces, pôles, réputation, objectifs, statistiques de la partie).
+- Confirmation obligatoire (fenêtre qui rappelle le total de contacts et ce qui est perdu). Après la cession, la caméra se recentre sur le petit bureau.
+- État : `prestige: { contacts, sales, pastEarned }` dans `GameState`, lu par `SaveSchema.readState()` (absent = aucun contact). Action `{ type: 'sellFirm' }` ; règles dans `src/core/prestige.ts`, chiffres dans `src/data/prestige.ts`.
+- Rythme mesuré par le joueur simulé (`npm run simulate`, 2 saisies/s, achète tout dès que possible, avec les 36 améliorations) : Pôle Social vers 10 min, Le siège et première cession vers 23 min ; chaque partie suivante atteint le siège en 10 à 15 min et le réseau double à chaque cession. Un vrai joueur, qui ne clique ni n'achète en continu, va nettement moins vite.
