@@ -8,7 +8,7 @@
 - [x] 03 Carte et caméra
 - [x] 04 HUD et panneaux (prototype jouable)
 - [ ] 05 Bâtiments et construction
-- [ ] 06 Profils, sauvegarde et progression hors ligne
+- [x] 06 Profils, sauvegarde et progression hors ligne (reste : chantiers terminés hors ligne, après l'étape 5)
 - [ ] 07 Départements, technologies, événements, objectifs
   - Pôles, règles du jeu (16/10/2026, avancé) : `src/data/departments.ts` (Pôle Social, Pôle Juridique, Pôle Conseil & Audit, rachat de portefeuille, contrôle fiscal) et `src/core/departments.ts` (prérequis : locaux aménagés + réputation, achat unique +5 réputation, effets branchés dans `getMultipliers`, rachat répétable, `resolveTaxAudit` avec immunité du Pôle Juridique). Actions `buyDepartment` et `buyPortfolio`. Tests `tests/departments.test.ts`. Pas encore affiché (fil « Pôles : pièces et écrans ») ; le tirage des événements reste à faire. Champs `departments` et `portfolios` à sauvegarder (étape 6).
 - [ ] 08 Polissage, performance et PWA
@@ -17,6 +17,17 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Étape 6 terminée sauf les chantiers (16/10/2026). **La partie est sauvegardée** : écran d'accueil avec jusqu'à 5 cabinets, rattrapage hors ligne plafonné à 8 h.
+- `src/core/offline.ts` : `catchUpOffline` (revenu/s sans effets temporaires × absence plafonnée à 8 h, horloge reculée → 0, effets expirés retirés, `lastSimulatedAt` = now) et `isAbsence` (> 1 min sans simulation). `GameStore` : `catchUp(now)`, `replace(state)`, `onAction(fn)`. Constantes `offlineCapMs`, `offlineSummaryMinMs` dans `balance.ts`. `formatDuration`, `formatDate` dans `format.ts`.
+- `src/persistence/` : `SaveSchema.ts` (v1, validation champ par champ qui nomme le champ fautif, migration v0 → v1), `SaveService.ts` (interface, clés), `ProfileStore.ts` (index `comptatycoon:profiles`, 5 cabinets, noms 2 à 24 caractères, résumé mis à jour à chaque sauvegarde, index illisible mis de côté), `LocalSaveService.ts` (clé de secours = sauvegarde valide précédente, données illisibles gardées sous `…:corrupt-<horodatage>`, quota et stockage refusé gérés, export / import texte, `navigator.storage.persist()`).
+- `src/main.ts` affiche `ui/ProfileScreen.ts` ; Phaser n'est créé qu'après le choix (`src/session.ts`). Sauvegarde toutes les 15 s, après chaque achat (`store.onAction`), onglet caché et `pagehide` ; rattrapage au chargement, au retour d'onglet et après une veille (> 1 min sans image). Récapitulatif « Pendant votre absence » au-delà d'une minute.
+- `ui/Modal.ts`, `ui/saveDialogs.ts` (exporter, importer, renommer, supprimer en retapant le nom), `ui/SettingsPanel.ts` (bouton engrenage au-dessus de « Recentrer » : changer de cabinet, exporter, importer, réinitialiser avec double confirmation). Textes dans `src/data/saveTexts.ts`. Changer de cabinet sauvegarde puis recharge la page.
+- Stockage refusé (mode privé) : message et bouton « Jouer sans sauvegarde ».
+- Reste : terminer pendant l'absence les chantiers de l'étape 5, quand elle sera fusionnée.
+- Le schéma lit aussi `departments` et `portfolios` (vides / 0 s'ils manquent) ; les identifiants d'amélioration ou de pôle inconnus sont ignorés sans rejeter la partie.
+- `npm run check` : typage OK, 101 tests OK, build OK.
+- Vérifié en Chromium headless (émulation iPhone 13, puis paysage 844 × 390) : création d'un cabinet, sauvegarde après achat (clé principale + secours), absence simulée de 10 h → 8 h créditées (0,5 €/s → +14,4 k€), Paramètres, export, changer de cabinet, import, menu ⋯, sauvegarde corrompue → message, aucun débordement horizontal, aucune erreur console.
+
 Licenciements et nouvelles améliorations (16/10/2026, demande de Nathan, hors étapes).
 - Bouton « − » à côté de chaque recrutement (associés compris) : premier appui = indemnité affichée, second appui dans les 3 s = départ. Indemnité = 25 % du prix payé pour le dernier recruté (`BALANCE.severanceShare`). Jamais le dernier associé ; un associé ne part pas si l'équipe dépasserait les places restantes. Actions `dismiss` et `dismissPartner`, `canDismiss`/`canDismissPartner` dans `core/recruitment.ts`.
 - 10 améliorations au lieu de 2 (GDD §3 bis) : scanner, OCR, EBICS, EDI, facture électronique, logiciel de révision, GED, tableaux de bord… Effets clic / poste / global dans `data/upgrades.ts`, prérequis et réputation vérifiés par `core/upgrades.ts`. Le Logiciel OCR quitte la table des technologies (§7) : l'étape 7 ne doit pas le recréer, l'Automatisation de la saisie le demande.
@@ -69,6 +80,11 @@ Refonte graphique « vue intérieure » (16/10/2026, demande de Nathan) : le jeu
 - iPhone : rotation portrait ↔ paysage sans déformation ni zone vide ; bouton Recentrer atteignable au pouce.
 - iPhone : bouton « Saisir une facture » atteignable au pouce, texte `+X €` lisible ; feuille de recrutement qui se ferme en la glissant vers le bas.
 - Trackpad Mac : le pincement du trackpad zoome la carte (il arrive comme une molette avec ctrl).
+- iPhone : l'écran d'accueil tient sous l'encoche, le clavier ne masque pas le champ « Nom du cabinet », pas de zoom sur le champ.
+- iPhone : quitter Safari quelques minutes puis revenir affiche « Pendant votre absence » ; verrouiller l'écran puis déverrouiller aussi.
+- iPhone : Exporter › Copier fonctionne, et le texte collé dans Importer sur un autre appareil recrée le cabinet.
 
 ## Idées / plus tard
 _(Hors périmètre de l'étape en cours.)_
+- Importer un cabinet du même nom qu'un existant : ajouter un suffixe (« (2) ») pour les distinguer.
+- Index des cabinets illisible : le reconstruire à partir des clés `comptatycoon:save:*` au lieu de repartir d'une liste vide.

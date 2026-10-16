@@ -40,3 +40,21 @@ export function formatRate(value: number): string {
   if (Math.abs(value) < 100) return `${fixed(value, 1)}${NBSP}€/s`;
   return `${formatMoney(value)}/s`;
 }
+
+/** Durée lisible : `45 s`, `12 min`, `2 h 15 min`, `8 h` (arrondie à l'inférieur). */
+export function formatDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  if (totalSeconds < 60) return `${totalSeconds}${NBSP}s`;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  if (totalMinutes < 60) return `${totalMinutes}${NBSP}min`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes === 0 ? `${hours}${NBSP}h` : `${hours}${NBSP}h ${minutes}${NBSP}min`;
+}
+
+const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+/** Date de dernière partie : `16 oct., 14:05`. */
+export function formatDate(timestamp: number): string {
+  return DATE_FORMAT.format(timestamp);
+}
