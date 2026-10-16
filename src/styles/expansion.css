@@ -89,3 +89,25 @@
   width: 100%;
   margin-top: 16px;
 }
+
+/* ---------- Pièces ---------- */
+.rooms__bar {
+  display: block;
+  height: 8px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--text-2) 25%, transparent);
+}
+
+.rooms__bar[hidden] {
+  display: none;
+}
+
+.rooms__fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 250ms linear;
+}

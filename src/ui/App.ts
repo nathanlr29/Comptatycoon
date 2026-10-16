@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { GameStore } from '../core/store';
 import type { GameState } from '../core/state';
+import { BUILDINGS, type BuildingType } from '../data/buildings';
 import { DEPARTMENT_IDS, DEPARTMENTS, type DepartmentId } from '../data/departments';
 import { canExpand, getFirmLevel } from '../core/expansion';
 import { getExpansionLevel } from '../data/expansion';
@@ -16,6 +17,7 @@ import { LiveInfo } from './LiveInfo';
 import { NotificationManager } from './NotificationManager';
 import { Panel } from './Panel';
 import { RecruitmentPanel } from './RecruitmentPanel';
+import { RoomsPanel } from './RoomsPanel';
 import { DevelopmentPanel } from './DevelopmentPanel';
 import { departmentViews } from './departmentViews';
 import { Tabs } from './Tabs';
@@ -43,8 +45,16 @@ export class App {
   private readonly upgrades: UpgradesPanel;
   /** « Améliorer » : améliorations et onglet Développement (pôles). */
   private readonly growth: Tabs;
-  private readonly buildingInfo = new BuildingInfo(() => this.show('Agrandir le cabinet', this.expansion));
+  private readonly buildingInfo = new BuildingInfo(() => this.openFirm(0));
   private readonly expansion = new ExpansionPanel(() => this.expand());
+  private readonly rooms = new RoomsPanel({ onBuild: (type) => this.build(type), onUpgrade: (id) => this.upgradeRoom(id) });
+  /** « Agrandir » : les locaux (niveaux du cabinet) et les pièces à aménager. */
+  private readonly firm = new Tabs([
+    { label: 'Locaux', view: this.expansion },
+    { label: 'Pièces', view: this.rooms },
+  ]);
+  /** Pièces en travaux au dernier rendu, pour annoncer leur fin. */
+  private roomWorks = new Set<string>();
   /** Niveau du cabinet au dernier rendu, pour annoncer la fin des travaux d'agrandissement. */
   private firmLevel = Number.POSITIVE_INFINITY;
   private readonly expandButton = h('button', { class: 'expand-button', type: 'button', 'aria-label': 'Agrandir le cabinet' });
@@ -76,7 +86,7 @@ export class App {
 
     this.expandButton.innerHTML = ICONS.expand;
     this.expandButton.append(h('span', { text: 'Agrandir' }));
-    this.expandButton.addEventListener('click', () => this.show('Agrandir le cabinet', this.expansion));
+    this.expandButton.addEventListener('click', () => this.openFirm(0));
     query('.map-controls').prepend(this.expandButton);
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
@@ -111,9 +121,45 @@ export class App {
     this.notifications.show('Travaux d’agrandissement lancés', `${next.name} dans ${remaining}`);
   }
 
+  private openFirm(tab: number): void {
+    this.firm.select(tab);
+    this.show('Agrandir le cabinet', this.firm);
+  }
+
+  /** Lance l'aménagement d'une pièce : le jeu lui choisit une place libre. */
+  private build(type: BuildingType): void {
+    if (!this.store.dispatch({ type: 'build', building: type }, Date.now()).ok) return;
+    this.notifyWorks(type);
+  }
+
+  private upgradeRoom(buildingId: string): void {
+    if (!this.store.dispatch({ type: 'upgradeBuilding', buildingId }, Date.now()).ok) return;
+    const building = this.store.getState().buildings.find((b) => b.id === buildingId);
+    if (building) this.notifyWorks(building.type);
+  }
+
+  private notifyWorks(type: BuildingType): void {
+    const building = this.store.getState().buildings.find((b) => b.type === type);
+    const remaining = building?.pending ? durationText(building.pending.endsAt - Date.now()) : '';
+    this.notifications.show('Travaux lancés', `${BUILDINGS[type].name} dans ${remaining}`);
+  }
+
+  /** Annonce les pièces dont les travaux viennent de finir (le Bureau principal a son propre message). */
+  private announceFinishedRooms(state: GameState): void {
+    const pending = new Set(state.buildings.filter((b) => b.pending && b.id !== 'hq').map((b) => b.id));
+    for (const id of this.roomWorks) {
+      const building = state.buildings.find((b) => b.id === id);
+      if (!pending.has(id) && building) this.notifications.show('Travaux terminés', `${BUILDINGS[building.type].name}, niveau ${building.level}`, 'success');
+    }
+    this.roomWorks = pending;
+  }
+
   private onBuildingSelected(id: string | null): void {
     if (id === 'hq') this.show('Bureau principal', this.buildingInfo, true);
-    else if (this.openView === this.buildingInfo) this.panel.close();
+    else if (id) {
+      this.firm.select(1);
+      this.show('Agrandir le cabinet', this.firm, true);
+    } else if (this.openView === this.buildingInfo) this.panel.close();
   }
 
   show(title: string, view: View, fromMap = false): void {
@@ -136,6 +182,7 @@ export class App {
       if (level) this.notifications.show('Cabinet agrandi', `${level.name} · +1 réputation`, 'success');
     }
     this.firmLevel = firmLevel;
+    this.announceFinishedRooms(state);
     this.dock.setLabel(clickLabel(getFirmLevel(state)));
     this.expandButton.classList.toggle('expand-button--ready', canExpand(state).ok);
     this.openView?.render(state, now);
