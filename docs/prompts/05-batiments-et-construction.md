@@ -6,8 +6,8 @@ Lis `CLAUDE.md`, `PROGRESS.md` et `docs/GDD.md` §6. Le jeu se passe à l'intér
 1. `data/buildings.ts` : bâtiments du GDD (sauf locaux de départements : seulement leurs emplacements verrouillés pour l'instant).
 2. `core/buildings.ts` : prérequis, coût de construction et d'amélioration, lancement de chantier (`buildEndsAt`), fin de chantier dans `tick`, effets ajoutés aux multiplicateurs de `economy.ts`, réputation gagnée, ouverture des parcelles selon le niveau du Bureau principal.
 3. Actions `build(slotId, type)` et `upgrade(buildingId)` avec raisons de refus.
-4. Rendu : cinq états visuels distincts (verrouillé, libre, travaux avec barre, aménagé, améliorable). Dessiner chaque pièce avec `game/rooms.ts` (`drawRoom(g, type, level, rect)`, mobilier qui s'enrichit avec le niveau) + badge de niveau ; l'open space montre un poste occupé par alternant ou junior (GDD §6).
-5. Panneau bâtiment : statistiques, effet actuel et suivant, coût, durée, bouton Construire / Améliorer avec raison si impossible. Tap sur un emplacement libre → liste des pièces aménageables ici.
+4. Rendu en fausse 3D (GDD §6) : la pièce achetée apparaît à sa place (`ROOMS` dans `src/data/office.ts`) ; travaux avec bâche et barre ; badge de niveau ; rien n'est dessiné pour une pièce non achetée (aucun emplacement « + »). Le dessin isométrique est fourni par `src/game/` (projection `iso.ts`).
+5. Panneau bâtiment : statistiques, effet actuel et suivant, coût, durée, bouton Construire / Améliorer avec raison si impossible. Les achats se font depuis le menu « Agrandir le cabinet » (pas de tap sur un emplacement vide).
 6. Animation légère à la fin des travaux et notification.
 
 ## Tests obligatoires

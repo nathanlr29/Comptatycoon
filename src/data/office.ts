@@ -1,0 +1,243 @@
+/**
+ * Plan du cabinet en fausse 3D (docs/GDD.md §6) : emprise de chaque niveau d'agrandissement,
+ * pièces à leur place prédéfinie, postes de travail (un par collaborateur affiché) et mobilier.
+ * Coordonnées en cases de la grille isométrique (voir src/game/iso.ts) : x vers le bas à droite,
+ * y vers le bas à gauche, origine au coin du fond. Rien n'est dessiné pour une pièce non achetée.
+ */
+
+export interface TileRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Direction du regard d'une personne assise : n = −y, e = +x, s = +y, w = −x. `s` et `e` font face à l'écran. */
+export type Facing = 'n' | 'e' | 's' | 'w';
+
+/**
+ * Poste de travail. (x, y) = centre du siège, où se dessine la personne ;
+ * le bureau est une demi-case plus loin dans la direction `facing`.
+ */
+export interface Desk {
+  x: number;
+  y: number;
+  facing: Facing;
+  /** Poste réservé : `director` = le joueur, `partner` = un associé. Sinon, poste de collaborateur. */
+  reserved?: 'director' | 'partner';
+}
+
+export type FurnitureType =
+  | 'plant'
+  | 'cabinet'
+  | 'bookshelf'
+  | 'sofa'
+  | 'meetingTable'
+  | 'rack'
+  | 'printer'
+  | 'coffee'
+  | 'reception'
+  | 'whiteboard'
+  | 'fountain'
+  | 'bench';
+
+export interface Furniture {
+  type: FurnitureType;
+  /** Coin du fond de l'emprise (cases). */
+  x: number;
+  y: number;
+  facing?: Facing;
+}
+
+/** Types de pièces, alignés sur les types de bâtiments (docs/GDD.md §6 et src/data/departments.ts). */
+export type RoomType =
+  | 'headquarters'
+  | 'openSpace'
+  | 'meetingRoom'
+  | 'serverRoom'
+  | 'socialWing'
+  | 'legalWing'
+  | 'advisoryWing'
+  | 'garden'
+  | 'fountain';
+
+export interface RoomLayout {
+  type: RoomType;
+  rect: TileRect;
+  /** Niveau d'agrandissement à partir duquel la place existe. */
+  minStage: number;
+  /** Ouverture de la cloison : côté avant (`s` = bord y + h, `e` = bord x + w) et position le long du bord. */
+  door: { side: 's' | 'e'; at: number };
+  desks: Desk[];
+  furniture: Furniture[];
+}
+
+export interface OfficeStage {
+  /** 1 = petit bureau de départ. */
+  stage: number;
+  name: string;
+  /** Emprise totale du cabinet à ce niveau, toujours ancrée en (0, 0). */
+  size: { w: number; h: number };
+  /** Porte d'entrée sur le bord avant (y = h), position x. */
+  entranceX: number;
+  /** Postes et mobilier de l'espace commun ajoutés par ce niveau (cumulés avec les niveaux précédents). */
+  desks: Desk[];
+  furniture: Furniture[];
+}
+
+/** Rangée de postes le long de x. */
+function row(x: number, y: number, count: number, facing: Facing, step = 1.5): Desk[] {
+  return Array.from({ length: count }, (_, i) => ({ x: x + i * step, y, facing }));
+}
+
+/** Colonne de postes le long de y. */
+function col(x: number, y: number, count: number, facing: Facing, step = 1.5): Desk[] {
+  return Array.from({ length: count }, (_, i) => ({ x, y: y + i * step, facing }));
+}
+
+export const OFFICE_STAGES: OfficeStage[] = [
+  {
+    stage: 1,
+    name: 'Le petit bureau',
+    size: { w: 8, h: 6 },
+    entranceX: 7,
+    desks: row(3.9, 4.1, 3, 'n', 1.4),
+    furniture: [{ type: 'plant', x: 7.2, y: 3.2 }, { type: 'printer', x: 3.1, y: 5.2 }],
+  },
+  {
+    stage: 2,
+    name: 'Le local voisin',
+    size: { w: 12, h: 9 },
+    entranceX: 9,
+    desks: row(5.6, 7.6, 2, 'n', 1.4),
+    furniture: [{ type: 'coffee', x: 8.2, y: 8.2 }, { type: 'plant', x: 11.2, y: 8.2 }],
+  },
+  {
+    stage: 3,
+    name: 'Le plateau',
+    size: { w: 16, h: 11 },
+    entranceX: 13,
+    desks: [...row(12.8, 7.2, 3, 's', 1.2), ...row(12.8, 9.4, 3, 'n', 1.2)],
+    furniture: [{ type: 'reception', x: 9, y: 9.4 }, { type: 'plant', x: 0.2, y: 10.2 }],
+  },
+  {
+    stage: 4,
+    name: "L'étage complet",
+    size: { w: 20, h: 13 },
+    entranceX: 17,
+    desks: row(0.9, 12.1, 9, 'n', 1.6),
+    furniture: [{ type: 'plant', x: 15.4, y: 12.2 }, { type: 'coffee', x: 19.1, y: 12.1 }],
+  },
+  {
+    stage: 5,
+    name: 'Le siège',
+    size: { w: 24, h: 15 },
+    entranceX: 21,
+    desks: [...col(21.2, 0.9, 8, 'w', 1.5), ...col(23.2, 0.9, 8, 'w', 1.5), ...row(0.9, 14.1, 12, 'n', 1.6)],
+    furniture: [{ type: 'plant', x: 20.2, y: 13.2 }, { type: 'sofa', x: 22, y: 13.3 }],
+  },
+];
+
+export const ROOMS: RoomLayout[] = [
+  {
+    type: 'headquarters',
+    rect: { x: 0, y: 0, w: 3, h: 3 },
+    minStage: 1,
+    door: { side: 'e', at: 2.2 },
+    desks: [
+      { x: 1.3, y: 0.9, facing: 's', reserved: 'director' },
+      { x: 0.6, y: 2.3, facing: 'e', reserved: 'partner' },
+      { x: 2.2, y: 2.4, facing: 'n', reserved: 'partner' },
+    ],
+    furniture: [{ type: 'bookshelf', x: 2, y: 0 }, { type: 'plant', x: 0.1, y: 0.1 }],
+  },
+  {
+    type: 'openSpace',
+    rect: { x: 3, y: 0, w: 5, h: 3 },
+    minStage: 1,
+    door: { side: 's', at: 4 },
+    desks: [...row(3.8, 1.0, 3, 's', 1.5), ...row(3.8, 2.3, 3, 'n', 1.5)],
+    furniture: [{ type: 'plant', x: 7.2, y: 0.1 }],
+  },
+  {
+    type: 'serverRoom',
+    rect: { x: 0, y: 3, w: 3, h: 3 },
+    minStage: 1,
+    door: { side: 'e', at: 4.5 },
+    desks: [],
+    furniture: [{ type: 'rack', x: 0.2, y: 3.3 }, { type: 'rack', x: 0.2, y: 4.3 }, { type: 'rack', x: 0.2, y: 5.2 }],
+  },
+  {
+    type: 'meetingRoom',
+    rect: { x: 8, y: 0, w: 4, h: 3 },
+    minStage: 2,
+    door: { side: 's', at: 9 },
+    desks: [],
+    furniture: [{ type: 'meetingTable', x: 9, y: 0.9 }, { type: 'whiteboard', x: 9.5, y: 0 }, { type: 'plant', x: 11.2, y: 0.1 }],
+  },
+  {
+    type: 'socialWing',
+    rect: { x: 8, y: 3, w: 4, h: 4 },
+    minStage: 2,
+    door: { side: 's', at: 9 },
+    desks: [...row(8.8, 4.0, 2, 's', 2), ...row(8.8, 5.8, 2, 'n', 2)],
+    furniture: [{ type: 'cabinet', x: 11.3, y: 3.1 }, { type: 'cabinet', x: 11.3, y: 4.1 }],
+  },
+  {
+    type: 'legalWing',
+    rect: { x: 0, y: 6, w: 5, h: 3 },
+    minStage: 2,
+    door: { side: 'e', at: 7.5 },
+    desks: row(0.9, 7.9, 3, 'n', 1.5),
+    furniture: [{ type: 'bookshelf', x: 0.1, y: 6 }, { type: 'bookshelf', x: 2, y: 6 }],
+  },
+  {
+    type: 'advisoryWing',
+    rect: { x: 12, y: 0, w: 4, h: 6 },
+    minStage: 3,
+    door: { side: 's', at: 13 },
+    desks: [...row(12.8, 3.6, 3, 's', 1.2), ...row(12.8, 5.2, 3, 'n', 1.2)],
+    furniture: [{ type: 'meetingTable', x: 13, y: 1 }, { type: 'whiteboard', x: 13.5, y: 0 }],
+  },
+  {
+    type: 'garden',
+    rect: { x: 16, y: 0, w: 4, h: 5 },
+    minStage: 4,
+    door: { side: 's', at: 17 },
+    desks: [],
+    furniture: [
+      { type: 'plant', x: 16.2, y: 0.2 },
+      { type: 'plant', x: 19.1, y: 0.2 },
+      { type: 'plant', x: 16.2, y: 3.9 },
+      { type: 'bench', x: 17.3, y: 2 },
+    ],
+  },
+  {
+    type: 'fountain',
+    rect: { x: 16, y: 5, w: 4, h: 5 },
+    minStage: 4,
+    door: { side: 's', at: 17 },
+    desks: [],
+    furniture: [{ type: 'fountain', x: 17, y: 6.5 }, { type: 'plant', x: 16.2, y: 5.2 }, { type: 'plant', x: 19.1, y: 9.1 }],
+  },
+];
+
+export const MAX_STAGE = OFFICE_STAGES.length;
+
+export function getStage(stage: number): OfficeStage {
+  const index = Math.min(MAX_STAGE, Math.max(1, Math.floor(stage))) - 1;
+  return OFFICE_STAGES[index] as OfficeStage;
+}
+
+export function getRoom(type: RoomType): RoomLayout {
+  const room = ROOMS.find((r) => r.type === type);
+  if (!room) throw new Error(`Pièce inconnue : ${type}`);
+  return room;
+}
+
+/** Postes visibles : ceux des niveaux atteints, puis ceux des pièces achetées (dans cet ordre). */
+export function visibleDesks(stage: number, rooms: readonly RoomType[]): Desk[] {
+  const fromStages = OFFICE_STAGES.filter((s) => s.stage <= stage).flatMap((s) => s.desks);
+  const fromRooms = ROOMS.filter((r) => r.minStage <= stage && rooms.includes(r.type)).flatMap((r) => r.desks);
+  return [...fromRooms.filter((d) => d.reserved), ...fromStages, ...fromRooms.filter((d) => !d.reserved)];
+}

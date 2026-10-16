@@ -64,41 +64,43 @@ revenu/s = Σ_catégories (effectif × production × multCatégorie)
 ```
 Les multiplicateurs d'une même famille se **multiplient** entre eux. Une seule fonction `getIncomePerSecond(state, now)` dans `core/economy.ts`, utilisée par le HUD, la simulation et le calcul hors ligne.
 
-## 6. Vue intérieure : le cabinet et ses pièces
-Le jeu se passe **à l'intérieur** du cabinet, vu en plan de coupe de dessus (murs, sols, mobilier, ombres légères), **pas d'isométrie vraie en V1**. On commence dans un **petit bureau** loué en rez-de-chaussée ; le joueur l'agrandit depuis le menu **« Agrandir le cabinet »** (bouton « Agrandir » sur la carte, ou fiche du Bureau principal). Le niveau du cabinet est le niveau du Bureau principal : chaque niveau loue un local voisin, qui apparaît alors à l'écran avec une courte animation (caméra qui glisse vers lui, toit voisin qui s'efface ; aucune animation si `prefers-reduced-motion`). Les « bâtiments » du jeu sont des **pièces** aménagées dans des **emplacements** prédéfinis du plan (pas d'éditeur libre). La rue, en bas du plan, montre l'entrée du cabinet.
+## 6. Le cabinet en fausse 3D : agrandissements, pièces et employés
+Le jeu se passe **à l'intérieur** du cabinet, en **vue isométrique** (fausse 3D, cases en losange 2:1) : sols, murs du fond pleine hauteur, cloisons basses entre les pièces, murs avant coupés pour voir dedans, mobilier en volume avec ombres. Caméra : glisser, pincer, molette, bornée au cabinet ; le zoom de départ cadre le petit bureau. Données du plan : `src/data/office.ts` ; projection : `src/game/iso.ts`.
 
-Niveaux du cabinet (`src/data/expansion.ts`) :
-| Niv. | Nom | Prix | Équipe requise | Ajoute |
-|---|---|---|---|---|
-| 1 | Le petit bureau | départ | — | Bureau principal, accueil, premiers postes |
-| 2 | Le local voisin | 500 € | 5 collaborateurs | postes, coin café, production +10 % |
-| 3 | Le plateau | 5 000 € | 12 collaborateurs | postes, accueil, place pour des pièces, production +10 % |
-| 4 | L'étage complet | 50 000 € | 20 collaborateurs, 2 associés | postes, production +10 % |
-| 5 | Le siège | 500 000 € | 35 collaborateurs, 3 associés | postes, bureau de direction, production +10 % |
+**Aucun emplacement vide n'est affiché** (pas de « + », pas de parcelle en pointillés, pas de local « À louer »). Le joueur agrandit le cabinet depuis le menu **« Agrandir le cabinet »** (bouton « Agrandir », ou fiche du Bureau principal) et y achète ses pièces ; chaque achat fait apparaître un nouveau visuel à sa place prédéfinie, avec une courte animation d'apparition (aucune si `prefers-reduced-motion`). Pas d'éditeur libre.
 
-Le niveau du cabinet est aussi l'étape du plan dessiné : c'est le plan (`src/data/office.ts`) qui porte les postes de travail et les places des pièces. **Rien de futur n'est dessiné** : un local non loué est recouvert par le toit de l'immeuble voisin, sans panneau ni « + », et le toucher ne fait rien. Les emplacements de pièces sont internes : le joueur choisit une pièce dans un menu et le jeu la place dans le premier emplacement libre (étape 5). La caméra (glisser, pincer, molette) reste bornée au plan entier ; le zoom de départ cadre le petit bureau.
+Niveaux du cabinet = niveaux du Bureau principal = étape du plan dessiné (`src/data/expansion.ts` pour prix et conditions, `src/data/office.ts` pour l'emprise, les postes et les places des pièces) :
+| Niv. | Nom | Prix | Équipe requise | Emprise (cases) | Pièces qui y trouvent leur place |
+|---|---|---|---|---|---|
+| 1 | Le petit bureau | départ | — | 8 × 6 | votre bureau, open space, salle serveurs |
+| 2 | Le local voisin | 500 € | 5 collaborateurs | 12 × 9 | salle de réunion, locaux Pôle Social, locaux Pôle Juridique |
+| 3 | Le plateau | 5 000 € | 12 collaborateurs | 16 × 11 | locaux Conseil & Audit |
+| 4 | L'étage complet | 50 000 € | 20 collaborateurs, 2 associés | 20 × 13 | coin plantes, fontaine |
+| 5 | Le siège | 500 000 € | 35 collaborateurs, 3 associés | 24 × 15 | (grand espace commun) |
+
+Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes dans l'espace commun.
 
 États visuels d'une pièce : en travaux (bâche, rubalise, barre de progression) · aménagée (pièce meublée) · améliorable (badge).
 
+**Pièces** (même règles et chiffres qu'avant ; une pièce n'est proposée que si le niveau d'agrandissement lui laisse la place) :
 | Pièce | Aménagement | Niv. max | Effet par niveau | Condition |
 |---|---|---|---|---|
-| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % par niveau au-delà du 1er ; ouvre de nouveaux locaux (menu « Agrandir le cabinet », conditions d'équipe ci-dessus) | — |
+| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % par niveau au-delà du 1er ; agrandit le cabinet (menu « Agrandir le cabinet », tableau ci-dessus) | — |
 | Open space | 200 € | 5 | alternants et juniors +25 % | — |
 | Salle de réunion | 2 500 € | 5 | +1 réputation toutes les 120 s | Bureau principal niv. 2 |
 | Salle serveurs | 1 500 € | 3 | production globale +5 % ; requise pour les technologies | — |
 | Locaux Pôle Social | 15 000 € | 1 | permet d'acheter le Pôle Social | Bureau principal niv. 2 |
 | Locaux Pôle Juridique | 40 000 € | 1 | permet d'acheter le Pôle Juridique | Bureau principal niv. 2 |
 | Locaux Conseil & Audit | 250 000 € | 1 | permet d'acheter le Pôle Conseil & Audit | Bureau principal niv. 3 |
-| Coin plantes, fontaine d'intérieur (décor) | 1 000 €, 10 000 € | 1 | +3 réputation à l'aménagement | — |
+| Coin plantes, fontaine d'intérieur (décor) | 1 000 €, 10 000 € | 1 | +3 réputation à l'aménagement | agrandissement niv. 4 |
 
-(Les identifiants techniques restent ceux de la V1 : le décor garde les types `garden` et `fountain`.)
 
-- Coût d'amélioration du niveau L vers L+1 = `ceil(coûtConstruction × 5^L)`. Bureau principal : 500 €, 5 000 €, 50 000 €, 500 000 €.
-- Durée de travaux = `10 s × L²` (L = niveau visé), plafonnée à 10 min. Des travaux se terminent aussi pendant l'absence du joueur (leur effet compte à partir du retour).
-- Une pièce a : `id` stable, `type`, `level`, `slotId`, `state`, `buildEndsAt?`. Sa position vient de `slotId` (données du plan, `src/data/map.ts`).
-- Le niveau se voit dans la pièce : plus de mobilier et de postes de travail, un mobilier plus cossu, et un badge de niveau. Le Bureau principal passe d'un bureau d'angle exigu (niv. 1) à un bureau de direction (niv. 5).
-- L'open space affiche un poste occupé par collaborateur (alternants et juniors), dans la limite des postes dessinés pour son niveau. Personnages fixes, vus de dessus (pas d'animation de déplacement, voir §12).
-- Le visuel suit toujours l'état : aucune pièce n'est dessinée aménagée si elle est verrouillée ou en travaux.
+**Employés visibles** : chaque collaborateur est un personnage dessiné à un poste de travail (siège + bureau + écran), dans le style de la vue. Ordre de placement : vous et vos associés dans votre bureau (postes réservés), puis l'espace commun, puis les pièces achetées qui ont des postes (open space, locaux des pôles). Au-delà des postes visibles, un compteur « +N » près de l'entrée. Personnages fixes ou à petite animation sur place (pas de déplacement, voir §12).
+
+- Durée de travaux = `10 s × L²` (L = niveau visé), plafonnée à 10 min ; pendant les travaux, la zone concernée montre bâche et barre de progression, jamais la pièce finie. Les travaux se terminent aussi pendant l'absence (effet compté à partir du retour).
+- Coût d'amélioration d'une pièce du niveau L vers L+1 = `ceil(coûtConstruction × 5^L)`. Le niveau se voit dans la pièce (mobilier plus fourni et plus cossu) et sur un badge.
+- Une pièce a : `id` stable, `type`, `level`, `state`, `buildEndsAt?`. Sa place vient de son type (`ROOMS` dans `src/data/office.ts`) ; l'ancien `slotId` n'est plus utilisé pour la position.
+- Le visuel suit toujours l'état : rien n'est dessiné pour ce qui n'est pas acheté.
 
 ## 7. Départements et technologies (achats uniques sauf mention)
 | Achat | Coût | Prérequis | Effet |
