@@ -5,7 +5,8 @@ import { getIncomePerSecond } from '../src/core/economy';
 import { simulate } from '../src/core/store';
 import type { BuildingState, GameState } from '../src/core/state';
 import { BUILDINGS, CONSTRUCTIBLE, type BuildingType } from '../src/data/buildings';
-import { ROOMS } from '../src/data/office';
+import { MAX_FIRM_LEVEL } from '../src/data/expansion';
+import { EXTERIOR_TYPES, ROOMS } from '../src/data/office';
 import { makeState, T0 } from './helpers';
 
 const staff = { intern: 4, junior: 0, senior: 0, manager: 0 };
@@ -47,6 +48,7 @@ describe('aménagement depuis le menu', () => {
 
   it('chaque pièce a sa place fixe sur le plan, qui existe au niveau de cabinet demandé', () => {
     for (const type of CONSTRUCTIBLE) {
+      if (EXTERIOR_TYPES.includes(type)) continue;
       const place = ROOMS.find((r) => r.type === type);
       expect(place, type).toBeDefined();
       expect(BUILDINGS[type].requiresHq, type).toBeGreaterThanOrEqual(place!.minStage);
@@ -101,7 +103,7 @@ describe('amélioration', () => {
   });
 
   it('refuse au-delà du niveau maximum', () => {
-    const state = makeState({ money: 1e9, buildings: [hq(5)] });
+    const state = makeState({ money: 1e15, buildings: [hq(MAX_FIRM_LEVEL)] });
     expect(applyAction(state, { type: 'upgradeBuilding', buildingId: 'hq' }, T0).result).toEqual({ ok: false, reason: 'max_level' });
   });
 });

@@ -1,3 +1,4 @@
+import { BUILDINGS } from '../data/buildings';
 import { EVENT_IDS, EVENT_TIMING, EVENT_WEIGHTS, FISCAL_PERIOD, PRESTIGIOUS_CLIENT, TAX_AUDIT_MIN_STAFF, type EventId } from '../data/events';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { resolveTaxAudit } from './departments';
@@ -37,10 +38,14 @@ export function scheduleNextEvent(now: number, rng: Rng): number {
   return now + minIntervalMs + Math.floor(rng() * (maxIntervalMs - minIntervalMs + 1));
 }
 
-/** Poids du tirage, ajusté par le mode de difficulté et, pour les démissions, par le confort des équipes. */
+/** Poids du tirage, ajusté par le mode de difficulté, le confort des équipes (démissions) et les aménagements (terrasse, enseigne). */
 export function getEventWeight(state: GameState, id: EventId): number {
-  const comfort = id === 'resignation' ? getPerkEffects(state).resignation : 1;
-  return EVENT_WEIGHTS[id] * (getDifficulty(state).eventWeights[id] ?? 1) * comfort;
+  let factor = (getDifficulty(state).eventWeights[id] ?? 1) * (id === 'resignation' ? getPerkEffects(state).resignation : 1);
+  for (const b of state.buildings) {
+    const delta = BUILDINGS[b.type].effect.eventWeightPerLevel?.[id];
+    if (delta && b.level > 0) factor *= Math.max(0, 1 + delta * b.level);
+  }
+  return EVENT_WEIGHTS[id] * factor;
 }
 
 export function pickEvent(state: GameState, rng: Rng): EventId | undefined {

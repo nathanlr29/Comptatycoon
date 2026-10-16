@@ -96,6 +96,11 @@ export function effectText(def: BuildingDefinition, level: number): string {
   }
   if (effect.reputationEveryMs) parts.push(`+${level} réputation toutes les ${durationText(effect.reputationEveryMs)}`);
   if (effect.reputationOnBuild) parts.push(`+${effect.reputationOnBuild} réputation à l’aménagement`);
+  if (effect.capacityPerLevel) parts.push(`+${effect.capacityPerLevel * level} places d’encadrement`);
+  for (const [id, delta] of Object.entries(effect.eventWeightPerLevel ?? {})) {
+    const pct = percent(Math.abs(delta * level));
+    parts.push(id === 'resignation' ? `Démissions −${pct}` : id === 'prestigiousClient' ? `Clients prestigieux +${pct}` : `${id} ${pct}`);
+  }
   return parts.length > 0 ? parts.join(' · ') : 'Permet d’ouvrir le pôle';
 }
 

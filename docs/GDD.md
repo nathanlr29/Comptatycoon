@@ -127,6 +127,8 @@ Niveaux du cabinet = niveaux du Bureau principal = étape du plan dessiné (`src
 | 3 | Le plateau | 7 500 € | 12 collaborateurs | 16 × 11 | place pour le Pôle Conseil & Audit |
 | 4 | L'étage complet | 500 000 € | 20 collaborateurs, 2 associés | 20 × 13 | coin plantes, fontaine |
 | 5 | Le siège | 25 000 000 € | 35 collaborateurs, 3 associés | 24 × 15 | (grand espace commun) |
+| 6 | L'annexe | 2 500 000 000 € | 60 collaborateurs, 4 associés | 30 × 15 (vers l'est) | terrasse ; deux places pour le fil « Confort des équipes » |
+| 7 | Le campus | 250 000 000 000 € | 75 collaborateurs, 5 associés | 30 × 20 (vers le sud) | deux places « Confort des équipes », la cantine, une rangée de postes |
 
 Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes dans l'espace commun.
 
@@ -140,6 +142,9 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 | Salle de réunion | 2 500 € | 5 | +1 réputation toutes les 120 s | Bureau principal niv. 2 |
 | Salle serveurs | 1 500 € | 3 | production globale +5 % ; requise pour les technologies | — |
 | Coin plantes, fontaine d'intérieur (décor) | 1 000 €, 10 000 € | 1 | +3 réputation à l'aménagement | agrandissement niv. 4 |
+| Enseigne lumineuse « COMPTA » (mur du fond) | 40 000 € | 1 | +5 réputation à l'aménagement ; Client prestigieux ×1,5 (poids du tirage) | agrandissement niv. 2 |
+| Parking (devant l'immeuble, à gauche de l'entrée) | 100 000 € | 3 | +5 places d'encadrement par niveau (5 places de parking, voitures et bornes de recharge dès le niv. 2) | agrandissement niv. 3 |
+| Terrasse (annexe) | 1 000 000 000 € | 3 | +5 réputation à l'aménagement, +1 réputation toutes les 60 s par niveau, démissions −30 % par niveau (poids du tirage) | agrandissement niv. 6 |
 
 
 **Employés visibles** : chaque collaborateur est un personnage dessiné à un poste de travail (siège + bureau + écran), dans le style de la vue. Ordre de placement : vous et vos associés dans votre bureau (postes réservés), puis l'espace commun, puis les pièces achetées qui ont des postes (open space, espaces des pôles ouverts). Au-delà des postes visibles, un compteur « +N » près de l'entrée. Personnages fixes ou à petite animation sur place (pas de déplacement, voir §12).

@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
-import { OFFICE_STAGES, ROOMS, getStage, visibleDesks, type Furniture, type RoomLayout, type RoomType } from '../data/office';
-import { builtRoomTypes, type OfficeView, type RoomView } from './officeView';
+import { EXTERIOR_TYPES, OFFICE_STAGES, ROOMS, getStage, parkingRect, visibleDesks, type Furniture, type PlanType, type RoomLayout, type TileRect } from '../data/office';
+import { builtRoomTypes, parkingLevel, planRect, type OfficeView, type RoomView } from './officeView';
 import type { Bounds } from './CameraController';
 import { DEPTH, ISO, depthOf, isoQuad, isoToScreen, screenBounds, screenToIso } from './iso';
 import { AmbientLayer } from './ambient';
 import { FlatBaker, type Rect } from './bake';
 import { daylightAt, localHour } from './daylight';
 import { box, poly, tiles } from './isoDraw';
+import { drawExterior } from './isoExterior';
 import { drawDesk, drawFurniture } from './isoFurniture';
 import { drawPerkItem, visiblePerkItems } from './perkFurniture';
 import { floor, gravelPath, wallDecor, wallFootShadow } from './isoTextures';
@@ -39,7 +40,7 @@ export class OfficeRenderer {
   private view: OfficeView = { stage: 1, rooms: [] };
   private readonly highlight: G;
   /** Barres de progression des travaux, redessinées sans tout reconstruire. */
-  private readonly bars = new Map<RoomType, G>();
+  private readonly bars = new Map<PlanType, G>();
   private readonly lighting: LightingLayer;
   private readonly ambient: AmbientLayer;
   private readonly baker: FlatBaker;
@@ -101,6 +102,15 @@ export class OfficeRenderer {
       group(`room:${room.type}:${done ? `done${desks}` : 'works'}`, () => (done ? this.drawRoom(room, r, stage.size, standing) : this.drawWorks(room, stage.size)));
     }
     for (const { key, item } of visiblePerkItems(perks, stage.stage)) group(key, () => drawPerkItem(this.scene, item, perks));
+    for (const r of view.rooms) {
+      if (!EXTERIOR_TYPES.includes(r.type)) continue;
+      const done = r.visual !== 'works';
+      group(`ext:${r.type}:${done ? 'done' : 'works'}:${r.level}:${stage.stage}`, () => {
+        const { objects, bar } = drawExterior(this.scene, this.baker, r, stage.stage, done);
+        if (bar) this.bars.set(r.type, bar);
+        return objects;
+      });
+    }
     this.known = keys;
     this.setHighlight(null);
     this.lighting.setLayout(stage.size, visibleDesks(stage.stage, builtRoomTypes(view)));
@@ -112,7 +122,9 @@ export class OfficeRenderer {
   /** Zone visitable par la caméra pour un niveau d'agrandissement. */
   bounds(stageNumber = this.view.stage): Bounds {
     const { w, h } = getStage(stageNumber).size;
-    return screenBounds(w, h, 36);
+    const parking = parkingLevel(this.view);
+    const r = parking ? parkingRect(stageNumber, parking) : null;
+    return screenBounds(Math.max(w, r ? r.x + r.w : 0), Math.max(h, r ? r.y + r.h : 0), 36);
   }
 
   /** Centre visuel du cabinet (sol). */
@@ -122,33 +134,33 @@ export class OfficeRenderer {
   }
 
   /** Pièce achetée sous un point du monde, ou null. */
-  roomAt(px: number, py: number): RoomType | null {
+  roomAt(px: number, py: number): PlanType | null {
     const p = screenToIso(px, py);
-    const types = new Set(this.view.rooms.map((r) => r.type));
-    const room = ROOMS.find((r) => types.has(r.type) && p.x >= r.rect.x && p.x <= r.rect.x + r.rect.w && p.y >= r.rect.y && p.y <= r.rect.y + r.rect.h);
-    return room?.type ?? null;
+    const hit = (r: TileRect | null) => !!r && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+    const found = this.view.rooms.find((r) => r.type !== 'signage' && hit(planRect(this.view, r.type)));
+    return found?.type ?? null;
   }
 
   /** Met à jour les barres de travaux (avancement 0 à 1 par type de pièce). */
   updateWorks(progress: ReadonlyMap<string, number>): void {
     for (const [type, g] of this.bars) {
-      const room = ROOMS.find((r) => r.type === type);
-      if (!room) continue;
+      const rect = planRect(this.view, type);
+      if (!rect) continue;
       const p = progress.get(type) ?? 1;
-      const { x, y, w, h } = room.rect;
-      const a = isoToScreen(x + w / 2, y + h / 2, 70);
+      const { x, y, w, h } = rect;
+      const a = isoToScreen(x + w / 2, y + h / 2, type === 'signage' ? 95 : 70);
       g.clear();
       g.fillStyle(COLORS.shadow, 0.75).fillRoundedRect(a.x - 40, a.y - 7, 80, 14, 7);
       g.fillStyle(COLORS.accent, 1).fillRoundedRect(a.x - 38, a.y - 5, Math.max(10, 76 * p), 10, 5);
     }
   }
 
-  setHighlight(type: RoomType | null): void {
+  setHighlight(type: PlanType | null): void {
     const g = this.highlight;
     g.clear();
-    const room = type ? ROOMS.find((r) => r.type === type) : undefined;
-    if (!room) return;
-    const { x, y, w, h } = room.rect;
+    const rect = type && type !== 'signage' ? planRect(this.view, type) : null;
+    if (!rect) return;
+    const { x, y, w, h } = rect;
     g.lineStyle(4, COLORS.accent, 1).strokePoints(isoQuad(x + 0.08, y + 0.08, w - 0.16, h - 0.16), true);
     poly(g, isoQuad(x, y, w, h), COLORS.accent, 0.14);
   }

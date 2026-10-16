@@ -68,6 +68,24 @@ export const EXPANSION_LEVELS: readonly ExpansionLevel[] = [
     minPartners: 3,
     adds: ['Le siège et ses postes', 'Bureau de direction', 'Production +10 %'],
   },
+  {
+    level: 6,
+    name: 'L’annexe',
+    description: 'Vous rachetez l’immeuble d’à côté : une annexe et sa terrasse.',
+    cost: 2_500_000_000,
+    minStaff: 60,
+    minPartners: 4,
+    adds: ['L’annexe et ses postes', 'Place pour la terrasse', 'Production +10 %'],
+  },
+  {
+    level: 7,
+    name: 'Le campus',
+    description: 'Tout le bâtiment est au cabinet : un campus de l’expertise comptable.',
+    cost: 250_000_000_000,
+    minStaff: 75,
+    minPartners: 5,
+    adds: ['L’aile sud et ses postes', 'Production +10 %'],
+  },
 ];
 
 export const MAX_FIRM_LEVEL = EXPANSION_LEVELS.length;

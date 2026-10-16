@@ -13,8 +13,8 @@ const atLevel = (level: number, patch = {}) => makeState({ buildings: [{ id: 'hq
 
 describe('données d’agrandissement', () => {
   it('suit les prix du Bureau principal (GDD §6) et ouvre les locaux dans l’ordre', () => {
-    expect(EXPANSION_LEVELS.map((l) => l.cost)).toEqual([0, 500, 7_500, 500_000, 25_000_000]);
-    expect(EXPANSION_LEVELS.map((l) => l.level)).toEqual([1, 2, 3, 4, 5]);
+    expect(EXPANSION_LEVELS.map((l) => l.cost)).toEqual([0, 500, 7_500, 500_000, 25_000_000, 2_500_000_000, 250_000_000_000]);
+    expect(EXPANSION_LEVELS.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(EXPANSION_LEVELS.map((l) => l.name)).toEqual(OFFICE_STAGES.map((s) => s.name));
   });
 

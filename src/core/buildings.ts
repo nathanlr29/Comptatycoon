@@ -1,5 +1,5 @@
 import { BUILDINGS, CONSTRUCTIBLE, CONSTRUCTION, type BuildingDefinition, type BuildingType } from '../data/buildings';
-import { ROOMS } from '../data/office';
+import { EXTERIOR_TYPES, ROOMS } from '../data/office';
 import type { RefusalReason } from './refusals';
 import type { BuildingState, GameState } from './state';
 
@@ -35,8 +35,11 @@ export function getConstructionMs(targetLevel: number): number {
  * fixe sur le plan (`ROOMS` de src/data/office.ts), dont l'identifiant est le type lui-même.
  */
 export function findFreeSlot(state: GameState, type: BuildingType): string | undefined {
+  if (getBuildingAt(state, type)) return undefined;
+  // Parking et enseigne n'occupent pas de pièce : leur place existe dès que le cabinet le permet.
+  if (EXTERIOR_TYPES.includes(type)) return getHqLevel(state) >= BUILDINGS[type].requiresHq ? type : undefined;
   const room = ROOMS.find((r) => r.type === type);
-  if (!room || getHqLevel(state) < room.minStage || getBuildingAt(state, type)) return undefined;
+  if (!room || getHqLevel(state) < room.minStage) return undefined;
   return type;
 }
 

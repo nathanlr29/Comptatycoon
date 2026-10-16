@@ -20,6 +20,14 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Locaux et parking (16/10/2026, demande de Nathan « nouvelles améliorations des locaux : agrandissement, parking… », fil « Locaux et parking »).
+- **Deux niveaux après le siège** : 6 « L’annexe » (2,5 Md€, 60 collaborateurs, 4 associés, 30 × 15, extension à l'est) et 7 « Le campus » (250 Md€, 75 collaborateurs, 5 associés, 30 × 20, extension au sud), +10 % de production chacun et leurs postes. Places réservées dans `data/office.ts` (commentaires) : niveau 6 `{24,5,6,4}` et `{24,9,6,4}`, niveau 7 `{0,15,8,5}` et `{8,15,8,5}` pour « Confort des équipes », `{16,15,8,5}` pour « Cantine ». La cession reste possible dès le siège.
+- **Parking** (100 k€, niv. 3 du cabinet, 3 niveaux) : +5 places d'encadrement par niveau (`BuildingEffect.capacityPerLevel`, lu par `getCapacity` et le départ d'un associé). Dessiné dehors, devant la façade à gauche de l'entrée (`parkingStalls`, `parkingRect`) : bitume, marquage, voitures garées, bornes de recharge au niv. 2, panneau « P ». Il suit la façade quand le cabinet s'agrandit ; la caméra l'inclut.
+- **Enseigne lumineuse** (40 k€, niv. 2) : « COMPTA » en lettres lumineuses sur le mur du fond (`SIGN_SPAN`), +5 réputation, Client prestigieux ×1,5. **Terrasse** (1 Md€, niv. 6, 3 niveaux) : parasols, transats, +1 réputation / 60 s par niveau, démissions −30 % par niveau. Effet générique `BuildingEffect.eventWeightPerLevel`, appliqué dans `getEventWeight`.
+- Parking et enseigne sont des « extérieurs » (`ExteriorType`, `EXTERIOR_TYPES`) : pas de pièce dans `ROOMS`, place = type. Dessin dans `game/isoExterior.ts`. Sauvegarde : aucun nouveau champ (ce sont des bâtiments).
+- Joueur simulé : siège (partie 1) à 22,3 min (22,9 avant), annexe vers 110 min, campus vers 140 min.
+- À vérifier sur iPhone : lisibilité de l'enseigne au zoom maximal, parking atteignable en glissant sur petit écran, toucher le parking ouvre l'onglet « Pièces ».
+
 Paramètres (16/10/2026, demande de Nathan, fil « Réglages »). Écran Paramètres en sections : Cabinet, Son, Affichage, Notifications, Statistiques, Secrets, À propos.
 - **Réglages de l'appareil** (`core/settings.ts` pur, `persistence/SettingsStore.ts`, clé `comptatycoon:settings`), séparés des sauvegardes des cabinets, communs à tous les cabinets, relus champ par champ (valeur invalide → défaut).
 - **Module partagé `src/settings.ts`** pour `ui/` et `game/` : `settings.get()`, `settings.update(patch)`, `reducedMotion()`, `onSettingsChange(fn)` (renvoie le désabonnement ; appelé aussi quand l'appareil change « Réduire les animations »). Pose `data-motion="full|reduced"` sur `<html>` (la règle CSS des animations réduites en dépend), la taille du texte (`font-size` racine, styles en rem) et le format des montants. Plus aucun `matchMedia('(prefers-reduced-motion…)')` dans le code : tout passe par `reducedMotion()`.
@@ -155,6 +163,8 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 - iPhone : Exporter › Copier fonctionne, et le texte collé dans Importer sur un autre appareil recrée le cabinet.
 
 ## Idées / plus tard
+- Locaux (fil « Locaux et parking ») : enseigne qui brille la nuit (halo au-dessus de la pénombre) ; voitures qui arrivent le matin et repartent le soir ; salle d'archives (pertes du contrôle fiscal réduites) ; niveau 8 « La tour » avec un deuxième étage visible ; rooftop au-dessus de l'annexe ; local vélos (démissions en moins, moins cher que la terrasse).
+
 - Paramètres, suites possibles : musique d'ambiance (volume séparé), vibrations (indisponibles sur Safari iOS), tutoriel à rejouer (il n'y a pas encore de tutoriel), thème clair, contraste élevé, confirmation avant les gros achats, réglages accessibles depuis l'écran d'accueil.
 - Économie : charges (salaires et loyer) pour distinguer chiffre d'affaires et bénéfice ; contrats clients à durée limitée ; dépenses du réseau (talents achetés avec les contacts) ; objectifs propres aux parties après une cession.
 - Confort des équipes, suite : salle de sport, crèche d'entreprise, salle de jeux vidéo et conciergerie dans les places réservées des niveaux 6 et 7 (fil « Locaux et parking ») ; plantes vertes et éclairage naturel ; prime d'intéressement ; événement « Pot de départ » évité par le CSE.
