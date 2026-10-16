@@ -126,14 +126,14 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
 };
 
-/** Types que le joueur peut aménager depuis le menu (le Bureau principal existe déjà). */
+/**
+ * Types que le joueur peut aménager depuis le menu (le Bureau principal existe déjà).
+ * Les espaces des pôles n'y sont pas : ils apparaissent quand le pôle ouvre (src/data/departments.ts).
+ */
 export const CONSTRUCTIBLE: BuildingType[] = [
   'openSpace',
   'serverRoom',
   'meetingRoom',
-  'socialWing',
-  'legalWing',
-  'advisoryWing',
   'garden',
   'fountain',
 ];

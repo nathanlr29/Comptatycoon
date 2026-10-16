@@ -10,21 +10,17 @@ import {
 } from '../src/core/departments';
 import { getBaseIncomePerSecond, getMultipliers } from '../src/core/economy';
 import type { BuildingState, GameState } from '../src/core/state';
-import type { BuildingType } from '../src/data/buildings';
+import { CONSTRUCTIBLE } from '../src/data/buildings';
 import { DEPARTMENTS } from '../src/data/departments';
+import { toOfficeView } from '../src/game/officeView';
 import { makeState, T0 } from './helpers';
 
-const wing = (type: BuildingType, level = 1): BuildingState => ({ id: type, type, level, slotId: 'east-1' });
-const hq: BuildingState = { id: 'hq', type: 'headquarters', level: 1, slotId: 'hq' };
+/** Cabinet au niveau `level` (= niveau du Bureau principal). */
+const firm = (level: number): BuildingState[] => [{ id: 'hq', type: 'headquarters', level, slotId: 'hq' }];
 const noStaff = { intern: 0, junior: 0, senior: 0, manager: 0 };
 
 function ready(patch: Partial<GameState> = {}): GameState {
-  return makeState({
-    money: 1e7,
-    reputation: 100,
-    buildings: [hq, wing('socialWing'), wing('legalWing'), wing('advisoryWing')],
-    ...patch,
-  });
+  return makeState({ money: 1e7, reputation: 100, buildings: firm(3), ...patch });
 }
 
 describe('ouverture des pôles', () => {
@@ -43,11 +39,23 @@ describe('ouverture des pôles', () => {
     expect(second.state).toBe(first);
   });
 
-  it('exige les locaux aménagés (pas en premier chantier)', () => {
-    const noWing = ready({ buildings: [hq] });
-    expect(canBuyDepartment(noWing, 'social')).toMatchObject({ ok: false, reason: 'missing_prerequisite' });
-    const underWorks = ready({ buildings: [hq, wing('socialWing', 0)] });
-    expect(canBuyDepartment(underWorks, 'social')).toMatchObject({ ok: false, reason: 'missing_prerequisite' });
+  it('n’exige aucun local séparé, seulement un cabinet assez grand', () => {
+    expect(canBuyDepartment(ready({ buildings: firm(1) }), 'social')).toMatchObject({ ok: false, reason: 'no_space' });
+    expect(canBuyDepartment(ready({ buildings: firm(2) }), 'social')).toMatchObject({ ok: true });
+    expect(canBuyDepartment(ready({ buildings: firm(2) }), 'legal')).toMatchObject({ ok: true });
+    expect(canBuyDepartment(ready({ buildings: firm(2) }), 'advisory')).toMatchObject({ ok: false, reason: 'no_space' });
+    expect(canBuyDepartment(ready({ buildings: firm(3) }), 'advisory')).toMatchObject({ ok: true });
+  });
+
+  it('les espaces des pôles ne sont plus dans le menu des pièces', () => {
+    for (const id of ['social', 'legal', 'advisory'] as const) expect(CONSTRUCTIBLE).not.toContain(DEPARTMENTS[id].room);
+  });
+
+  it('l’espace du pôle apparaît dans le cabinet dès son ouverture', () => {
+    const before = ready({ money: 25_000, reputation: 15 });
+    expect(toOfficeView(before).rooms.map((r) => r.type)).not.toContain('socialWing');
+    const { state } = applyAction(before, { type: 'buyDepartment', id: 'social' }, T0);
+    expect(toOfficeView(state).rooms).toContainEqual({ type: 'socialWing', level: 1, visual: 'built' });
   });
 
   it('exige la réputation, puis les fonds', () => {
@@ -59,7 +67,7 @@ describe('ouverture des pôles', () => {
   it('liste les prérequis manquants en clair', () => {
     const missing = getMissingRequirements(makeState({ reputation: 3 }), 'legal');
     expect(missing).toEqual([
-      { kind: 'building', name: 'Locaux Pôle Juridique' },
+      { kind: 'space', level: 2, name: 'Le local voisin' },
       { kind: 'reputation', required: 25 },
     ]);
     expect(getMissingRequirements(ready(), 'legal')).toEqual([]);
@@ -69,7 +77,7 @@ describe('ouverture des pôles', () => {
     expect(getDepartmentStatus(makeState({ money: 100, reputation: 30 }), 'legal')).toEqual({
       owned: false,
       cost: 60_000,
-      missing: [{ kind: 'building', name: 'Locaux Pôle Juridique' }, { kind: 'funds', cost: 60_000 }],
+      missing: [{ kind: 'space', level: 2, name: 'Le local voisin' }, { kind: 'funds', cost: 60_000 }],
     });
     expect(getDepartmentStatus(ready(), 'legal')).toEqual({ owned: false, cost: 60_000, missing: [] });
     expect(getDepartmentStatus(ready({ departments: ['legal'], money: 0 }), 'legal').owned).toBe(true);
@@ -119,7 +127,7 @@ describe('rachat de portefeuille clients', () => {
   });
 
   it('est répétable : +2 réputation et +5 % de production par rachat', () => {
-    let state = ready({ reputation: 0, departments: ['social'], staff: noStaff });
+    let state = ready({ reputation: 0, departments: ['social'], staff: noStaff, buildings: firm(1) });
     for (let i = 0; i < 2; i++) state = applyAction(state, { type: 'buyPortfolio' }, T0).state;
     expect(state.portfolios).toBe(2);
     expect(state.reputation).toBe(4);

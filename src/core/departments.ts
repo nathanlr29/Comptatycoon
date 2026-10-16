@@ -1,25 +1,28 @@
 import { DEPARTMENTS, DEPARTMENT_IDS, PORTFOLIO, TAX_AUDIT, type DepartmentId } from '../data/departments';
+import { getExpansionLevel } from '../data/expansion';
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
+import { getFirmLevel } from './expansion';
 import type { Check } from './recruitment';
 import type { GameState } from './state';
 
 /** Prérequis non remplis d'un pôle, pour les afficher en clair. */
 export type MissingRequirement =
-  | { kind: 'building'; name: string }
+  | { kind: 'space'; level: number; name: string }
   | { kind: 'reputation'; required: number }
   | { kind: 'funds'; cost: number };
 
-/** Les locaux du pôle sont aménagés (niveau ≥ 1, travaux du premier niveau finis). */
-export function hasDepartmentBuilding(state: GameState, id: DepartmentId): boolean {
-  const type = DEPARTMENTS[id].requiresBuilding;
-  return state.buildings.some((b) => b.type === type && b.level >= 1);
+/** Le cabinet est assez grand pour installer le pôle (pas de locaux séparés à aménager). */
+export function hasDepartmentSpace(state: GameState, id: DepartmentId): boolean {
+  return getFirmLevel(state) >= DEPARTMENTS[id].minFirmLevel;
 }
 
-/** Prérequis non remplis (locaux, réputation) ; l'argent est à part, voir `getDepartmentStatus`. */
+/** Prérequis non remplis (place, réputation) ; l'argent est à part, voir `getDepartmentStatus`. */
 export function getMissingRequirements(state: GameState, id: DepartmentId): MissingRequirement[] {
   const def = DEPARTMENTS[id];
   const missing: MissingRequirement[] = [];
-  if (!hasDepartmentBuilding(state, id)) missing.push({ kind: 'building', name: def.buildingName });
+  if (!hasDepartmentSpace(state, id)) {
+    missing.push({ kind: 'space', level: def.minFirmLevel, name: getExpansionLevel(def.minFirmLevel)?.name ?? '' });
+  }
   if (state.reputation < def.minReputation) missing.push({ kind: 'reputation', required: def.minReputation });
   return missing;
 }
@@ -45,7 +48,7 @@ export function canBuyDepartment(state: GameState, id: DepartmentId): Check {
   const def = DEPARTMENTS[id];
   const cost = def.cost;
   if (state.departments.includes(id)) return { ok: false, reason: 'already_owned', cost };
-  if (!hasDepartmentBuilding(state, id)) return { ok: false, reason: 'missing_prerequisite', cost };
+  if (!hasDepartmentSpace(state, id)) return { ok: false, reason: 'no_space', cost };
   if (state.reputation < def.minReputation) return { ok: false, reason: 'locked', cost };
   if (state.money < cost) return { ok: false, reason: 'insufficient_funds', cost };
   return { ok: true, cost };

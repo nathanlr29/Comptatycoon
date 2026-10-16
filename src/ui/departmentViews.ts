@@ -2,10 +2,15 @@ import { canBuyDepartment, canBuyPortfolio, getMissingRequirements, getPortfolio
 import { formatMoney } from '../core/format';
 import type { GameState } from '../core/state';
 import { DEPARTMENTS, DEPARTMENT_IDS, PORTFOLIO, type DepartmentId } from '../data/departments';
+import { getExpansionLevel } from '../data/expansion';
 import type { DepartmentView } from './DevelopmentPanel';
 
 /** Couleurs d'identité des pôles, les mêmes que sur le plan (src/game/departmentRooms.ts). */
 const COLORS: Record<DepartmentId, string> = { social: '#14b8a6', legal: '#ef4444', advisory: '#3b82f6' };
+
+function spaceLabel(level: number): string {
+  return `Place dans le cabinet : ${getExpansionLevel(level)?.name ?? `niveau ${level}`}`;
+}
 
 /** Traduit l'état du jeu en lignes de l'onglet Développement. Aucune règle ici : tout vient de core/. */
 export function departmentViews(state: GameState): DepartmentView[] {
@@ -23,7 +28,7 @@ export function departmentViews(state: GameState): DepartmentView[] {
       canBuy: check.ok,
       actionLabel: owned ? 'Ouvert' : `Ouvrir · ${formatMoney(check.cost)}`,
       requirements: [
-        { label: `${def.buildingName} aménagés`, met: !missing.some((m) => m.kind === 'building') },
+        { label: spaceLabel(def.minFirmLevel), met: !missing.some((m) => m.kind === 'space') },
         { label: `Réputation ${def.minReputation} (vous : ${Math.floor(state.reputation)})`, met: !missing.some((m) => m.kind === 'reputation') },
         { label: `Fonds : ${formatMoney(check.cost)}`, met: state.money >= check.cost },
       ],

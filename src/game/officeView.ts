@@ -1,5 +1,6 @@
 import { getBuildingVisual, getConstructionProgress, type BuildingVisual } from '../core/buildings';
 import type { GameState } from '../core/state';
+import { DEPARTMENTS } from '../data/departments';
 import { ROOMS, type RoomType } from '../data/office';
 
 const ROOM_TYPES = new Set<string>(ROOMS.map((r) => r.type));
@@ -20,7 +21,12 @@ export function toOfficeView(state: GameState): OfficeView {
   const stage = state.buildings.find((b) => b.id === 'hq')?.level ?? 1;
   const rooms = state.buildings
     .filter((b) => ROOM_TYPES.has(b.type))
-    .map((b) => ({ type: b.type as RoomType, level: b.level, visual: getBuildingVisual(state, b) }));
+    .map((b): RoomView => ({ type: b.type as RoomType, level: b.level, visual: getBuildingVisual(state, b) }));
+  // Un pôle ouvert occupe son espace dans le cabinet, sans chantier.
+  for (const id of state.departments) {
+    const type = DEPARTMENTS[id].room;
+    if (!rooms.some((r) => r.type === type)) rooms.push({ type, level: 1, visual: 'built' });
+  }
   return { stage, rooms };
 }
 

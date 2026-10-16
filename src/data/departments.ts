@@ -3,8 +3,8 @@ import type { StaffRole } from './staff';
 /** Pôles du cabinet (docs/GDD.md §7). Valeurs d'équilibrage de départ. */
 export type DepartmentId = 'social' | 'legal' | 'advisory';
 
-/** Type de la pièce « Locaux … » qui permet d'acheter le pôle (docs/GDD.md §6). */
-export type DepartmentBuildingType = 'socialWing' | 'legalWing' | 'advisoryWing';
+/** Espace du pôle dessiné dans le cabinet une fois le pôle ouvert (src/data/office.ts). */
+export type DepartmentRoomType = 'socialWing' | 'legalWing' | 'advisoryWing';
 
 /** Effets d'un pôle ; un champ absent n'a pas d'effet. */
 export interface DepartmentEffect {
@@ -25,10 +25,10 @@ export interface DepartmentDefinition {
   tagline: string;
   description: string;
   cost: number;
-  /** Pièce à aménager avant l'achat. */
-  requiresBuilding: DepartmentBuildingType;
-  /** Nom de cette pièce, pour « Nécessite : … ». */
-  buildingName: string;
+  /** Niveau du cabinet (src/data/expansion.ts) qui donne la place d'installer le pôle. */
+  minFirmLevel: number;
+  /** Espace du pôle sur le plan, dessiné dès l'ouverture. */
+  room: DepartmentRoomType;
   minReputation: number;
   effect: DepartmentEffect;
   /** Texte court de l'effet. */
@@ -43,8 +43,8 @@ const LIST: DepartmentDefinition[] = [
     tagline: 'Paie, DSN',
     description: 'Les bulletins de paie et les déclarations sociales de vos clients, faits maison.',
     cost: 20_000,
-    requiresBuilding: 'socialWing',
-    buildingName: 'Locaux Pôle Social',
+    minFirmLevel: 2,
+    room: 'socialWing',
     minReputation: 15,
     effect: { flatIncome: 150, roles: { junior: 1.5 } },
     effectText: '+150 €/s · Juniors × 1,5',
@@ -55,8 +55,8 @@ const LIST: DepartmentDefinition[] = [
     tagline: 'Secrétariat, AG, statuts',
     description: 'Approbation des comptes, assemblées et statuts : vos dossiers sont inattaquables.',
     cost: 60_000,
-    requiresBuilding: 'legalWing',
-    buildingName: 'Locaux Pôle Juridique',
+    minFirmLevel: 2,
+    room: 'legalWing',
     minReputation: 25,
     effect: { taxAuditImmunity: true, roles: { senior: 1.5 } },
     effectText: 'Immunité au contrôle fiscal · Seniors × 1,5',
@@ -67,8 +67,8 @@ const LIST: DepartmentDefinition[] = [
     tagline: 'Fiscal, stratégie, CAC',
     description: 'Conseil fiscal, stratégie et commissariat aux comptes pour les grands clients.',
     cost: 400_000,
-    requiresBuilding: 'advisoryWing',
-    buildingName: 'Locaux Conseil & Audit',
+    minFirmLevel: 3,
+    room: 'advisoryWing',
     minReputation: 50,
     effect: { global: 2, roles: { manager: 1.5 } },
     effectText: 'Production × 2 · Managers × 1,5',
