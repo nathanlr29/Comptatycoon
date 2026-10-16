@@ -1,10 +1,11 @@
 import { formatMoney } from '../core/format';
 import type { GameState } from '../core/state';
+import { canBuyUpgrade } from '../core/upgrades';
 import { UPGRADES, UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
-import { refusalText } from '../data/texts';
+import { refusalText, requiresText } from '../data/texts';
 import { h, setText } from './dom';
 
-/** Améliorations à achat unique. */
+/** Équipements et logiciels à achat unique. */
 export class UpgradesPanel {
   readonly el = h('div', { class: 'list' });
   private readonly rows = new Map<UpgradeId, { button: HTMLButtonElement; reason: HTMLElement }>();
@@ -24,7 +25,7 @@ export class UpgradesPanel {
             { class: 'item__info' },
             h('h3', { class: 'item__name', text: def.name }),
             h('p', { class: 'item__desc', text: def.description }),
-            h('span', { class: 'item__meta', text: `Saisie × ${def.clickMultiplier}` }),
+            h('span', { class: 'item__meta', text: def.effectText }),
           ),
           h('div', { class: 'item__action' }, button, reason),
         ),
@@ -35,12 +36,17 @@ export class UpgradesPanel {
 
   render(state: GameState): void {
     for (const [id, row] of this.rows) {
-      const owned = state.upgrades.includes(id);
-      const cost = UPGRADES[id].cost;
-      setText(row.button, owned ? 'Acquis' : formatMoney(cost));
-      row.button.disabled = owned || state.money < cost;
+      const def = UPGRADES[id];
+      const check = canBuyUpgrade(state, id);
+      const owned = !check.ok && check.reason === 'already_owned';
+      setText(row.button, owned ? 'Acquis' : formatMoney(check.cost));
+      row.button.disabled = !check.ok;
       row.button.classList.toggle('item__buy--owned', owned);
-      setText(row.reason, !owned && state.money < cost ? refusalText('insufficient_funds') : '');
+      let reason = '';
+      if (!check.ok && !owned) {
+        reason = check.reason === 'missing_prerequisite' && def.requires ? requiresText(UPGRADES[def.requires].name) : refusalText(check.reason, def.minReputation);
+      }
+      setText(row.reason, reason);
     }
   }
 }

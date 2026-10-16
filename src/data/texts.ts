@@ -17,5 +17,26 @@ export function refusalText(reason: RefusalReason, minReputation = 0): string {
       return `Réputation ${minReputation} requise`;
     case 'already_owned':
       return 'Acquis';
+    case 'missing_prerequisite':
+      return 'Prérequis manquant';
+    case 'nobody_to_dismiss':
+      return 'Personne à licencier';
+    case 'last_partner':
+      return 'Vous restez le dernier associé';
+    case 'team_too_large':
+      return 'Trop de collaborateurs à encadrer';
   }
+}
+
+export function requiresText(name: string): string {
+  return `Nécessite : ${name}`;
+}
+
+/** Affiché après un premier appui sur « − ». */
+export function confirmDismissText(amount: string): string {
+  return `Touchez − encore : indemnité ${amount}`;
+}
+
+export function dismissRefusalText(reason: string): string {
+  return `Départ impossible : ${reason.toLowerCase()}`;
 }

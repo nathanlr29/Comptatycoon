@@ -19,8 +19,14 @@ export interface Multipliers {
 export function getMultipliers(state: GameState): Multipliers {
   const role = Object.fromEntries(STAFF_ROLES.map((r) => [r, 1])) as Record<StaffRole, number>;
   let click = 1;
-  for (const id of state.upgrades) click *= UPGRADES[id].clickMultiplier;
-  return { global: 1, click, role, clickIncomeShare: 0 };
+  let global = 1;
+  for (const id of state.upgrades) {
+    const effect = UPGRADES[id].effect;
+    click *= effect.click ?? 1;
+    global *= effect.global ?? 1;
+    for (const r of STAFF_ROLES) role[r] *= effect.roles?.[r] ?? 1;
+  }
+  return { global, click, role, clickIncomeShare: 0 };
 }
 
 export function getReputationMultiplier(state: GameState): number {
@@ -59,6 +65,16 @@ export function scaledCost(baseCost: number, owned: number, growth: number = BAL
 
 export function getHireCost(state: GameState, role: StaffRole): number {
   return scaledCost(STAFF[role].baseCost, state.staff[role]);
+}
+
+/** Indemnité pour licencier un collaborateur : part du prix payé pour le dernier recruté. */
+export function getSeveranceCost(state: GameState, role: StaffRole): number {
+  return Math.ceil(scaledCost(STAFF[role].baseCost, Math.max(state.staff[role] - 1, 0)) * BALANCE.severanceShare);
+}
+
+/** Indemnité pour le départ d'un associé (même règle, sur le prix du dernier associé). */
+export function getPartnerSeveranceCost(state: GameState): number {
+  return Math.ceil(scaledCost(BALANCE.partnerBaseCost, Math.max(state.partners - 2, 0), BALANCE.partnerCostGrowth) * BALANCE.severanceShare);
 }
 
 /** Coût du prochain associé : 25 000 €, puis ×4 à chaque associé. */
