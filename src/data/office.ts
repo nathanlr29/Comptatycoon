@@ -12,12 +12,15 @@ export interface TileRect {
   h: number;
 }
 
-/** Direction du regard d'une personne assise : n = −y, e = +x, s = +y, w = −x. `s` et `e` font face à l'écran. */
-export type Facing = 'n' | 'e' | 's' | 'w';
+/**
+ * Côté du bureau par rapport à la personne : `s` = bureau vers +y (bas gauche de l'écran), `e` = vers +x (bas droite).
+ * Les personnes font toujours face à l'écran, derrière leur bureau.
+ */
+export type Facing = 's' | 'e';
 
 /**
- * Poste de travail. (x, y) = centre du siège, où se dessine la personne ;
- * le bureau est une demi-case plus loin dans la direction `facing`.
+ * Poste de travail. (x, y) = point au sol où se dessine la personne (bas-centre du personnage) ;
+ * le bureau est devant elle, voir `deskRect`.
  */
 export interface Desk {
   x: number;
@@ -85,6 +88,11 @@ export interface OfficeStage {
   furniture: Furniture[];
 }
 
+/** Emprise du bureau d'un poste (cases) : devant la personne, centré sous elle à l'écran. */
+export function deskRect(d: Desk): TileRect {
+  return d.facing === 's' ? { x: d.x - 0.2, y: d.y + 0.3, w: 0.9, h: 0.5 } : { x: d.x + 0.3, y: d.y - 0.2, w: 0.5, h: 0.9 };
+}
+
 /** Rangée de postes le long de x. */
 function row(x: number, y: number, count: number, facing: Facing, step = 1.5): Desk[] {
   return Array.from({ length: count }, (_, i) => ({ x: x + i * step, y, facing }));
@@ -101,7 +109,7 @@ export const OFFICE_STAGES: OfficeStage[] = [
     name: 'Le petit bureau',
     size: { w: 8, h: 6 },
     entranceX: 7,
-    desks: row(3.9, 4.1, 3, 'n', 1.4),
+    desks: row(3.9, 3.9, 3, 's', 1.4),
     furniture: [{ type: 'plant', x: 7.2, y: 3.2 }, { type: 'printer', x: 3.1, y: 5.2 }],
   },
   {
@@ -109,7 +117,7 @@ export const OFFICE_STAGES: OfficeStage[] = [
     name: 'Le local voisin',
     size: { w: 12, h: 9 },
     entranceX: 9,
-    desks: row(5.6, 7.6, 2, 'n', 1.4),
+    desks: row(5.6, 7.4, 2, 's', 1.4),
     furniture: [{ type: 'coffee', x: 8.2, y: 8.2 }, { type: 'plant', x: 11.2, y: 8.2 }],
   },
   {
@@ -117,15 +125,15 @@ export const OFFICE_STAGES: OfficeStage[] = [
     name: 'Le plateau',
     size: { w: 16, h: 11 },
     entranceX: 13,
-    desks: [...row(12.8, 7.2, 3, 's', 1.2), ...row(12.8, 9.4, 3, 'n', 1.2)],
+    desks: [...row(12.8, 7.0, 3, 's', 1.2), ...row(12.8, 8.8, 3, 's', 1.2)],
     furniture: [{ type: 'reception', x: 9, y: 9.4 }, { type: 'plant', x: 0.2, y: 10.2 }],
   },
   {
     stage: 4,
-    name: "L'étage complet",
+    name: 'L’étage complet',
     size: { w: 20, h: 13 },
     entranceX: 17,
-    desks: row(0.9, 12.1, 9, 'n', 1.6),
+    desks: row(0.9, 11.9, 9, 's', 1.6),
     furniture: [{ type: 'plant', x: 15.4, y: 12.2 }, { type: 'coffee', x: 19.1, y: 12.1 }],
   },
   {
@@ -133,7 +141,7 @@ export const OFFICE_STAGES: OfficeStage[] = [
     name: 'Le siège',
     size: { w: 24, h: 15 },
     entranceX: 21,
-    desks: [...col(21.2, 0.9, 8, 'w', 1.5), ...col(23.2, 0.9, 8, 'w', 1.5), ...row(0.9, 14.1, 12, 'n', 1.6)],
+    desks: [...col(21.2, 0.9, 8, 'e', 1.5), ...col(23.2, 0.9, 8, 'e', 1.5), ...row(0.9, 13.9, 12, 's', 1.6)],
     furniture: [{ type: 'plant', x: 20.2, y: 13.2 }, { type: 'sofa', x: 22, y: 13.3 }],
   },
 ];
@@ -147,7 +155,7 @@ export const ROOMS: RoomLayout[] = [
     desks: [
       { x: 1.3, y: 0.9, facing: 's', reserved: 'director' },
       { x: 0.6, y: 2.3, facing: 'e', reserved: 'partner' },
-      { x: 2.2, y: 2.4, facing: 'n', reserved: 'partner' },
+      { x: 2.3, y: 2.1, facing: 's', reserved: 'partner' },
     ],
     furniture: [{ type: 'bookshelf', x: 2, y: 0 }, { type: 'plant', x: 0.1, y: 0.1 }],
   },
@@ -156,7 +164,7 @@ export const ROOMS: RoomLayout[] = [
     rect: { x: 3, y: 0, w: 5, h: 3 },
     minStage: 1,
     door: { side: 's', at: 4 },
-    desks: [...row(3.8, 1.0, 3, 's', 1.5), ...row(3.8, 2.3, 3, 'n', 1.5)],
+    desks: [...row(3.8, 0.7, 3, 's', 1.5), ...row(3.8, 1.9, 3, 's', 1.5)],
     furniture: [{ type: 'plant', x: 7.2, y: 0.1 }],
   },
   {
@@ -180,7 +188,7 @@ export const ROOMS: RoomLayout[] = [
     rect: { x: 8, y: 3, w: 4, h: 4 },
     minStage: 2,
     door: { side: 's', at: 9 },
-    desks: [...row(8.8, 4.0, 2, 's', 2), ...row(8.8, 5.8, 2, 'n', 2)],
+    desks: [...row(8.7, 3.8, 2, 's', 1.8), ...row(8.7, 5.5, 2, 's', 1.8)],
     furniture: [{ type: 'cabinet', x: 11.3, y: 3.1 }, { type: 'cabinet', x: 11.3, y: 4.1 }],
   },
   {
@@ -188,7 +196,7 @@ export const ROOMS: RoomLayout[] = [
     rect: { x: 0, y: 6, w: 5, h: 3 },
     minStage: 2,
     door: { side: 'e', at: 7.5 },
-    desks: row(0.9, 7.9, 3, 'n', 1.5),
+    desks: row(0.9, 7.3, 3, 's', 1.5),
     furniture: [{ type: 'bookshelf', x: 0.1, y: 6 }, { type: 'bookshelf', x: 2, y: 6 }],
   },
   {
@@ -196,7 +204,7 @@ export const ROOMS: RoomLayout[] = [
     rect: { x: 12, y: 0, w: 4, h: 6 },
     minStage: 3,
     door: { side: 's', at: 13 },
-    desks: [...row(12.8, 3.6, 3, 's', 1.2), ...row(12.8, 5.2, 3, 'n', 1.2)],
+    desks: [...row(12.8, 3.3, 3, 's', 1.2), ...row(12.8, 4.7, 3, 's', 1.2)],
     furniture: [{ type: 'meetingTable', x: 13, y: 1 }, { type: 'whiteboard', x: 13.5, y: 0 }],
   },
   {

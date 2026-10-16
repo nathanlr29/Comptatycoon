@@ -7,6 +7,8 @@ export interface Seat {
   y: number;
   /** Bureau d'associé (plus cossu) ou poste de collaborateur. */
   kind: 'partner' | 'staff';
+  /** Profondeur d'affichage (tri avec le mobilier, voir src/game/iso.ts). */
+  depth: number;
 }
 
 /**

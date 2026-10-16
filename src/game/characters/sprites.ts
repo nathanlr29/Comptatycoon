@@ -1,6 +1,6 @@
 /**
- * Personnage assis à son bureau, vu de face en 3/4 (fausse 3D : on voit le dessus et la face
- * avant du bureau). Dessiné une seule fois par apparence dans une texture de 3 images
+ * Personnage assis, vu de face en 3/4, mains sur le clavier. Le bureau devant lui est dessiné par
+ * la vue en fausse 3D (src/game/isoFurniture.ts). Dessiné une seule fois par apparence dans une texture de 3 images
  * (frappe main gauche, repos, frappe main droite) ; les sprites réutilisent ces textures.
  */
 import type Phaser from 'phaser';
@@ -17,8 +17,6 @@ const FRAMES = 3;
 /** Ordre des images pendant l'animation de frappe. */
 const TYPING = [1, 0, 1, 2, 1, 0, 1, 1];
 
-const WOOD = { top: 0xd2a679, front: 0xa87b52, edge: 0xe7c9a4 };
-const DARK_WOOD = { top: 0x6b3f26, front: 0x4a2a18, edge: 0x8a5a3a };
 const SHADOW = 0x0f172a;
 
 export function textureKey(role: TeamRole, look: number): string {
@@ -62,7 +60,6 @@ export function textureScale(): number {
 
 /** Image `frame` : 0 = main gauche levée, 1 = repos, 2 = main droite levée. */
 function drawCharacter(g: G, style: RoleStyle, look: Look, frame: number): void {
-  const wood = style.premiumDesk ? DARK_WOOD : WOOD;
   // Ombre au sol
   g.fillStyle(SHADOW, 0.2).fillEllipse(28, 66, 54, 8);
   // Dossier du fauteuil (derrière la personne)
@@ -72,16 +69,6 @@ function drawCharacter(g: G, style: RoleStyle, look: Look, frame: number): void 
   drawTorso(g, style, look);
   drawHead(g, look);
 
-  // Bureau : dessus puis objets, bras, mains, et enfin la face avant
-  g.fillStyle(wood.top, 1).fillRect(2, 44, 52, 10);
-  g.fillStyle(wood.edge, 1).fillRect(2, 44, 52, 1.5);
-  drawProp(g, style);
-  // Écran vu de dos, décalé à droite pour ne pas cacher le visage
-  g.fillStyle(0x475569, 1).fillRect(43, 41, 3, 5);
-  g.fillStyle(0x1f2937, 1).fillRoundedRect(37, 29, 16, 13, 2);
-  g.fillStyle(0x64748b, 1).fillCircle(45, 35.5, 1.2);
-  // Clavier
-  g.fillStyle(0xe2e8f0, 1).fillRoundedRect(20, 47, 15, 4, 1);
   // Bras puis mains sur le clavier
   const left = frame === 0 ? -2 : 0;
   const right = frame === 2 ? -2 : 0;
@@ -90,11 +77,6 @@ function drawCharacter(g: G, style: RoleStyle, look: Look, frame: number): void 
   g.lineBetween(19, 37, 23, 47 + left);
   g.lineBetween(37, 37, 33, 47 + right);
   g.fillStyle(look.skin, 1).fillCircle(23, 48 + left, 2.6).fillCircle(33, 48 + right, 2.6);
-  // Face avant du bureau et plaque de catégorie
-  g.fillStyle(wood.front, 1).fillRect(2, 54, 52, 12);
-  g.fillStyle(SHADOW, 0.15).fillRect(2, 54, 52, 2);
-  if (style.premiumDesk) g.fillStyle(0xf2c14e, 1).fillRect(2, 63, 52, 1.5);
-  g.fillStyle(style.plate, 1).fillRoundedRect(22, 57.5, 12, 4.5, 1.5);
 }
 
 function drawTorso(g: G, style: RoleStyle, look: Look): void {
@@ -155,32 +137,6 @@ function drawHead(g: G, look: Look): void {
   g.lineStyle(0.9, darken(skin, 0.7), 1).beginPath().arc(28, 24.5, 2.2, 0.2 * Math.PI, 0.8 * Math.PI).strokePath();
   if (look.glasses) {
     g.lineStyle(0.9, 0x111827, 1).strokeCircle(25, 22, 2.4).strokeCircle(31, 22, 2.4).lineBetween(27.4, 22, 28.6, 22);
-  }
-}
-
-function drawProp(g: G, style: RoleStyle): void {
-  switch (style.prop) {
-    case 'notes':
-      g.fillStyle(0xfde047, 1).fillRect(6, 46, 6, 6);
-      g.fillStyle(0xf9a8d4, 1).fillRect(10, 45, 5, 5);
-      break;
-    case 'books':
-      g.fillStyle(0x1e3a8a, 1).fillRect(5, 41, 11, 4);
-      g.fillStyle(0x9a3b3b, 1).fillRect(6, 37.5, 10, 3.5);
-      break;
-    case 'folder':
-      g.fillStyle(0x0ea5e9, 1).fillRect(5, 46, 12, 7);
-      g.fillStyle(0xffffff, 1).fillRect(6, 45, 10, 2);
-      break;
-    case 'mug':
-      g.fillStyle(0xffffff, 1).fillRoundedRect(7, 41, 7, 8, 1.5);
-      g.lineStyle(1.2, 0xffffff, 1).strokeCircle(15, 45, 2);
-      g.fillStyle(0x7c2d12, 1).fillEllipse(10.5, 41.5, 6, 2);
-      break;
-    case 'pen':
-      g.fillStyle(0xf8fafc, 1).fillRect(5, 46, 11, 7);
-      g.lineStyle(1.2, 0xf2c14e, 1).lineBetween(8, 52, 15, 46);
-      break;
   }
 }
 

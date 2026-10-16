@@ -14,7 +14,6 @@ import { animationKey, ensureCharacterTexture, textureScale } from './sprites';
 const APPEAR_MS = 320;
 
 export class StaffLayer {
-  private readonly layer: Phaser.GameObjects.Layer;
   private readonly sprites = new Map<string, Phaser.GameObjects.Sprite>();
   private readonly pool: Phaser.GameObjects.Sprite[] = [];
   private seats: Seat[] = [];
@@ -25,7 +24,6 @@ export class StaffLayer {
   private readonly onMotionChange = () => this.applyMotion();
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.layer = scene.add.layer().setDepth(10);
     this.motion.addEventListener('change', this.onMotionChange);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.motion.removeEventListener('change', this.onMotionChange));
   }
@@ -55,7 +53,7 @@ export class StaffLayer {
       const seat = seatIndex === undefined ? undefined : this.seats[seatIndex];
       if (!seat) continue;
       const existing = this.sprites.get(member.id);
-      if (existing) existing.setPosition(seat.x, seat.y).setDepth(seat.y);
+      if (existing) existing.setPosition(seat.x, seat.y).setDepth(seat.depth);
       else this.spawn(member, seat, animate);
     }
   }
@@ -64,9 +62,9 @@ export class StaffLayer {
     const look = lookIndex(member.id, LOOKS_PER_ROLE);
     const key = ensureCharacterTexture(this.scene, member.role, look);
     const sprite = this.pool.pop() ?? this.scene.make.sprite({ key }, false).setOrigin(0.5, 1);
-    sprite.setTexture(key, 1).setScale(textureScale()).setPosition(seat.x, seat.y).setDepth(seat.y).setAlpha(1).setVisible(true);
+    sprite.setTexture(key, 1).setScale(textureScale()).setPosition(seat.x, seat.y).setDepth(seat.depth).setAlpha(1).setVisible(true);
     sprite.setData('anim', animationKey(member.role, look));
-    this.layer.add(sprite);
+    this.scene.add.existing(sprite);
     this.sprites.set(member.id, sprite);
     this.animate(sprite);
     if (animate && !this.motion.matches) {
@@ -80,7 +78,7 @@ export class StaffLayer {
     sprite.stop();
     this.scene.tweens.killTweensOf(sprite);
     const recycle = () => {
-      this.layer.remove(sprite);
+      this.scene.children.remove(sprite);
       sprite.setVisible(false);
       this.pool.push(sprite);
     };

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyAction } from '../src/core/actions';
 import { getTeam } from '../src/core/team';
 import { assignSeats, lookIndex, type Seat } from '../src/game/characters/seating';
-import { tempSeats } from '../src/game/characters/tempSeats';
+import { officeSeats } from '../src/game/characters/officeSeats';
 import { makeState, T0 } from './helpers';
 
 const staff = (intern = 0, junior = 0, senior = 0, manager = 0) => ({ intern, junior, senior, manager });
@@ -25,10 +25,10 @@ describe('équipe visible', () => {
 
 describe('placement aux bureaux', () => {
   const seats: Seat[] = [
-    { x: 0, y: 0, kind: 'partner' },
-    { x: 10, y: 0, kind: 'staff' },
-    { x: 20, y: 0, kind: 'staff' },
-    { x: 30, y: 0, kind: 'staff' },
+    { x: 0, y: 0, kind: 'partner', depth: 0 },
+    { x: 10, y: 0, kind: 'staff', depth: 0 },
+    { x: 20, y: 0, kind: 'staff', depth: 0 },
+    { x: 30, y: 0, kind: 'staff', depth: 0 },
   ];
 
   it('les associés vont aux bureaux d’associé, les autres aux postes', () => {
@@ -62,9 +62,10 @@ describe('placement aux bureaux', () => {
     expect(looks.size).toBeGreaterThan(3);
   });
 
-  it('le petit bureau assoit toute l’équipe du premier associé', () => {
-    const seats = tempSeats(1);
-    expect(seats.filter((s) => s.kind === 'partner').length).toBeGreaterThanOrEqual(1);
-    expect(seats.filter((s) => s.kind === 'staff').length).toBeGreaterThanOrEqual(15);
+  it('le petit bureau a un poste pour vous et des postes en plus avec l’open space', () => {
+    const start = officeSeats(1, ['headquarters']);
+    expect(start[0]?.kind).toBe('partner');
+    const withOpenSpace = officeSeats(1, ['headquarters', 'openSpace']);
+    expect(withOpenSpace.filter((s) => s.kind === 'staff').length).toBe(start.filter((s) => s.kind === 'staff').length + 6);
   });
 });
