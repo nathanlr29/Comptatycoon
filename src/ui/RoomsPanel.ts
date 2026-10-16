@@ -27,7 +27,7 @@ export class RoomsPanel {
   private state: GameState | null = null;
 
   constructor(handlers: RoomsHandlers) {
-    this.el.append(h('p', { class: 'list__summary', text: 'Choisissez une pièce : elle s’installe dans une place libre de vos locaux.' }));
+    this.el.append(h('p', { class: 'list__summary', text: 'Chaque pièce a sa place dans vos locaux et apparaît à la fin des travaux.' }));
     for (const type of CONSTRUCTIBLE) {
       const def = BUILDINGS[type];
       const level = h('span', { class: 'item__count' });

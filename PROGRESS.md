@@ -21,6 +21,7 @@
 
 ## État actuel
 Menu « Agrandir le cabinet » (16/10/2026, demande de Nathan, hors étapes).
+- Onglets « Locaux » (niveaux du cabinet) et « Pièces » (`ui/RoomsPanel.ts`) : aménager une pièce (`build`), l'améliorer (`upgradeBuilding`), barre d'avancement et temps restant pendant les travaux, raison affichée sinon (« Agrandissez le cabinet », « Bureau principal niv. N requis »…). Toucher une pièce sur la carte ouvre l'onglet « Pièces ». Notification « Travaux terminés ».
 - Bouton « Agrandir » sur la carte (pastille quand c'est possible) et dans la fiche du Bureau principal. Le menu liste les 5 niveaux : prix, équipe requise, ce que chaque niveau ajoute. Action `{ type: 'upgradeBuilding', buildingId: 'hq' }` → `canExpand`/`expandFirm` (`core/expansion.ts`), immédiate pour l'instant (l'étape 5 ajoutera la durée de travaux). Production +10 % par niveau au-delà du 1er (`getFirmMultiplier` dans `getMultipliers`).
 - Plus aucun « + » ni local « À louer » : un local non loué est le toit de l'immeuble voisin. Au passage de niveau, la caméra glisse vers le nouveau local et le toit s'efface (instantané si `prefers-reduced-motion`).
 - `data/expansion.ts` : niveaux, prix, conditions d'équipe, textes du menu. Le niveau du cabinet = l'étape du plan (`stage` de `data/office.ts`, refonte « Vue intérieure ») ; les postes de travail viennent du plan, pas de ce fichier.
