@@ -35,6 +35,13 @@ body {
   font-family: var(--font);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* Pas de zoom double-tap de Safari (taps rapides sur le HUD) ; le canvas reste à none. */
+  touch-action: manipulation;
+}
+
+/* Explicite sur chaque élément : Safari ne combine pas toujours avec les parents. */
+body *:not(canvas) {
+  touch-action: manipulation;
 }
 
 #game {

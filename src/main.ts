@@ -2,6 +2,7 @@ import './settings';
 import { getBrowserStorage, LocalSaveService, requestPersistentStorage } from './persistence/LocalSaveService';
 import { ProfileStore } from './persistence/ProfileStore';
 import { startSession } from './session';
+import { preventPageZoom } from './ui/pageZoom';
 import { ProfileScreen } from './ui/ProfileScreen';
 import './styles/main.css';
 import './styles/ui.css';
@@ -22,7 +23,4 @@ const screen = new ProfileScreen(document.body, saves, storage !== null, {
   },
 });
 
-// Safari iOS : empêche le zoom de la page par pincement (le canvas gère son propre zoom).
-for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
-  document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
-}
+preventPageZoom();

@@ -235,7 +235,8 @@
 
 .modal__textarea {
   resize: vertical;
-  font: 0.8125rem ui-monospace, Menlo, monospace;
+  /* 16 px aussi : en dessous, Safari iOS zoome la page au focus. */
+  font: 1rem ui-monospace, Menlo, monospace;
   word-break: break-all;
 }
 
