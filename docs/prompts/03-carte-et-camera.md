@@ -3,12 +3,13 @@
 Lis `CLAUDE.md`, `PROGRESS.md` et `docs/GDD.md` §6. La carte est le cœur de l'expérience : la navigation doit être agréable au doigt comme à la souris.
 
 ## Graphismes
-<!-- Remplacer ce bloc selon la réponse à la question « Graphismes » de la revue. -->
-Dessine les bâtiments et le décor toi-même en **SVG** simples et lisibles (formes, toits, ombres portées, une couleur par type), stockés dans `public/assets/` ou générés en textures Phaser. Pas de pixel art détaillé ni d'images lourdes. Un bâtiment doit rester reconnaissable à 48 px de large. Ne reproduis aucun asset ni l'identité visuelle d'un jeu existant.
+> Révisé le 16/10/2026 (demande de Nathan) : le jeu se passe **à l'intérieur** du cabinet (GDD §6). La « carte » est le plan de coupe du bâtiment.
+
+Plan vu de dessus, dessiné en vectoriel (`Phaser.GameObjects.Graphics`, pas de fichiers image) : murs épais avec arête claire, sols différenciés (parquet, moquette, carrelage), mobilier simple, ombres légères, rue en bas avec l'entrée. Couleurs chaudes et lisibles, une teinte de sol par type de pièce. Une pièce doit rester reconnaissable à 48 px de large. Ne reproduis aucun asset ni l'identité visuelle d'un jeu existant.
 
 ## À faire
-1. `data/map.ts` : taille du monde, emplacements (`slotId`, position, taille, zone), zones verrouillées.
-2. `game/GameScene.ts` : sol, allées, emplacements vides, zones verrouillées (grisées + cadenas), Bureau principal au centre.
+1. `data/map.ts` : taille du plan, emplacements de pièces (`slotId`, position, taille, zone), locaux verrouillés (GDD §6).
+2. `game/MapScene.ts` + `game/MapRenderer.ts` : plan du bâtiment (murs, sols, rue), emplacements libres, locaux non loués (dans le noir, « À louer » + cadenas), Bureau principal dans le petit bureau de départ.
 3. `game/CameraController.ts` :
    - glisser à la souris et à un doigt, avec inertie légère ;
    - molette (zoom centré sur le curseur) et pincement à deux doigts (zoom centré entre les doigts, implémenté à partir des pointeurs Phaser, sans plugin) ;

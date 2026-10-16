@@ -3,8 +3,8 @@
 Source de vérité des règles. Toutes les valeurs chiffrées sont des **valeurs de départ** : elles vivent dans `src/data/` et peuvent être rééquilibrées sans toucher au code. Si une règle est ambiguë, choisir l'interprétation la plus simple et la noter dans `PROGRESS.md` › Décisions.
 
 ## 1. Boucle de jeu
-Gagner de l'argent (clic + production passive) → recruter et construire → débloquer départements et technologies → atteindre des objectifs → la carte du cabinet grandit visuellement.
-Objectifs : court terme (< 2 min : premiers recrutements), moyen terme (10–30 min : premier département), long terme (plusieurs sessions : Pôle Conseil & Audit, carte complète).
+Gagner de l'argent (clic + production passive) → recruter et construire → débloquer départements et technologies → atteindre des objectifs → le cabinet s'agrandit visuellement (nouveaux locaux, pièces mieux meublées).
+Objectifs : court terme (< 2 min : premiers recrutements), moyen terme (10–30 min : premier département), long terme (plusieurs sessions : Pôle Conseil & Audit, tous les locaux loués).
 
 ## 2. Ressources
 | Ressource | Rôle |
@@ -46,27 +46,40 @@ revenu/s = Σ_catégories (effectif × production × multCatégorie)
 ```
 Les multiplicateurs d'une même famille se **multiplient** entre eux. Une seule fonction `getIncomePerSecond(state, now)` dans `core/economy.ts`, utilisée par le HUD, la simulation et le calcul hors ligne.
 
-## 6. Bâtiments et carte
-Carte à **emplacements prédéfinis** (pas d'éditeur libre). Vue de dessus avec légère profondeur (ombres, toits), **pas d'isométrie vraie en V1**. Carte ≈ 2 à 3 fois l'écran dans chaque direction. Parcelles verrouillées : grisées avec cadenas et condition affichée au tap.
+## 6. Vue intérieure : le cabinet et ses pièces
+Le jeu se passe **à l'intérieur** du cabinet, vu en plan de coupe de dessus (murs, sols, mobilier, ombres légères), **pas d'isométrie vraie en V1**. On commence dans un **petit bureau** loué en rez-de-chaussée ; en améliorant le Bureau principal, le cabinet loue les locaux voisins et le plan s'agrandit. Les « bâtiments » du jeu sont des **pièces** aménagées dans des **emplacements** prédéfinis du plan (pas d'éditeur libre). La rue, en bas du plan, montre l'entrée du cabinet.
 
-États visuels : verrouillé · disponible (constructible) · en chantier (barre de progression) · construit · améliorable (badge).
+Locaux (zones) et ouverture :
+| Zone (`ZoneId`) | Nom affiché | Ouverture | Emplacements |
+|---|---|---|---|
+| `start` | Le bureau | dès le départ | Bureau principal + 2 |
+| `east` | Local voisin | Bureau principal niv. 2 (on abat la cloison) | 3 |
+| `north` | Le plateau | Bureau principal niv. 3 | 3 grands |
+| `garden` | Espace détente | Bureau principal niv. 4 | 3 |
 
-| Bâtiment | Construction | Niv. max | Effet par niveau | Condition |
+Un local non loué est dessiné dans le noir (sol nu, murs en pointillés), avec un panneau « À louer », un cadenas et sa condition ; le tap affiche la condition. La caméra (glisser, pincer, molette) reste bornée au plan entier ; le zoom de départ cadre le petit bureau.
+
+États visuels d'un emplacement : verrouillé (local non loué) · libre (sol nu, contour pointillé, « + ») · en travaux (bâche, rubalise, barre de progression) · aménagé (pièce meublée) · améliorable (badge).
+
+| Pièce | Aménagement | Niv. max | Effet par niveau | Condition |
 |---|---|---|---|---|
-| Bureau principal | déjà construit (niv. 1) | 5 | production globale +10 % ; débloque des parcelles | — |
+| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % ; ouvre de nouveaux locaux | — |
 | Open space | 200 € | 5 | alternants et juniors +25 % | — |
 | Salle de réunion | 2 500 € | 5 | +1 réputation toutes les 120 s | Bureau principal niv. 2 |
 | Salle serveurs | 1 500 € | 3 | production globale +5 % ; requise pour les technologies | — |
 | Locaux Pôle Social | 15 000 € | 1 | permet d'acheter le Pôle Social | Bureau principal niv. 2 |
 | Locaux Pôle Juridique | 40 000 € | 1 | permet d'acheter le Pôle Juridique | Bureau principal niv. 2 |
 | Locaux Conseil & Audit | 250 000 € | 1 | permet d'acheter le Pôle Conseil & Audit | Bureau principal niv. 3 |
-| Jardin, fontaine (décor) | 1 000 €, 10 000 € | 1 | +3 réputation à la construction | — |
+| Coin plantes, fontaine d'intérieur (décor) | 1 000 €, 10 000 € | 1 | +3 réputation à l'aménagement | — |
+
+(Les identifiants techniques restent ceux de la V1 : le décor garde les types `garden` et `fountain`.)
 
 - Coût d'amélioration du niveau L vers L+1 = `ceil(coûtConstruction × 5^L)`. Bureau principal : 500 €, 5 000 €, 50 000 €, 500 000 €.
-- Durée de chantier = `10 s × L²` (L = niveau visé), plafonnée à 10 min. Un chantier se termine aussi pendant l'absence du joueur (son effet compte à partir du retour).
-- Un bâtiment a : `id` stable, `type`, `level`, `slotId`, `state`, `buildEndsAt?`. La position vient de `slotId` (données de carte).
-- Parcelles : Bureau principal niv. 2 ouvre la zone Est, niv. 3 la zone Nord, niv. 4 la zone décor.
-- Le visuel suit toujours l'état : aucun bâtiment n'est dessiné construit s'il est verrouillé ou en chantier.
+- Durée de travaux = `10 s × L²` (L = niveau visé), plafonnée à 10 min. Des travaux se terminent aussi pendant l'absence du joueur (leur effet compte à partir du retour).
+- Une pièce a : `id` stable, `type`, `level`, `slotId`, `state`, `buildEndsAt?`. Sa position vient de `slotId` (données du plan, `src/data/map.ts`).
+- Le niveau se voit dans la pièce : plus de mobilier et de postes de travail, un mobilier plus cossu, et un badge de niveau. Le Bureau principal passe d'un bureau d'angle exigu (niv. 1) à un bureau de direction (niv. 5).
+- L'open space affiche un poste occupé par collaborateur (alternants et juniors), dans la limite des postes dessinés pour son niveau. Personnages fixes, vus de dessus (pas d'animation de déplacement, voir §12).
+- Le visuel suit toujours l'état : aucune pièce n'est dessinée aménagée si elle est verrouillée ou en travaux.
 
 ## 7. Départements et technologies (achats uniques sauf mention)
 | Achat | Coût | Prérequis | Effet |
@@ -112,7 +125,7 @@ Liste fixe de 12 à 15 objectifs affichés un ou deux à la fois, avec récompen
 - Appeler `navigator.storage.persist()` si disponible.
 
 ## 10 bis. Écran d'accueil, joueurs et cabinets
-Premier écran du jeu, avant la carte.
+Premier écran du jeu, avant la vue du cabinet.
 
 **Étape 6 (local, sans réseau)**
 - Liste des cabinets de cet appareil (5 au maximum) : nom du cabinet, revenu/s, date de dernière partie. Le dernier joué est en tête avec un grand bouton **Continuer**.

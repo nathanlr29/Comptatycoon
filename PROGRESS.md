@@ -16,6 +16,8 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Refonte graphique « vue intérieure » (16/10/2026, demande de Nathan) : le jeu se passe dans le cabinet, en plan de coupe vu de dessus. On commence dans un petit bureau (Bureau principal + 2 emplacements + accueil) ; les locaux voisins (« Local voisin », « Le plateau », « Espace détente ») sont dans le noir avec un panneau « À louer » jusqu'aux niveaux 2, 3, 4 du Bureau principal. GDD §6 et prompts 03 et 05 mis à jour (bâtiments = pièces). `src/data/map.ts` : plan 1600 × 1240, mêmes types et `ZoneId`, nouveaux ids d'emplacements. `src/game/MapRenderer.ts` (même API), `furniture.ts` (mobilier), `rooms.ts` (`drawRoom(g, type, level, rect, staff)` pour les 9 pièces, `drawFreeSlot`, `drawWorks`, badge) prêts pour l'étape 5. Le Bureau principal se meuble selon son niveau (1 à 5).
+
 Étape 4 terminée (16/10/2026). **Le jeu est jouable** : saisir des factures, recruter, acheter les améliorations du clic, voir la capacité d'encadrement. Une recharge remet la partie à zéro (sauvegarde à l'étape 6).
 - `src/main.ts` crée le `GameStore`, la scène (`new MapScene(store)`) et l'interface (`new App(store, game)`), puis appelle `store.tick` à chaque image.
 - `src/ui/` : `App.ts` (assemblage), `HUD.ts`, `ActionDock.ts` (bouton d'action + texte flottant `+X €`), `Panel.ts` (feuille du bas sur mobile, panneau latéral ≥ 900 px ; fermeture bouton, Échap, tap hors panneau, glissement vers le bas), `RecruitmentPanel.ts`, `UpgradesPanel.ts`, `BuildingInfo.ts`, `NotificationManager.ts`.
