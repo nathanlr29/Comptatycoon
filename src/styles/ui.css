@@ -480,4 +480,18 @@
   border-color: #f87171;
   background: #f87171;
   color: var(--bg);
+/* ---------- Pièces (étape 5) ---------- */
+.item[hidden],
+.facts [hidden] {
+  display: none;
+}
+
+.facts__action {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.facts__reason {
+  margin: 6px 0 0;
+  text-align: center;
 }

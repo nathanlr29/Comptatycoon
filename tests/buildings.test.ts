@@ -8,7 +8,7 @@ import { BUILDINGS } from '../src/data/buildings';
 import { makeState, T0 } from './helpers';
 
 const staff = { intern: 4, junior: 0, senior: 0, manager: 0 };
-const OPEN_SLOT = 'start-w';
+const OPEN_SLOT = 'start-1';
 const EAST_SLOT = 'east-1';
 
 function build(state: GameState, slotId: string, building: keyof typeof BUILDINGS, now = T0) {
@@ -34,7 +34,7 @@ describe('construction', () => {
   it('refuse un emplacement occupé et un deuxième exemplaire', () => {
     const { state } = build(makeState({ money: 1e6 }), OPEN_SLOT, 'openSpace');
     expect(canBuild(state, OPEN_SLOT, 'serverRoom')).toMatchObject({ ok: false, reason: 'slot_taken' });
-    expect(canBuild(state, 'start-e', 'openSpace')).toMatchObject({ ok: false, reason: 'already_owned' });
+    expect(canBuild(state, 'start-2', 'openSpace')).toMatchObject({ ok: false, reason: 'already_owned' });
   });
 
   it('débite le coût et termine le chantier après exactement 10 s', () => {
@@ -94,7 +94,15 @@ describe('amélioration', () => {
 });
 
 describe('zones et réputation passive', () => {
-  it('ouvre l’Aile Est au niveau 2 du Bureau principal', () => {
+  it('ouvre le plateau au niveau 3 et l’espace détente au niveau 4', () => {
+    const at = (level: number) => makeState({ buildings: [{ id: 'hq', type: 'headquarters', level, slotId: 'hq' }] });
+    expect(getSlotVisual(at(2), 'north-1')).toBe('locked');
+    expect(getSlotVisual(at(3), 'north-1')).toBe('available');
+    expect(getSlotVisual(at(3), 'garden-1')).toBe('locked');
+    expect(getSlotVisual(at(4), 'garden-1')).toBe('available');
+  });
+
+  it('ouvre le local voisin au niveau 2 du Bureau principal', () => {
     const hq2 = makeState({ money: 1e6, buildings: [{ id: 'hq', type: 'headquarters', level: 2, slotId: 'hq' }] });
     expect(getSlotVisual(makeState(), EAST_SLOT)).toBe('locked');
     expect(getSlotVisual(hq2, EAST_SLOT)).toBe('available');

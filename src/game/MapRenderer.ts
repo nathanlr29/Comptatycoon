@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { BUILDING, HQ_SLOT, KITCHEN, RECEPTION, SLOTS, START_VIEW, WORLD, ZONES, isZoneUnlocked, type Rect, type Zone, type ZoneId } from '../data/map';
+import { getBuildingAt, getConstructionProgress, getHqLevel, getOpenSpaceStaff, getSlotVisual } from '../core/buildings';
+import type { GameState } from '../core/state';
+import { BUILDINGS, type BuildingType } from '../data/buildings';
 import { floor } from './furniture';
 import { MAP_COLORS as C } from './palette';
-import { drawFreeSlot, drawKitchen, drawLevelBadge, drawReception, drawRoom } from './rooms';
+import { drawFreeSlot, drawKitchen, drawLevelBadge, drawReception, drawRoom, drawWorks, type RoomType } from './rooms';
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 /** Débord des sols de chaque local sur l'espace entre locaux (le reste forme les murs). */
@@ -14,6 +17,17 @@ const DOORS: { between: [ZoneId, ZoneId]; rect: Rect }[] = [
   { between: ['start', 'garden'], rect: { x: 436, y: 726, w: 48, h: 88 } },
   { between: ['east', 'north'], rect: { x: 1256, y: 496, w: 88, h: 48 } },
 ];
+const ROOM_OF: Record<BuildingType, RoomType> = {
+  headquarters: 'headquarters',
+  openSpace: 'open_space',
+  meetingRoom: 'meeting_room',
+  serverRoom: 'server_room',
+  socialWing: 'social',
+  legalWing: 'legal',
+  advisoryWing: 'audit',
+  garden: 'garden',
+  fountain: 'fountain',
+};
 const ENTRANCE: Rect = { x: 860, y: 988, w: 70, h: 30 };
 
 function pad(r: Rect, p: number): Rect {
@@ -38,17 +52,41 @@ export class MapRenderer {
     this.highlight = scene.add.graphics();
   }
 
-  /** Redessine ce qui dépend du niveau du Bureau principal. */
-  render(hqLevel: number): void {
+  /** Redessine les locaux et les pièces selon l'état du jeu. */
+  render(state: GameState, now: number): void {
     const g = this.dynamic;
     g.clear();
     this.overlay.removeAll(true);
+    const hqLevel = getHqLevel(state);
     const open = (id: ZoneId) => ZONES.some((z) => z.id === id && isZoneUnlocked(z, hqLevel));
     for (const door of DOORS) if (door.between.every(open)) floor(g, door.rect, 'corridor');
-    for (const slot of SLOTS) if (open(slot.zone)) drawFreeSlot(g, slot);
-    drawRoom(g, 'headquarters', hqLevel, HQ_SLOT);
-    this.label(HQ_SLOT, 'Bureau principal', hqLevel);
+    for (const slot of [HQ_SLOT, ...SLOTS]) {
+      if (!open(slot.zone)) continue;
+      const building = getBuildingAt(state, slot.id);
+      const visual = getSlotVisual(state, slot.id);
+      if (!building) {
+        drawFreeSlot(g, slot);
+        continue;
+      }
+      const name = BUILDINGS[building.type].name;
+      if (visual === 'construction') {
+        drawWorks(g, slot, getConstructionProgress(building, now));
+        this.label(slot, name, null, false);
+        continue;
+      }
+      const staff = building.type === 'openSpace' ? getOpenSpaceStaff(state) : 0;
+      drawRoom(g, ROOM_OF[building.type], building.level, slot, staff);
+      this.label(slot, name, building.level, visual === 'upgradable');
+    }
     for (const zone of ZONES) if (!isZoneUnlocked(zone, hqLevel)) this.drawLockedZone(zone);
+  }
+
+  /** Bref éclat blanc sur une pièce dont les travaux viennent de finir. */
+  flash(rect: Rect): void {
+    const g = this.scene.add.graphics();
+    g.fillStyle(0xffffff, 1).fillRect(rect.x, rect.y, rect.w, rect.h);
+    g.setAlpha(0.7);
+    this.scene.tweens.add({ targets: g, alpha: 0, duration: 700, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
   }
 
   setHighlight(rect: Rect | null): void {
@@ -66,14 +104,16 @@ export class MapRenderer {
       .setResolution(this.textResolution);
   }
 
-  /** Plaque du nom sur le mur du bas (comme une plaque de porte) et badge de niveau. */
-  private label(r: Rect, name: string, level: number): void {
+  /** Plaque du nom sur le mur du bas (comme une plaque de porte) et badge de niveau (absent pendant les travaux). */
+  private label(r: Rect, name: string, level: number | null, upgradable: boolean): void {
     const plate = this.text(r.x + 18, r.y + r.h, name, 14, C.textLight).setOrigin(0, 0.5);
     const bg = this.scene.add.graphics();
     bg.fillStyle(C.wall, 1).fillRoundedRect(r.x + 8, r.y + r.h - 12, plate.width + 20, 24, 12);
+    this.overlay.add([bg, plate]);
+    if (level === null) return;
     const badge = this.scene.add.graphics();
-    const at = drawLevelBadge(badge, r, false);
-    this.overlay.add([bg, plate, badge, this.text(at.x, at.y, String(level), 15, C.textLight)]);
+    const at = drawLevelBadge(badge, r, upgradable);
+    this.overlay.add([badge, this.text(at.x, at.y, upgradable ? `${level}↑` : String(level), upgradable ? 13 : 15, C.textLight)]);
   }
 
   private drawOutside(g: Phaser.GameObjects.Graphics): void {

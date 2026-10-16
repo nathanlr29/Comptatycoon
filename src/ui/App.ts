@@ -1,11 +1,14 @@
 import type Phaser from 'phaser';
 import type { GameStore } from '../core/store';
 import type { GameState } from '../core/state';
+import { getBuildingAt } from '../core/buildings';
+import { BUILDINGS } from '../data/buildings';
 import { getZone, type ZoneId } from '../data/map';
 import { clickLabel } from '../data/texts';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
-import { BuildingInfo } from './BuildingInfo';
+import { BuildPanel } from './BuildPanel';
+import { BuildingPanel } from './BuildingPanel';
 import { HUD } from './HUD';
 import { NotificationManager } from './NotificationManager';
 import { Panel } from './Panel';
@@ -28,8 +31,11 @@ export class App {
   private readonly dock: ActionDock;
   private readonly recruitment: RecruitmentPanel;
   private readonly upgrades: UpgradesPanel;
-  private readonly buildingInfo = new BuildingInfo();
+  private readonly buildingPanel: BuildingPanel;
+  private readonly buildPanel: BuildPanel;
   private openView: View | null = null;
+  /** Pièces en travaux au dernier rendu, pour annoncer la fin des travaux. */
+  private pending = new Set<string>();
 
   constructor(
     private readonly store: GameStore,
@@ -48,12 +54,22 @@ export class App {
       else store.dispatch({ type: 'dismiss', role }, Date.now());
     });
     this.upgrades = new UpgradesPanel((id) => store.dispatch({ type: 'buyUpgrade', id }, Date.now()));
+    this.buildingPanel = new BuildingPanel((buildingId) => store.dispatch({ type: 'upgradeBuilding', buildingId }, Date.now()));
+    this.buildPanel = new BuildPanel((slotId, building) => {
+      const result = store.dispatch({ type: 'build', slotId, building }, Date.now());
+      const built = result.ok ? getBuildingAt(store.getState(), slotId) : undefined;
+      if (built) this.showBuilding(built.id);
+    });
 
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
+    game.events.on(MAP_EVENTS.slotSelected, (slotId: string) => {
+      this.buildPanel.select(slotId);
+      this.show('Aménager une pièce', this.buildPanel, true);
+    });
     game.events.on(MAP_EVENTS.zoneSelected, (id: ZoneId) => {
       const zone = getZone(id);
-      this.notifications.show(zone.name, `Se débloque au niveau ${zone.unlockLevel} du Bureau principal.`);
+      this.notifications.show(`${zone.name} : à louer`, `Bureau principal niveau ${zone.unlockLevel} requis.`);
     });
 
     store.subscribe((state) => this.render(state));
@@ -66,8 +82,23 @@ export class App {
   }
 
   private onBuildingSelected(id: string | null): void {
-    if (id === 'hq') this.show('Bureau principal', this.buildingInfo, true);
-    else if (this.openView === this.buildingInfo) this.panel.close();
+    if (id) this.showBuilding(id);
+    else if (this.openView === this.buildingPanel || this.openView === this.buildPanel) this.panel.close();
+  }
+
+  private showBuilding(id: string): void {
+    this.show(this.buildingPanel.select(id, this.store.getState()), this.buildingPanel, true);
+  }
+
+  private announceFinishedWorks(state: GameState): void {
+    const pending = new Set(state.buildings.filter((b) => b.pending).map((b) => b.id));
+    for (const id of this.pending) {
+      const building = state.buildings.find((b) => b.id === id);
+      if (pending.has(id) || !building) continue;
+      const name = BUILDINGS[building.type].name;
+      this.notifications.show('Travaux terminés', building.level > 1 ? `${name} : niveau ${building.level}` : `${name} : aménagement terminé`, 'success');
+    }
+    this.pending = pending;
   }
 
   private show(title: string, view: View, fromMap = false): void {
@@ -83,6 +114,7 @@ export class App {
   private render(state: GameState): void {
     const now = Date.now();
     this.hud.render(state, now);
+    this.announceFinishedWorks(state);
     const hq = state.buildings.find((b) => b.id === 'hq');
     this.dock.setLabel(clickLabel(hq?.level ?? 1));
     this.openView?.render(state, now);

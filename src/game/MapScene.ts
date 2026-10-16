@@ -4,13 +4,15 @@ import { CameraController } from './CameraController';
 import { hitTest, screenToWorld } from './geometry';
 import { InputController } from './InputController';
 import { MapRenderer } from './MapRenderer';
+import { getBuildingAt, getConstructionProgress, getHqLevel, getOpenSpaceStaff, getSlotVisual } from '../core/buildings';
+import type { GameState } from '../core/state';
 import type { GameStore } from '../core/store';
 
 /** Ce que l'interface peut écouter sur `game.events`. */
 export const MAP_EVENTS = {
   /** id du bâtiment sélectionné, ou null pour désélection. */
   buildingSelected: 'building:selected',
-  /** id d'un emplacement libre d'une zone ouverte. */
+  /** id d'un emplacement libre d'un local ouvert. */
   slotSelected: 'slot:selected',
   /** id d'une zone verrouillée touchée. */
   zoneSelected: 'zone:selected',
@@ -24,6 +26,8 @@ export class MapScene extends Phaser.Scene {
   private camera!: CameraController;
   private mapView!: MapRenderer;
   private hqLevel = 1;
+  private signature = '';
+  private pending = new Set<string>();
 
   constructor(private readonly store: GameStore) {
     super('map');
@@ -31,8 +35,7 @@ export class MapScene extends Phaser.Scene {
 
   create(): void {
     this.mapView = new MapRenderer(this);
-    this.hqLevel = this.readHqLevel();
-    this.mapView.render(this.hqLevel);
+    this.refresh(this.store.getState());
 
     this.camera = new CameraController(this.cameras.main);
     this.camera.centerOn(START_VIEW.x, START_VIEW.y);
@@ -41,11 +44,7 @@ export class MapScene extends Phaser.Scene {
     const onResize = (size: Phaser.Structs.Size) => this.camera.resize(size.width, size.height);
     const onRecenter = () => this.camera.centerOn(START_VIEW.x, START_VIEW.y);
     const onClear = () => this.mapView.setHighlight(null);
-    // Ne redessine la carte que si le niveau du Bureau principal change.
-    const unsubscribe = this.store.subscribe(() => {
-      const level = this.readHqLevel();
-      if (level !== this.hqLevel) this.mapView.render((this.hqLevel = level));
-    });
+    const unsubscribe = this.store.subscribe((state) => this.refresh(state));
     this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
     this.game.events.on(MAP_EVENTS.recenter, onRecenter);
     this.game.events.on(MAP_EVENTS.clearSelection, onClear);
@@ -72,17 +71,43 @@ export class MapScene extends Phaser.Scene {
     );
     if (lockedZone) return this.emitSelection(MAP_EVENTS.zoneSelected, lockedZone.id, null);
 
-    if (hitTest([HQ_SLOT], p.x, p.y)) return this.emitSelection(MAP_EVENTS.buildingSelected, 'hq', HQ_SLOT);
-
-    // Pas de surbrillance tant qu'on ne peut rien construire (étape 5).
-    const slot = hitTest(SLOTS, p.x, p.y);
-    if (slot) return this.emitSelection(MAP_EVENTS.slotSelected, slot.id, null);
+    const slot = hitTest([HQ_SLOT, ...SLOTS], p.x, p.y);
+    if (slot) {
+      const building = getBuildingAt(this.store.getState(), slot.id);
+      if (building) return this.emitSelection(MAP_EVENTS.buildingSelected, building.id, slot);
+      return this.emitSelection(MAP_EVENTS.slotSelected, slot.id, slot);
+    }
 
     this.emitSelection(MAP_EVENTS.buildingSelected, null, null);
   }
 
-  private readHqLevel(): number {
-    return this.store.getState().buildings.find((b) => b.id === 'hq')?.level ?? 1;
+  /** Redessine seulement si ce qui se voit a changé (barre de travaux par pas de 5 %). */
+  private refresh(state: GameState): void {
+    const now = Date.now();
+    this.hqLevel = getHqLevel(state);
+    const parts = [String(Math.min(getOpenSpaceStaff(state), 99))];
+    for (const b of state.buildings) {
+      const progress = b.pending ? Math.floor(getConstructionProgress(b, now) * 20) : '';
+      parts.push(`${b.id}:${b.level}:${progress}:${getSlotVisual(state, b.slotId)}`);
+    }
+    const signature = parts.join('|');
+    if (signature !== this.signature) {
+      this.signature = signature;
+      this.mapView.render(state, now);
+    }
+    this.flashFinished(state);
+  }
+
+  private flashFinished(state: GameState): void {
+    const pending = new Set(state.buildings.filter((b) => b.pending).map((b) => b.id));
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (const id of this.pending) {
+      if (pending.has(id) || reduced) continue;
+      const slotId = state.buildings.find((b) => b.id === id)?.slotId;
+      const rect = [HQ_SLOT, ...SLOTS].find((s) => s.id === slotId);
+      if (rect) this.mapView.flash(rect);
+    }
+    this.pending = pending;
   }
 
   private emitSelection(event: string, id: string | null, rect: Rect | null): void {

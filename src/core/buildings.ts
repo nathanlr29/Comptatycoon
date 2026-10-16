@@ -120,3 +120,8 @@ export function getConstructionProgress(building: BuildingState, now: number): n
   const total = getConstructionMs(building.pending.targetLevel);
   return Math.min(1, Math.max(0, 1 - (building.pending.endsAt - now) / total));
 }
+
+/** Collaborateurs installés dans l'open space (alternants et juniors), pour le dessin des postes. */
+export function getOpenSpaceStaff(state: GameState): number {
+  return state.staff.intern + state.staff.junior;
+}

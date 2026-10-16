@@ -1,6 +1,6 @@
 import type { StaffRole } from './staff';
 
-/** Bâtiments et pièces constructibles (docs/GDD.md §6). Valeurs d'équilibrage de départ. */
+/** Pièces aménageables du cabinet (docs/GDD.md §6). Valeurs d'équilibrage de départ. */
 export type BuildingType =
   | 'headquarters'
   | 'openSpace'
@@ -41,7 +41,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   headquarters: {
     type: 'headquarters',
     name: 'Bureau principal',
-    description: 'Le cœur du cabinet. Chaque niveau ouvre de nouveaux espaces.',
+    description: 'Votre bureau, le cœur du cabinet. Chaque niveau ouvre de nouveaux locaux.',
     cost: 0,
     maxLevel: 5,
     requiresHq: 0,
@@ -104,7 +104,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
   garden: {
     type: 'garden',
-    name: 'Jardin',
+    name: 'Coin plantes',
     description: 'Un coin de verdure qui plaît aux clients.',
     cost: 1_000,
     maxLevel: 1,
@@ -113,7 +113,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
   },
   fountain: {
     type: 'fountain',
-    name: 'Fontaine',
+    name: 'Fontaine d’intérieur',
     description: 'Le signe d’un cabinet qui réussit.',
     cost: 10_000,
     maxLevel: 1,
