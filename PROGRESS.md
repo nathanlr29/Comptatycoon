@@ -18,6 +18,14 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Menu « Agrandir le cabinet » (16/10/2026, demande de Nathan, hors étapes).
+- Bouton « Agrandir » sur la carte (pastille quand c'est possible) et dans la fiche du Bureau principal. Le menu liste les 5 niveaux : prix, équipe requise, ce que chaque niveau ajoute. Action `{ type: 'upgradeBuilding', buildingId: 'hq' }` → `canExpand`/`expandFirm` (`core/expansion.ts`), immédiate pour l'instant (l'étape 5 ajoutera la durée de travaux). Production +10 % par niveau au-delà du 1er (`getFirmMultiplier` dans `getMultipliers`).
+- Plus aucun « + » ni local « À louer » : un local non loué est le toit de l'immeuble voisin. Au passage de niveau, la caméra glisse vers le nouveau local et le toit s'efface (instantané si `prefers-reduced-motion`).
+- `data/expansion.ts` : niveaux, prix, conditions d'équipe, textes du menu. Le niveau du cabinet = l'étape du plan (`stage` de `data/office.ts`, refonte « Vue intérieure ») ; les postes de travail viennent du plan, pas de ce fichier.
+- Sauvegarde : aucun nouveau champ (le niveau du cabinet reste celui du Bureau principal).
+- À vérifier sur iPhone : bouton « Agrandir » atteignable au pouce, animation fluide, menu lisible en paysage.
+
+
 Employés visibles (16/10/2026, demande de Nathan, fil « Employés visibles ») : chaque personne du cabinet est assise à son bureau, vue de face en 3/4 (dessus et face avant du bureau visibles). Alternant en sweat à capuche, junior en chemise avec badge, senior chemise-cravate, manager en veste avec tasse, associé en costume au bureau en bois foncé ; une plaque de couleur sur le bureau repère la catégorie. 8 variantes par catégorie, fixes pour une même personne. `core/team.ts` (`getTeam` : ids stables `${role}-${n}`, un départ retire le dernier arrivé) ; `game/characters/` : `seating.ts` (placement pur : personne ne bouge quand un autre arrive ou part), `sprites.ts` (texture de 3 images générée une fois par apparence), `StaffLayer.ts` (pool de sprites, mise à jour seulement si les effectifs changent, frappe au clavier coupée par `prefers-reduced-motion`). Sièges **provisoires** dans `tempSeats.ts` (open space dans les emplacements des locaux loués) : à remplacer par les bureaux de la refonte fausse 3D via `StaffLayer.setSeats`. `npm run check` : 11 fichiers / 71 tests OK, build OK.
 Étape 6 terminée sauf les chantiers (16/10/2026). **La partie est sauvegardée** : écran d'accueil avec jusqu'à 5 cabinets, rattrapage hors ligne plafonné à 8 h.
 - `src/core/offline.ts` : `catchUpOffline` (revenu/s sans effets temporaires × absence plafonnée à 8 h, horloge reculée → 0, effets expirés retirés, `lastSimulatedAt` = now) et `isAbsence` (> 1 min sans simulation). `GameStore` : `catchUp(now)`, `replace(state)`, `onAction(fn)`. Constantes `offlineCapMs`, `offlineSummaryMinMs` dans `balance.ts`. `formatDuration`, `formatDate` dans `format.ts`.

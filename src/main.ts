@@ -5,6 +5,7 @@ import { ProfileScreen } from './ui/ProfileScreen';
 import './styles/main.css';
 import './styles/ui.css';
 import './styles/profiles.css';
+import './styles/expansion.css';
 
 const storage = getBrowserStorage();
 const saves = new LocalSaveService(storage, new ProfileStore(storage));

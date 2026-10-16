@@ -65,23 +65,24 @@ revenu/s = Σ_catégories (effectif × production × multCatégorie)
 Les multiplicateurs d'une même famille se **multiplient** entre eux. Une seule fonction `getIncomePerSecond(state, now)` dans `core/economy.ts`, utilisée par le HUD, la simulation et le calcul hors ligne.
 
 ## 6. Vue intérieure : le cabinet et ses pièces
-Le jeu se passe **à l'intérieur** du cabinet, vu en plan de coupe de dessus (murs, sols, mobilier, ombres légères), **pas d'isométrie vraie en V1**. On commence dans un **petit bureau** loué en rez-de-chaussée ; en améliorant le Bureau principal, le cabinet loue les locaux voisins et le plan s'agrandit. Les « bâtiments » du jeu sont des **pièces** aménagées dans des **emplacements** prédéfinis du plan (pas d'éditeur libre). La rue, en bas du plan, montre l'entrée du cabinet.
+Le jeu se passe **à l'intérieur** du cabinet, vu en plan de coupe de dessus (murs, sols, mobilier, ombres légères), **pas d'isométrie vraie en V1**. On commence dans un **petit bureau** loué en rez-de-chaussée ; le joueur l'agrandit depuis le menu **« Agrandir le cabinet »** (bouton « Agrandir » sur la carte, ou fiche du Bureau principal). Le niveau du cabinet est le niveau du Bureau principal : chaque niveau loue un local voisin, qui apparaît alors à l'écran avec une courte animation (caméra qui glisse vers lui, toit voisin qui s'efface ; aucune animation si `prefers-reduced-motion`). Les « bâtiments » du jeu sont des **pièces** aménagées dans des **emplacements** prédéfinis du plan (pas d'éditeur libre). La rue, en bas du plan, montre l'entrée du cabinet.
 
-Locaux (zones) et ouverture :
-| Zone (`ZoneId`) | Nom affiché | Ouverture | Emplacements |
-|---|---|---|---|
-| `start` | Le bureau | dès le départ | Bureau principal + 2 |
-| `east` | Local voisin | Bureau principal niv. 2 (on abat la cloison) | 3 |
-| `north` | Le plateau | Bureau principal niv. 3 | 3 grands |
-| `garden` | Espace détente | Bureau principal niv. 4 | 3 |
+Niveaux du cabinet (`src/data/expansion.ts`) :
+| Niv. | Nom | Prix | Équipe requise | Ajoute |
+|---|---|---|---|---|
+| 1 | Le petit bureau | départ | — | Bureau principal, accueil, premiers postes |
+| 2 | Le local voisin | 500 € | 5 collaborateurs | postes, coin café, production +10 % |
+| 3 | Le plateau | 5 000 € | 12 collaborateurs | postes, accueil, place pour des pièces, production +10 % |
+| 4 | L'étage complet | 50 000 € | 20 collaborateurs, 2 associés | postes, production +10 % |
+| 5 | Le siège | 500 000 € | 35 collaborateurs, 3 associés | postes, bureau de direction, production +10 % |
 
-Un local non loué est dessiné dans le noir (sol nu, murs en pointillés), avec un panneau « À louer », un cadenas et sa condition ; le tap affiche la condition. La caméra (glisser, pincer, molette) reste bornée au plan entier ; le zoom de départ cadre le petit bureau.
+Le niveau du cabinet est aussi l'étape du plan dessiné : c'est le plan (`src/data/office.ts`) qui porte les postes de travail et les places des pièces. **Rien de futur n'est dessiné** : un local non loué est recouvert par le toit de l'immeuble voisin, sans panneau ni « + », et le toucher ne fait rien. Les emplacements de pièces sont internes : le joueur choisit une pièce dans un menu et le jeu la place dans le premier emplacement libre (étape 5). La caméra (glisser, pincer, molette) reste bornée au plan entier ; le zoom de départ cadre le petit bureau.
 
-États visuels d'un emplacement : verrouillé (local non loué) · libre (sol nu, contour pointillé, « + ») · en travaux (bâche, rubalise, barre de progression) · aménagé (pièce meublée) · améliorable (badge).
+États visuels d'une pièce : en travaux (bâche, rubalise, barre de progression) · aménagée (pièce meublée) · améliorable (badge).
 
 | Pièce | Aménagement | Niv. max | Effet par niveau | Condition |
 |---|---|---|---|---|
-| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % ; ouvre de nouveaux locaux | — |
+| Bureau principal (votre bureau) | déjà aménagé (niv. 1) | 5 | production globale +10 % par niveau au-delà du 1er ; ouvre de nouveaux locaux (menu « Agrandir le cabinet », conditions d'équipe ci-dessus) | — |
 | Open space | 200 € | 5 | alternants et juniors +25 % | — |
 | Salle de réunion | 2 500 € | 5 | +1 réputation toutes les 120 s | Bureau principal niv. 2 |
 | Salle serveurs | 1 500 € | 3 | production globale +5 % ; requise pour les technologies | — |
