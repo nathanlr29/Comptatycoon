@@ -15,7 +15,7 @@ export interface Multipliers {
   global: number;
   click: number;
   role: Record<StaffRole, number>;
-  /** Part du revenu/s ajoutée à chaque clic (technologies). */
+  /** Part du revenu/s ajoutée à chaque clic (améliorations, puis technologies). */
   clickIncomeShare: number;
   /** Production fixe en €/s (Pôle Social), ajoutée avant le multiplicateur global. */
   flatIncome: number;
@@ -24,10 +24,12 @@ export interface Multipliers {
 export function getMultipliers(state: GameState): Multipliers {
   const role = Object.fromEntries(STAFF_ROLES.map((r) => [r, 1])) as Record<StaffRole, number>;
   let click = 1;
+  let clickIncomeShare = 0;
   let global = getFirmMultiplier(state);
   for (const id of state.upgrades) {
     const effect = UPGRADES[id].effect;
     click *= effect.click ?? 1;
+    clickIncomeShare += effect.clickIncomeShare ?? 0;
     global *= effect.global ?? 1;
     for (const r of STAFF_ROLES) role[r] *= effect.roles?.[r] ?? 1;
   }
@@ -40,7 +42,7 @@ export function getMultipliers(state: GameState): Multipliers {
   const departments = getDepartmentBonuses(state);
   global *= departments.global;
   for (const r of STAFF_ROLES) role[r] *= departments.role[r];
-  return { global, click, role, clickIncomeShare: 0, flatIncome: departments.flatIncome };
+  return { global, click, role, clickIncomeShare, flatIncome: departments.flatIncome };
 }
 
 export function getReputationMultiplier(state: GameState): number {
