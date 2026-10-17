@@ -168,3 +168,12 @@ export const COFFEE_TEXTS = {
   upgraded: (name: string) => ({ title: 'Nouvelle machine', body: name }),
   banner: (multiplier: string, seconds: number) => `Pause café ×${multiplier} · ${seconds}\u00a0s`,
 } as const;
+
+/** Vue extérieure du cabinet (docs/GDD.md §6 quater). */
+export const FACADE_TEXTS = {
+  open: 'Voir la façade',
+  back: 'Cabinet',
+  backLabel: 'Revenir au cabinet',
+  hint: 'Aperçu · rien à acheter ici',
+  level: (n: number) => `Niveau ${n}`,
+} as const;

@@ -22,6 +22,7 @@ import { BuildingInfo } from './BuildingInfo';
 import { CoffeePanel } from './CoffeePanel';
 import { h } from './dom';
 import { ExpansionPanel } from './ExpansionPanel';
+import { FacadeOverlay } from './FacadeOverlay';
 import { ICONS } from './icons';
 import { HUD } from './HUD';
 import { LiveInfo } from './LiveInfo';
@@ -124,6 +125,7 @@ export class App {
     this.coffeeButton.addEventListener('click', () => this.show(COFFEE_TEXTS.title, this.coffee));
     query('.map-controls').prepend(this.coffeeButton, this.expandButton);
     query('#recenter').addEventListener('click', () => game.events.emit(MAP_EVENTS.recenter));
+    new FacadeOverlay(game, store, query('.map-controls'));
     game.events.on(MAP_EVENTS.buildingSelected, (id: string | null) => this.onBuildingSelected(id));
 
     this.secrets = new Secrets(store, this.notifications, this.hud);

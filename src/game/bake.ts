@@ -21,7 +21,11 @@ export class FlatBaker {
   private keys: string[] = [];
   private next = 0;
 
-  constructor(private readonly scene: Phaser.Scene) {}
+  /** `prefix` : les textures sont communes à toutes les scènes, chaque baker garde ses propres clés. */
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly prefix = 'flat',
+  ) {}
 
   bake(depth: number, b: Rect, draw: (g: G) => void): Phaser.GameObjects.Image {
     const scale = Math.min(MAX_SCALE, Math.sqrt(MAX_PIXELS / Math.max(1, b.width * b.height)));
@@ -29,7 +33,7 @@ export class FlatBaker {
     g.scaleCanvas(scale, scale);
     g.translateCanvas(-b.x, -b.y);
     draw(g);
-    const key = `flat-${this.next++}`;
+    const key = `${this.prefix}-${this.next++}`;
     g.generateTexture(key, Math.ceil(b.width * scale), Math.ceil(b.height * scale));
     g.destroy();
     this.keys.push(key);

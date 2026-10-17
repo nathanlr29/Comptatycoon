@@ -20,6 +20,16 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Façade (17/10/2026, demande de Nathan « une vue extérieure, sans en faire trop », maquette Opus retenue, GDD §6 quater).
+- Bouton « Façade » dans `.map-controls` (`ui/FacadeOverlay.ts`), barre « ← Cabinet » et Échap pour revenir. Pendant l'aperçu, le HUD, le dock, les boutons et la carte d'objectif sont masqués (`body.facade-open`, `styles/facade.css`).
+- `game/FacadeScene.ts` : scène Phaser lancée par-dessus, le cabinet est mis en veille (`scene.sleep('map')`, ni rendu ni mise à jour). Toute la scène est dessinée par `game/facadeDraw.ts` et figée en une seule image (`FlatBaker`, préfixe `facade`). Elle n'est redessinée que si le niveau, le parking, l'enseigne ou la lumière changent (vérification toutes les 30 s). Le ciel est un dégradé `daylightAt()`.
+- Gabarits par niveau dans `data/facade.ts` (`facadeLayout`, `facadeStalls`), séparés de `data/office.ts` qui dépasse déjà 300 lignes. Tests `tests/facade.test.ts`.
+- `FlatBaker` prend un préfixe de clés : les textures sont communes à toutes les scènes, et deux bakers en `flat-N` s'écrasaient.
+- `isoExterior.ts` exporte `drawCar` (voiture dessinée dans un Graphics donné), `CAR_COLORS`, `GLYPHS` et `noise`, réutilisés par la façade.
+- Aucun changement du core ni de la sauvegarde.
+- Vérifié en Chromium (iPhone 13) aux niveaux 1, 3, 5 et 7 : façade, parking, enseigne, fenêtres allumées au crépuscule, retour au cabinet intact, aucune erreur console.
+- À vérifier sur iPhone : bouton « Façade » au pouce, barre de retour sous l'encoche, netteté de l'image sur écran Retina.
+
 Prestige : revendre le cabinet (17/10/2026, demande de Nathan « il faut donner envie de tout remettre à 0 », fil « Prestige », GDD §14 et §14 bis). Part de la cession de #27.
 - **Atouts du réseau** : 12 atouts permanents payés en contacts, sans perdre le bonus de production (un contact dépensé reste dans le réseau). Départ avec argent, juniors, réputation, machine à café, 2e associé ; embauches, travaux et agrandissements moins chers ou plus rapides ; absence plus longue ; plus de contacts à la cession ; cession dès le niveau 4. Les atouts « au départ » s'appliquent aussi tout de suite à l'achat. `data/talents.ts`, `core/talents.ts`, action `buyTalent`, refus `insufficient_contacts`, `ui/TalentsPanel.ts`.
 - **Onglet Cession plus parlant** : offre de reprise, production du réseau avant → après (×N), contacts à faire jouer, CA manquant pour le contact suivant avec barre, titre du joueur (Jeune confrère → Légende de l'Ordre). Pastille sur « Améliorer » et notification une fois par partie quand la cession vaut le coup (`isSaleWorthwhile`). Bilan après la cession avec « Choisir mes atouts » (`ui/saleFlow.ts`).
@@ -183,6 +193,7 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 - iPhone : Exporter › Copier fonctionne, et le texte collé dans Importer sur un autre appareil recrée le cabinet.
 
 ## Idées / plus tard
+- Façade interactive (proposée le 17/10/2026, pas encore validée) : clients qui arrivent du parking (toucher = bonus de clic), facteur qui apporte un événement, file d'attente en période fiscale, enseigne et façade qui changent de style après une cession.
 - Locaux (fil « Locaux et parking ») : enseigne qui brille la nuit (halo au-dessus de la pénombre) ; voitures qui arrivent le matin et repartent le soir ; salle d'archives (pertes du contrôle fiscal réduites) ; niveau 8 « La tour » avec un deuxième étage visible ; rooftop au-dessus de l'annexe ; local vélos (démissions en moins, moins cher que la terrasse).
 
 - Paramètres, suites possibles : musique d'ambiance (volume séparé), vibrations (indisponibles sur Safari iOS), tutoriel à rejouer (il n'y a pas encore de tutoriel), thème clair, contraste élevé, confirmation avant les gros achats, réglages accessibles depuis l'écran d'accueil.

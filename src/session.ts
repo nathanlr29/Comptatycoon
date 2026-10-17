@@ -5,6 +5,7 @@ import { createInitialState } from './core/state';
 import { GameStore } from './core/store';
 import { DIFFICULTIES } from './data/difficulty';
 import { saveErrorText, SAVE_TEXTS } from './data/saveTexts';
+import { FacadeScene } from './game/FacadeScene';
 import { MapScene } from './game/MapScene';
 import type { LocalSaveService } from './persistence/LocalSaveService';
 import type { LoadResult } from './persistence/SaveService';
@@ -27,7 +28,7 @@ export function startSession(profileId: string | null, saves: LocalSaveService):
     backgroundColor: '#232c3b',
     scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
     input: { mouse: { preventDefaultWheel: true } },
-    scene: [new MapScene(store)],
+    scene: [new MapScene(store), new FacadeScene(store)],
   });
   const app = new App(store, game);
 
