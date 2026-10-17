@@ -42,7 +42,9 @@ export type FurnitureType =
   | 'reception'
   | 'whiteboard'
   | 'fountain'
-  | 'bench';
+  | 'bench'
+  | 'parasol'
+  | 'lounger';
 
 export interface Furniture {
   type: FurnitureType;
@@ -62,7 +64,19 @@ export type RoomType =
   | 'legalWing'
   | 'advisoryWing'
   | 'garden'
-  | 'fountain';
+  | 'fountain'
+  | 'terrace';
+
+/**
+ * Aménagements sans pièce au sol : le parking devant l'immeuble (hors de l'emprise, voir `parkingStalls`)
+ * et l'enseigne lumineuse sur le mur du fond (`SIGN_SPAN`).
+ */
+export type ExteriorType = 'parking' | 'signage';
+
+export const EXTERIOR_TYPES: readonly string[] = ['parking', 'signage'];
+
+/** Tout ce que le plan peut montrer pour un bâtiment acheté. */
+export type PlanType = RoomType | ExteriorType;
 
 export interface RoomLayout {
   type: RoomType;
@@ -143,6 +157,24 @@ export const OFFICE_STAGES: OfficeStage[] = [
     entranceX: 21,
     desks: [...col(21.2, 0.9, 8, 'e', 1.5), ...col(23.2, 0.9, 8, 'e', 1.5), ...row(0.9, 13.9, 12, 's', 1.6)],
     furniture: [{ type: 'plant', x: 20.2, y: 13.2 }, { type: 'sofa', x: 22, y: 13.3 }],
+  },
+  {
+    // Extension à l'est (x 24 → 30) : terrasse au fond, deux pièces du fil « Confort des équipes » au milieu.
+    stage: 6,
+    name: 'L’annexe',
+    size: { w: 30, h: 15 },
+    entranceX: 27,
+    desks: row(24.9, 13.4, 4, 's', 1.4),
+    furniture: [{ type: 'plant', x: 24.1, y: 14.2 }],
+  },
+  {
+    // Extension au sud (y 15 → 20) : pièces des fils « Confort des équipes » (x 0 → 16) et « Cantine » (x 16 → 24), postes à droite.
+    stage: 7,
+    name: 'Le campus',
+    size: { w: 30, h: 20 },
+    entranceX: 27,
+    desks: [...row(24.8, 16.0, 4, 's', 1.3), ...row(24.8, 18.2, 4, 's', 1.3)],
+    furniture: [{ type: 'plant', x: 24.1, y: 15.2 }, { type: 'plant', x: 29.3, y: 15.2 }],
   },
 ];
 
@@ -228,7 +260,59 @@ export const ROOMS: RoomLayout[] = [
     desks: [],
     furniture: [{ type: 'fountain', x: 17, y: 6.5 }, { type: 'plant', x: 16.2, y: 5.2 }, { type: 'plant', x: 19.1, y: 9.1 }],
   },
+  {
+    type: 'terrace',
+    rect: { x: 24, y: 0, w: 6, h: 5 },
+    minStage: 6,
+    door: { side: 's', at: 25 },
+    desks: [],
+    furniture: [
+      { type: 'parasol', x: 25, y: 0.6 },
+      { type: 'parasol', x: 27.6, y: 0.6 },
+      { type: 'lounger', x: 25, y: 3.2 },
+      { type: 'lounger', x: 26.4, y: 3.2 },
+      { type: 'lounger', x: 27.8, y: 3.2 },
+      { type: 'plant', x: 29.1, y: 0.2 },
+      { type: 'plant', x: 29.1, y: 4.1 },
+    ],
+  },
 ];
+
+/**
+ * Enseigne lumineuse : position le long du mur du fond (x), hauteur (z, px) sur le mur. Existe dès le petit bureau,
+ * au-dessus des deux premières fenêtres, à gauche de l'horloge (src/game/ambient.ts).
+ */
+export const SIGN_SPAN = { x0: 1.1, x1: 4.7, z0: 68, z1: 83 } as const;
+
+/** Places du parking par niveau du parking (1 place = 1 collaborateur de plus). */
+export const PARKING_STALLS_PER_LEVEL = 5;
+/** Places par rangée ; une rangée = 2 cases de profondeur, séparée de l'immeuble par un trottoir. */
+const STALLS_PER_ROW = 8;
+const STALL_W = 1.15;
+const PARKING_GAP = 0.9;
+const ROW_DEPTH = 2;
+
+/**
+ * Places du parking devant l'immeuble, à gauche de l'entrée (hors de l'emprise du cabinet, y > h).
+ * Leur position suit la façade avant du niveau atteint : le parking « recule » quand le cabinet s'agrandit.
+ */
+export function parkingStalls(stage: number, level: number): TileRect[] {
+  const { h } = getStage(stage).size;
+  const count = Math.max(0, level) * PARKING_STALLS_PER_LEVEL;
+  return Array.from({ length: count }, (_, i) => {
+    const r = Math.floor(i / STALLS_PER_ROW);
+    return { x: 0.4 + (i % STALLS_PER_ROW) * STALL_W, y: h + PARKING_GAP + r * ROW_DEPTH, w: STALL_W, h: ROW_DEPTH };
+  });
+}
+
+/** Emprise du parking (bitume compris), au moins celle d'un parking de niveau 1. */
+export function parkingRect(stage: number, level: number): TileRect {
+  const stalls = parkingStalls(stage, Math.max(1, level));
+  const rows = Math.ceil(stalls.length / STALLS_PER_ROW);
+  const cols = Math.min(stalls.length, STALLS_PER_ROW);
+  const { h } = getStage(stage).size;
+  return { x: 0, y: h + PARKING_GAP - 0.3, w: 0.8 + cols * STALL_W, h: rows * ROW_DEPTH + 0.6 };
+}
 
 export const MAX_STAGE = OFFICE_STAGES.length;
 

@@ -1,4 +1,5 @@
 import { EXPANSION_LEVELS, MAX_FIRM_LEVEL } from './expansion';
+import type { EventId } from './events';
 import type { StaffRole } from './staff';
 
 /** Bâtiments et pièces constructibles (docs/GDD.md §6). Valeurs d'équilibrage de départ. */
@@ -11,7 +12,10 @@ export type BuildingType =
   | 'legalWing'
   | 'advisoryWing'
   | 'garden'
-  | 'fountain';
+  | 'fountain'
+  | 'terrace'
+  | 'parking'
+  | 'signage';
 
 export interface BuildingEffect {
   /** Bonus de production globale par niveau (0,1 = +10 %). */
@@ -22,6 +26,10 @@ export interface BuildingEffect {
   reputationEveryMs?: number;
   /** Réputation gagnée une fois, à la fin de la construction. */
   reputationOnBuild?: number;
+  /** Places d'encadrement en plus par niveau (s'ajoutent à celles des associés). */
+  capacityPerLevel?: number;
+  /** Variation du poids d'un événement aléatoire par niveau (−0,3 = 30 % moins souvent). */
+  eventWeightPerLevel?: Partial<Record<EventId, number>>;
 }
 
 export interface BuildingDefinition {
@@ -124,6 +132,34 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
     requiresHq: 4,
     effect: { reputationOnBuild: 3 },
   },
+  signage: {
+    type: 'signage',
+    name: 'Enseigne lumineuse',
+    description: 'Votre nom en lettres lumineuses : les gros clients vous remarquent.',
+    cost: 40_000,
+    maxLevel: 1,
+    requiresHq: 2,
+    effect: { reputationOnBuild: 5, eventWeightPerLevel: { prestigiousClient: 0.5 } },
+  },
+  parking: {
+    type: 'parking',
+    name: 'Parking',
+    description: 'Des places devant l’immeuble : vous pouvez recruter plus loin.',
+    cost: 100_000,
+    maxLevel: 3,
+    requiresHq: 3,
+    effect: { capacityPerLevel: 5 },
+  },
+  terrace: {
+    type: 'terrace',
+    name: 'Terrasse',
+    description: 'Transats et parasols sur le toit de l’annexe : on y souffle, on reste.',
+    cost: 1_000_000_000,
+    maxLevel: 3,
+    // Sa place n'existe qu'à « L’annexe » (src/data/office.ts).
+    requiresHq: 6,
+    effect: { reputationOnBuild: 5, reputationEveryMs: 60_000, eventWeightPerLevel: { resignation: -0.3 } },
+  },
 };
 
 /**
@@ -136,6 +172,9 @@ export const CONSTRUCTIBLE: BuildingType[] = [
   'meetingRoom',
   'garden',
   'fountain',
+  'signage',
+  'parking',
+  'terrace',
 ];
 
 /** Durée de chantier : 10 s × niveau visé², plafonnée à 10 min. */

@@ -30,6 +30,8 @@ const SIZE: Record<FurnitureType, [number, number]> = {
   whiteboard: [1.3, 0.12],
   fountain: [2, 2],
   bench: [1.4, 0.5],
+  parasol: [1.2, 1.2],
+  lounger: [0.6, 1.4],
 };
 
 export function drawFurniture(scene: Phaser.Scene, f: Furniture): G[] {
@@ -143,6 +145,30 @@ export function drawFurniture(scene: Phaser.Scene, f: Furniture): G[] {
       add((g) => {
         groundShadow(g, x, y, w, h);
         box(g, x, y, w, h, 0, 14, COLORS.deskWood);
+      });
+      break;
+    case 'parasol':
+      // Table ronde, deux chaises, parasol rayé
+      add((g) => {
+        poly(g, isoQuad(x + 0.1, y + 0.15, w - 0.2, h - 0.2), COLORS.shadow, 0.2);
+        box(g, x + 0.15, y + 0.45, 0.25, 0.25, 0, 14, COLORS.chair);
+        box(g, x + 0.8, y + 0.45, 0.25, 0.25, 0, 14, COLORS.chair);
+        box(g, x + 0.4, y + 0.4, 0.4, 0.4, 0, 18, COLORS.white);
+        box(g, x + 0.57, y + 0.57, 0.06, 0.06, 18, 40, COLORS.metal, false);
+        const c = isoToScreen(x + 0.6, y + 0.6, 62);
+        for (let k = 0; k < 8; k++) {
+          const a0 = (k / 8) * Math.PI * 2;
+          const a1 = ((k + 1) / 8) * Math.PI * 2;
+          g.fillStyle(k % 2 ? COLORS.white : 0xe76f51, 1).fillTriangle(c.x, c.y - 8, c.x + Math.cos(a0) * 44, c.y + Math.sin(a0) * 22, c.x + Math.cos(a1) * 44, c.y + Math.sin(a1) * 22);
+        }
+      });
+      break;
+    case 'lounger':
+      add((g) => {
+        groundShadow(g, x, y, w, h);
+        box(g, x, y, w, h, 0, 8, COLORS.deskWood);
+        box(g, x + 0.05, y + 0.05, w - 0.1, h - 0.5, 8, 3, 0x7dd3fc);
+        box(g, x + 0.05, y, w - 0.1, 0.25, 8, 14, 0x7dd3fc);
       });
       break;
   }

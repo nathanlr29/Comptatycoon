@@ -63,6 +63,8 @@ export const ROOM_FLOORS: Record<RoomType, { kind: FloorKind; colors: readonly [
   advisoryWing: { kind: 'carpet', colors: [0xb5c5e7, 0xabbce0] },
   garden: { kind: 'grass', colors: [0x92c26c, 0x88b862] },
   fountain: { kind: 'stone', colors: [0xe4dfd5, 0xd9d3c7] },
+  // Lames de bois grisées par le soleil
+  terrace: { kind: 'parquet', colors: [0xb39b7d, 0xa58d70] },
 };
 
 /** Assombrit (f < 1) ou éclaircit (f > 1) une couleur 0xRRGGBB. */
