@@ -5,6 +5,7 @@ import { UPGRADES } from '../data/upgrades';
 import { getDepartmentBonuses } from './departments';
 import { getDifficulty } from './difficulty';
 import { getFirmMultiplier } from './expansion';
+import { getPerkEffects } from './perks';
 import { getPrestigeMultiplier } from './prestige';
 import type { GameState } from './state';
 
@@ -86,8 +87,9 @@ export function scaledCost(baseCost: number, owned: number, growth: number = BAL
   return Math.ceil(baseCost * growth ** owned);
 }
 
+/** Prix d'embauche, réduit par les avantages sociaux (mutuelle, titres-restaurant). */
 export function getHireCost(state: GameState, role: StaffRole): number {
-  return scaledCost(STAFF[role].baseCost, state.staff[role], STAFF[role].costGrowth);
+  return Math.ceil(scaledCost(STAFF[role].baseCost, state.staff[role], STAFF[role].costGrowth) * getPerkEffects(state).hireCost);
 }
 
 /** Indemnité pour licencier un collaborateur : part du prix payé pour le dernier recruté. */

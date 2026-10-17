@@ -1,6 +1,7 @@
 import { BALANCE } from '../data/balance';
 import { STAFF, STAFF_ROLES, type StaffRole } from '../data/staff';
 import { getHireCost, getPartnerCost, getPartnerSeveranceCost, getSeveranceCost } from './economy';
+import { getPerkEffects } from './perks';
 import type { GameState } from './state';
 
 import type { RefusalReason } from './refusals';
@@ -13,8 +14,13 @@ export function getStaffCount(state: GameState): number {
   return STAFF_ROLES.reduce((sum, role) => sum + state.staff[role], 0);
 }
 
+/** Places d'encadrement par associé : 15, plus le Séminaire annuel. */
+export function getStaffPerPartner(state: GameState): number {
+  return BALANCE.staffPerPartner + getPerkEffects(state).staffPerPartner;
+}
+
 export function getCapacity(state: GameState): number {
-  return state.partners * BALANCE.staffPerPartner;
+  return state.partners * getStaffPerPartner(state);
 }
 
 export function canHire(state: GameState, role: StaffRole): Check {
@@ -45,7 +51,7 @@ export function canDismiss(state: GameState, role: StaffRole): Check {
 export function canDismissPartner(state: GameState): Check {
   const cost = getPartnerSeveranceCost(state);
   if (state.partners <= 1) return { ok: false, reason: 'last_partner', cost };
-  if (getStaffCount(state) > (state.partners - 1) * BALANCE.staffPerPartner) return { ok: false, reason: 'team_too_large', cost };
+  if (getStaffCount(state) > (state.partners - 1) * getStaffPerPartner(state)) return { ok: false, reason: 'team_too_large', cost };
   if (state.money < cost) return { ok: false, reason: 'insufficient_funds', cost };
   return { ok: true, cost };
 }

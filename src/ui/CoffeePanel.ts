@@ -1,4 +1,4 @@
-import { canTakeCoffeeBreak, canUpgradeCoffeeMachine, getCoffeeBreakEnd, getCoffeeMachine } from '../core/coffee';
+import { canTakeCoffeeBreak, canUpgradeCoffeeMachine, getCoffeeBreakEnd, getCoffeeCooldownMs, getCoffeeMachine } from '../core/coffee';
 import { formatMoney } from '../core/format';
 import type { GameState } from '../core/state';
 import { getCoffeeMachineDef, MAX_COFFEE_LEVEL, type CoffeeMachine } from '../data/coffee';
@@ -10,8 +10,8 @@ export interface CoffeeHandlers {
   onUpgrade: () => void;
 }
 
-function machineEffect(m: CoffeeMachine): string {
-  return `${COFFEE_TEXTS.effect(multiplierText(m.multiplier), durationText(m.durationMs))} · ${COFFEE_TEXTS.cooldown(durationText(m.cooldownMs))}`;
+function machineEffect(state: GameState, m: CoffeeMachine): string {
+  return `${COFFEE_TEXTS.effect(multiplierText(m.multiplier), durationText(m.durationMs))} · ${COFFEE_TEXTS.cooldown(durationText(getCoffeeCooldownMs(state, m)))}`;
 }
 
 /** Panneau « Pause café » : lancer la pause, voir le délai, changer de machine. */
@@ -63,7 +63,7 @@ export class CoffeePanel {
 
     const machine = getCoffeeMachine(state);
     setText(this.currentName, machine.name);
-    setText(this.currentMeta, machineEffect(machine));
+    setText(this.currentMeta, machineEffect(state, machine));
     const isMax = machine.level >= MAX_COFFEE_LEVEL;
     this.next.hidden = isMax;
     this.maxed.hidden = !isMax;
@@ -71,7 +71,7 @@ export class CoffeePanel {
     const next = getCoffeeMachineDef(machine.level + 1);
     setText(this.nextName, next.name);
     setText(this.nextDesc, next.description);
-    setText(this.nextMeta, machineEffect(next));
+    setText(this.nextMeta, machineEffect(state, next));
     const upgrade = canUpgradeCoffeeMachine(state);
     setText(this.buy, formatMoney(next.cost));
     this.buy.disabled = !upgrade.ok;

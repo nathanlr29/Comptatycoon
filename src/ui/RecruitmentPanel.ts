@@ -1,4 +1,4 @@
-import { canDismiss, canDismissPartner, canHire, canHirePartner, getCapacity, getStaffCount, type Check } from '../core/recruitment';
+import { canDismiss, canDismissPartner, canHire, canHirePartner, getCapacity, getStaffCount, getStaffPerPartner, type Check } from '../core/recruitment';
 import { formatMoney, formatRate } from '../core/format';
 import type { GameState } from '../core/state';
 import { BALANCE } from '../data/balance';
@@ -15,6 +15,7 @@ interface Row {
   check: (s: GameState) => Check;
   dismissCheck: (s: GameState) => Check;
   minReputation: number;
+  effect: (s: GameState) => string;
 }
 
 type Target = StaffRole | 'partner';
@@ -39,7 +40,7 @@ export class RecruitmentPanel {
       const def = STAFF[role];
       this.addRow(def.name, def.description, `${formatRate(def.income)} chacun`, def.minReputation, (s) => canHire(s, role), (s) => canDismiss(s, role), () => onHire(role), role);
     }
-    this.addRow(PARTNER.name, PARTNER.description, `+${BALANCE.staffPerPartner} places`, BALANCE.partnerMinReputation, canHirePartner, canDismissPartner, () => onHire('partner'), 'partner');
+    this.addRow(PARTNER.name, PARTNER.description, (s) => `+${getStaffPerPartner(s)} places`, BALANCE.partnerMinReputation, canHirePartner, canDismissPartner, () => onHire('partner'), 'partner');
   }
 
   render(state: GameState, now = Date.now()): void {
@@ -68,7 +69,7 @@ export class RecruitmentPanel {
   private addRow(
     name: string,
     description: string,
-    effect: string,
+    effect: string | ((s: GameState) => string),
     minReputation: number,
     check: Row['check'],
     dismissCheck: Row['dismissCheck'],
@@ -91,8 +92,7 @@ export class RecruitmentPanel {
         h('div', { class: 'item__action' }, h('div', { class: 'item__buttons' }, dismiss, button), reason),
       ),
     );
-    this.rows.push({ count, meta, button, dismiss, reason, check, dismissCheck, minReputation });
-    meta.dataset.effect = effect;
+    this.rows.push({ count, meta, button, dismiss, reason, check, dismissCheck, minReputation, effect: typeof effect === 'string' ? () => effect : effect });
   }
 
   private renderRow(index: number, state: GameState, owned: string): void {
@@ -101,7 +101,7 @@ export class RecruitmentPanel {
     const dismissCheck = row.dismissCheck(state);
     const armed = this.armed?.index === index;
     setText(row.count, `× ${owned}`);
-    setText(row.meta, row.meta.dataset.effect ?? '');
+    setText(row.meta, row.effect(state));
     setText(row.button, formatMoney(check.cost));
     row.button.disabled = !check.ok;
     // Personne à licencier : bouton inactif. Autre refus : expliqué au premier appui.

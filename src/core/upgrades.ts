@@ -1,5 +1,6 @@
 import { UPGRADES, type UpgradeId } from '../data/upgrades';
-import type { Check } from './recruitment';
+import { getFirmLevel } from './expansion';
+import { getStaffCount, type Check } from './recruitment';
 import type { GameState } from './state';
 
 /** Niveau terminé d'une pièce (0 si elle n'est pas aménagée). */
@@ -13,6 +14,8 @@ export function canBuyUpgrade(state: GameState, id: UpgradeId): Check {
   const cost = def.cost;
   if (state.upgrades.includes(id)) return { ok: false, reason: 'already_owned', cost };
   if (def.requires && !state.upgrades.includes(def.requires)) return { ok: false, reason: 'missing_prerequisite', cost };
+  if (def.minFirmLevel && getFirmLevel(state) < def.minFirmLevel) return { ok: false, reason: 'requires_hq', cost };
+  if (def.minStaff && getStaffCount(state) < def.minStaff) return { ok: false, reason: 'team_too_small', cost };
   if (def.requiresBuilding && builtLevel(state, def.requiresBuilding.type) < def.requiresBuilding.level) return { ok: false, reason: 'missing_building', cost };
   if (state.reputation < (def.minReputation ?? 0)) return { ok: false, reason: 'locked', cost };
   if (state.money < cost) return { ok: false, reason: 'insufficient_funds', cost };

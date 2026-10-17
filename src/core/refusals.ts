@@ -9,6 +9,7 @@ export type RefusalReason =
   | 'nobody_to_dismiss'
   | 'last_partner'
   | 'team_too_large'
+  | 'team_too_small'
   | 'no_space'
   | 'requires_hq'
   | 'under_construction'
