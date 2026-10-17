@@ -145,6 +145,7 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 | Enseigne lumineuse « COMPTA » (mur du fond) | 40 000 € | 1 | +5 réputation à l'aménagement ; Client prestigieux ×1,5 (poids du tirage) | agrandissement niv. 2 |
 | Parking (devant l'immeuble, à gauche de l'entrée) | 100 000 € | 3 | +5 places d'encadrement par niveau (5 places de parking, voitures et bornes de recharge dès le niv. 2) | agrandissement niv. 3 |
 | Terrasse (annexe) | 1 000 000 000 € | 3 | +5 réputation à l'aménagement, +1 réputation toutes les 60 s par niveau, démissions −30 % par niveau (poids du tirage) | agrandissement niv. 6 |
+| Cantine (§6 ter) | 50 Md€ | 4 | production globale +4 % ; démissions −15 % (poids du tirage) ; +5 réputation à l'aménagement | agrandissement niv. 7 |
 
 
 **Employés visibles** : chaque collaborateur est un personnage dessiné à un poste de travail (siège + bureau + écran), dans le style de la vue. Ordre de placement : vous et vos associés dans votre bureau (postes réservés), puis l'espace commun, puis les pièces achetées qui ont des postes (open space, espaces des pôles ouverts). Au-delà des postes visibles, un compteur « +N » près de l'entrée. Personnages fixes ou à petite animation sur place (pas de déplacement, voir §12).
@@ -153,6 +154,18 @@ Chaque niveau au-delà du 1er : production globale +10 % et de nouveaux postes d
 - Coût d'amélioration d'une pièce du niveau L vers L+1 = `ceil(coûtConstruction × 5^L)`. Le niveau se voit dans la pièce (mobilier plus fourni et plus cossu) et sur un badge.
 - Une pièce a : `id` stable, `type`, `level`, `state`, `buildEndsAt?`. Sa place vient de son type (`ROOMS` dans `src/data/office.ts`) ; l'ancien `slotId` n'est plus utilisé pour la position.
 - Le visuel suit toujours l'état : rien n'est dessiné pour ce qui n'est pas acheté.
+
+## 6 ter. La cantine
+Une pièce du menu « Pièces », à sa place fixe au Campus (niveau 7 du cabinet, rectangle 16,15 → 24,20, `CANTEEN_ROOM` dans `src/data/canteen.ts`). Quatre niveaux, chacun avec son nom et son mobilier (rien n'est dessiné avant l'achat) :
+| Niv. | Nom | Prix | Ce qu'on voit |
+|---|---|---|---|
+| 1 | Kitchenette | 50 Md€ | plan de travail, micro-ondes, frigo, une table |
+| 2 | Cafétéria | 200 Md€ | trois tables, une plante |
+| 3 | Self-service | 800 Md€ | buffet chaud sous vitre, quatre tables |
+| 4 | Restaurant d'entreprise | 3 000 Md€ | cuisine avec son chef en toque et sa casserole fumante, six tables |
+
+Effets, par niveau : production globale +4 % ; poids de l'événement « Démission » (§8) × (1 − 0,15 × niveau), soit −60 % au restaurant d'entreprise, cumulé avec le mode de difficulté, la terrasse et le confort des équipes. Aucun effet temporaire : tout compte aussi hors ligne.
+**Déjeuner** (visuel seulement) : de 12 h à 13 h 30, heure réelle du joueur, jusqu'à 6 collaborateurs vont s'asseoir aux tables de la cantine (deux places par table, `canteenSeats`), puis regagnent leur bureau. La kitchenette sert aussi de coin café pour les allées et venues.
 
 ## 7. Départements (achats uniques sauf mention)
 Les technologies (Automatisation de la saisie, Assistant comptable IA…) sont dans l'onglet « Améliorations », rubrique Technologies (§3 bis).

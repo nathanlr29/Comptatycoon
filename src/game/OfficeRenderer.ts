@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { EXTERIOR_TYPES, OFFICE_STAGES, ROOMS, getStage, parkingRect, visibleDesks, type Furniture, type PlanType, type RoomLayout, type TileRect } from '../data/office';
+import { EXTERIOR_TYPES, OFFICE_STAGES, ROOMS, getStage, parkingRect, roomFurnitureAt, visibleDesks, type Furniture, type PlanType, type RoomLayout, type TileRect } from '../data/office';
 import { builtRoomTypes, parkingLevel, planRect, type OfficeView, type RoomView } from './officeView';
 import type { Bounds } from './CameraController';
 import { DEPTH, ISO, depthOf, isoQuad, isoToScreen, screenBounds, screenToIso } from './iso';
@@ -258,7 +258,8 @@ export class OfficeRenderer {
   }
 
   private roomFurniture(room: RoomLayout, level: number): Furniture[] {
-    return room.type === 'headquarters' ? [...room.furniture, ...headquartersExtras(level)] : room.furniture;
+    const base = roomFurnitureAt(room, level);
+    return room.type === 'headquarters' ? [...base, ...headquartersExtras(level)] : base;
   }
 
   /** Diplôme d'expert-comptable encadré au mur ouest du bureau principal. */

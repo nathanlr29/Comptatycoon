@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
+import { isLunchTime } from '../core/canteen';
 import { getCoffeeBreakEnd } from '../core/coffee';
 import type { GameStore } from '../core/store';
+import { canteenSeats } from '../data/canteen';
 import { getStage } from '../data/office';
 import { CameraController } from './CameraController';
+import { localHour } from './daylight';
 import { placesFrom } from './characters/behavior';
-import { coffeeSpots, type CoffeeSpot } from './characters/coffeeSpots';
+import { coffeeSpots, spotAt, type CoffeeSpot } from './characters/coffeeSpots';
 import { officeSeats } from './characters/officeSeats';
 import { StaffLayer } from './characters/StaffLayer';
 import { playReveal } from './expansionView';
@@ -26,6 +29,8 @@ export const MAP_EVENTS = {
 
 /** Zoom maximal quand on cadre tout le cabinet (le petit bureau ne doit pas paraître énorme). */
 const FIT_MAX_ZOOM = 1.25;
+/** Personnes qui vont déjeuner à la cantine, au plus. */
+const LUNCH_GUESTS = 6;
 
 /** Scène du cabinet en fausse 3D (docs/GDD.md §6) : plan, mobilier et employés. */
 export class MapScene extends Phaser.Scene {
@@ -35,6 +40,7 @@ export class MapScene extends Phaser.Scene {
   private view: OfficeView | null = null;
   private viewKey = '';
   private spots: CoffeeSpot[] = [];
+  private lunchSpots: CoffeeSpot[] = [];
 
   constructor(private readonly store: GameStore) {
     super('map');
@@ -87,6 +93,8 @@ export class MapScene extends Phaser.Scene {
       const door = isoToScreen(stage.entranceX, stage.size.h + 0.8);
       this.staff.setEntrance(door.x, door.y);
       this.spots = coffeeSpots(view.stage);
+      const canteen = view.rooms.find((r) => r.type === 'canteen' && r.visual !== 'works');
+      this.lunchSpots = canteen ? canteenSeats(canteen.level).slice(0, LUNCH_GUESTS).map((s) => spotAt(s.x, s.y)) : [];
       this.staff.setPlaces(placesFrom(this.office.visibleFurniture(), stage.size));
       this.camera.setBounds(this.office.bounds());
       if (grew) this.reveal(view.stage);
@@ -94,6 +102,8 @@ export class MapScene extends Phaser.Scene {
     this.office.updateWorks(worksProgress(state, Date.now()));
     this.staff.sync(state);
     this.staff.setCoffeeBreak(getCoffeeBreakEnd(state, Date.now()) !== null, this.spots);
+    // À l'heure du déjeuner (heure réelle), une partie de l'équipe s'attable à la cantine.
+    this.staff.setGathering('lunch', this.lunchSpots.length > 0 && isLunchTime(localHour(new Date())), this.lunchSpots, 'seated');
   }
 
   /** Nouveau niveau : la caméra recadre le cabinet agrandi et son contour pulse. */

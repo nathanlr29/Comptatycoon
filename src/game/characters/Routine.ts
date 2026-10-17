@@ -263,6 +263,8 @@ export class Routine {
     (sprite.getData('walk') as Phaser.Tweens.Tween | undefined)?.remove();
     sprite.setData('walk', undefined);
     this.scene.tweens.killTweensOf(sprite);
+    // Une apparition (fondu à l'embauche) interrompue ne doit pas laisser la personne invisible.
+    sprite.setAlpha(1);
   }
 
   private play(sprite: Sprite, motion: Motion, staggered: boolean): void {
