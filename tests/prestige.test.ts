@@ -20,17 +20,17 @@ function seat(patch: Partial<GameState> = {}): GameState {
     departments: ['social'],
     buildings: firm(5),
     claimedObjectives: ['firstInvoices'],
-    stats: { totalEarned: 1e8, clicks: 5_000 },
+    stats: { totalEarned: 1e8, clicks: 5_000, playMs: 3_600_000 },
     ...patch,
   });
 }
 
 describe('cession du cabinet', () => {
   it('rapporte √(CA de la partie / 1 M€) contacts, arrondis à l’inférieur', () => {
-    expect(getContactsForSale(seat({ stats: { totalEarned: 999_999, clicks: 0 } }))).toBe(0);
-    expect(getContactsForSale(seat({ stats: { totalEarned: 1e6, clicks: 0 } }))).toBe(1);
+    expect(getContactsForSale(seat({ stats: { totalEarned: 999_999, clicks: 0, playMs: 0 } }))).toBe(0);
+    expect(getContactsForSale(seat({ stats: { totalEarned: 1e6, clicks: 0, playMs: 0 } }))).toBe(1);
     expect(getContactsForSale(seat())).toBe(10);
-    expect(getContactsForSale(seat({ stats: { totalEarned: 1e10, clicks: 0 } }))).toBe(100);
+    expect(getContactsForSale(seat({ stats: { totalEarned: 1e10, clicks: 0, playMs: 0 } }))).toBe(100);
   });
 
   it('donne 50 % de contacts en plus en Exigeant', () => {
@@ -40,11 +40,11 @@ describe('cession du cabinet', () => {
 
   it('demande un cabinet agrandi jusqu’au siège', () => {
     expect(canSellFirm(seat({ buildings: firm(4) }))).toEqual({ ok: false, reason: 'missing_prerequisite', contacts: 10 });
-    expect(canSellFirm(seat({ stats: { totalEarned: 0, clicks: 0 } }))).toEqual({ ok: false, reason: 'locked', contacts: 0 });
+    expect(canSellFirm(seat({ stats: { totalEarned: 0, clicks: 0, playMs: 0 } }))).toEqual({ ok: false, reason: 'locked', contacts: 0 });
     expect(canSellFirm(seat())).toEqual({ ok: true, contacts: 10 });
   });
 
-  it('repart du petit bureau en gardant mode, contacts et date de fondation', () => {
+  it('repart du petit bureau en gardant mode, contacts, date de fondation et temps de jeu', () => {
     const before = seat({ difficulty: 'hard', createdAt: T0 - 1_000, prestige: { contacts: 4, sales: 1, pastEarned: 2e7 } });
     const { state, result } = applyAction(before, { type: 'sellFirm' }, T0 + 5_000);
     expect(result).toEqual({ ok: true, amount: 15 });
@@ -54,7 +54,7 @@ describe('cession du cabinet', () => {
     expect(state.lastSimulatedAt).toBe(T0 + 5_000);
     expect([state.money, state.reputation, state.partners, getFirmLevel(state)]).toEqual([0, 0, 1, 1]);
     expect([state.upgrades, state.departments, state.claimedObjectives]).toEqual([[], [], []]);
-    expect(state.stats).toEqual({ totalEarned: 0, clicks: 0 });
+    expect(state.stats).toEqual({ totalEarned: 0, clicks: 0, playMs: 3_600_000 }); // le temps de jeu est gardé
   });
 
   it('refuse sans rien changer si le cabinet n’est pas au siège', () => {

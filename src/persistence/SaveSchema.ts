@@ -179,6 +179,7 @@ function readState(value: unknown): GameState {
     stats: {
       totalEarned: num(stats.totalEarned, 'state.stats.totalEarned', 0),
       clicks: int(stats.clicks, 'state.stats.clicks', 0),
+      playMs: stats.playMs === undefined ? 0 : num(stats.playMs, 'state.stats.playMs', 0),
     },
     difficulty: difficulty(s.difficulty, 'state.difficulty'),
     prestige: prestige(s.prestige, 'state.prestige'),

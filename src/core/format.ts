@@ -21,14 +21,27 @@ const SCALES = [
   { min: 1e4, div: 1e3, unit: 'k€', decimals: 1 },
 ] as const;
 
-/** `1 234 €`, `12,5 k€`, `3,40 M€`, `1,2 Md€`, puis `1,23e12 €`. */
-export function formatMoney(value: number): string {
+export type Notation = 'short' | 'full';
+
+/** Réglage d'affichage choisi par le joueur (voir `src/settings.ts`) ; abrégé par défaut. */
+let notation: Notation = 'short';
+
+export function setNumberNotation(value: Notation): void {
+  notation = value;
+}
+
+/**
+ * Abrégé : `1 234 €`, `12,5 k€`, `3,40 M€`, `1,2 Md€`, puis `1,23e12 €`.
+ * Complet : `12 500 €`, `3 400 000 €`, puis `1,23e12 €`.
+ */
+export function formatMoney(value: number, style: Notation = notation): string {
   const sign = value < 0 ? '-' : '';
   const v = Math.abs(value);
   if (v >= 1e12) {
     const [mantissa = '0', exp = '0'] = v.toExponential(2).split('e+');
     return `${sign}${mantissa.replace('.', ',')}e${exp}${NBSP}€`;
   }
+  if (style === 'full') return `${sign}${fixed(v, 0)}${NBSP}€`;
   for (const s of SCALES) {
     if (v >= s.min) return `${sign}${fixed(v / s.div, s.decimals)}${NBSP}${s.unit}`;
   }
@@ -36,9 +49,9 @@ export function formatMoney(value: number): string {
 }
 
 /** Revenu par seconde : une décimale sous 100 €/s. */
-export function formatRate(value: number): string {
+export function formatRate(value: number, style: Notation = notation): string {
   if (Math.abs(value) < 100) return `${fixed(value, 1)}${NBSP}€/s`;
-  return `${formatMoney(value)}/s`;
+  return `${formatMoney(value, style)}/s`;
 }
 
 /** Durée lisible : `45 s`, `12 min`, `2 h 15 min`, `8 h` (arrondie à l'inférieur). */

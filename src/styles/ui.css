@@ -468,13 +468,12 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 1ms !important;
-    transition-duration: 1ms !important;
-  }
+/* Animations réduites : `data-motion` est posé par src/settings.ts (réglage du joueur ou de l'appareil). */
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  animation-duration: 1ms !important;
+  transition-duration: 1ms !important;
 }
 
 .item__buttons {

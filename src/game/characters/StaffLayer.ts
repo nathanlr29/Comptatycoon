@@ -5,6 +5,7 @@
  * personnes au fil du temps (frapper, téléphoner, se lever…) est confié à `Routine`.
  */
 import Phaser from 'phaser';
+import { onSettingsChange, reducedMotion } from '../../settings';
 import { getTeam, type TeamMember } from '../../core/team';
 import type { GameState } from '../../core/state';
 import type { Place } from './behavior';
@@ -27,7 +28,6 @@ export class StaffLayer {
   private seating = new Map<string, number>();
   private team: TeamMember[] = [];
   private signature = '';
-  private readonly motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   private readonly onMotionChange = () => this.routine.reset();
   private readonly overflow: OverflowBadge;
   private readonly routine: Routine;
@@ -39,8 +39,8 @@ export class StaffLayer {
       seatOf: (id) => this.seatOf(id),
       showChair: (id, visible) => this.showChair(id, visible),
     });
-    this.motion.addEventListener('change', this.onMotionChange);
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.motion.removeEventListener('change', this.onMotionChange));
+    const off = onSettingsChange(this.onMotionChange);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
   }
 
   /** Sièges disponibles (coordonnées monde). Les personnes déjà assises gardent leur place ; tout le monde se rassoit. */
@@ -109,7 +109,7 @@ export class StaffLayer {
     sprite.setPosition(seat.x, seat.y).setDepth(seat.depth);
     this.sprites.set(member.id, sprite);
     this.routine.join(member.id);
-    if (animate && !this.motion.matches) {
+    if (animate && !reducedMotion()) {
       sprite.setAlpha(0).setY(seat.y + 10);
       this.scene.tweens.add({ targets: sprite, alpha: 1, y: seat.y, duration: APPEAR_MS, ease: 'Back.Out' });
     }
@@ -148,7 +148,7 @@ export class StaffLayer {
     this.sprites.delete(id);
     sprite.stop();
     this.scene.tweens.killTweensOf(sprite);
-    if (!animate || this.motion.matches) return this.recycle(sprite);
+    if (!animate || reducedMotion()) return this.recycle(sprite);
     this.scene.tweens.add({ targets: sprite, alpha: 0, y: sprite.y + 10, duration: APPEAR_MS, onComplete: () => this.recycle(sprite) });
   }
 

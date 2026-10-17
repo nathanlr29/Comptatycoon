@@ -1,10 +1,11 @@
 /**
  * Petite vie du cabinet : voyants des serveurs qui clignotent, vapeur du café, ronds dans l'eau de la fontaine,
- * horloge murale à l'heure réelle. Sans animation si `prefers-reduced-motion` (l'horloge reste à l'heure).
+ * horloge murale à l'heure réelle. Sans animation si les animations sont réduites (Paramètres ou appareil ; l'horloge reste à l'heure).
  * Les autres décors animés (easter eggs, mode café…) s'ajoutent ici plutôt que dans un rendu parallèle.
  */
 import Phaser from 'phaser';
 import type { Furniture } from '../data/office';
+import { onSettingsChange, reducedMotion } from '../settings';
 import { clockHands } from './daylight';
 import { depthOf, isoToScreen, type ScreenPoint } from './iso';
 import { COLORS } from './palette';
@@ -17,18 +18,22 @@ const CLOCK = { s: 5.5, z: 54, r: 0.3, rz: 11 } as const;
 export class AmbientLayer {
   private objects: Phaser.GameObjects.GameObject[] = [];
   private readonly clock: G;
-  private readonly motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  private furniture: readonly Furniture[] = [];
+  private still = reducedMotion();
 
   constructor(private readonly scene: Phaser.Scene) {
     this.clock = scene.add.graphics().setDepth(-0.9);
-  }
-
-  private get still(): boolean {
-    return this.motion?.matches ?? false;
+    // Les animations s'arrêtent ou reprennent dès que le réglage change.
+    const off = onSettingsChange(() => {
+      if (reducedMotion() !== this.still) this.render(this.furniture);
+    });
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
   }
 
   /** Recrée la vie ambiante pour le mobilier affiché. */
   render(furniture: readonly Furniture[]): void {
+    this.furniture = furniture;
+    this.still = reducedMotion();
     for (const o of this.objects) {
       this.scene.tweens.killTweensOf(o);
       o.destroy();

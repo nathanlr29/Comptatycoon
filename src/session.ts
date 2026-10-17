@@ -13,8 +13,7 @@ import { h } from './ui/dom';
 import { Modal } from './ui/Modal';
 import { showExport, showImport } from './ui/saveDialogs';
 import { SettingsPanel } from './ui/SettingsPanel';
-
-const AUTOSAVE_MS = 15_000;
+import { settings as deviceSettings } from './settings';
 
 /** Lance la partie d'un cabinet (`null` : sans sauvegarde) et branche les déclencheurs de sauvegarde. */
 export function startSession(profileId: string | null, saves: LocalSaveService): void {
@@ -33,13 +32,16 @@ export function startSession(profileId: string | null, saves: LocalSaveService):
   const app = new App(store, game);
 
   let lastSaveFailed = false;
+  let lastSavedAt: number | null = null;
   // Tant qu'une sauvegarde abîmée attend la décision du joueur, rien n'est écrit (la copie de secours est préservée).
   let savingEnabled = loaded.status !== 'corrupt';
-  const save = (): void => {
-    if (!profileId || !savingEnabled) return;
+  const save = (): boolean => {
+    if (!profileId || !savingEnabled) return false;
     const result = saves.save(profileId, store.getState());
     if (!result.ok && !lastSaveFailed) app.notifications.show('Sauvegarde', saveErrorText(result), 'warning', 6000);
     lastSaveFailed = !result.ok;
+    if (result.ok) lastSavedAt = Date.now();
+    return result.ok;
   };
 
   const showReport = (report: OfflineReport): void => {
@@ -107,8 +109,15 @@ export function startSession(profileId: string | null, saves: LocalSaveService):
     showReport(firstReport);
   }
 
-  // Déclencheurs : toutes les 15 s, après chaque achat, onglet caché, page quittée.
-  window.setInterval(save, AUTOSAVE_MS);
+  // Déclencheurs : à l'intervalle choisi dans les Paramètres (15 s par défaut), après chaque achat, onglet caché, page quittée.
+  let autosaveSeconds = deviceSettings.get().autosaveSeconds;
+  let autosave = window.setInterval(save, autosaveSeconds * 1000);
+  deviceSettings.subscribe((s) => {
+    if (s.autosaveSeconds === autosaveSeconds) return;
+    autosaveSeconds = s.autosaveSeconds;
+    window.clearInterval(autosave);
+    autosave = window.setInterval(save, autosaveSeconds * 1000);
+  });
   store.onAction((action, result) => {
     if (result.ok && action.type !== 'click') save();
   });
@@ -133,6 +142,8 @@ export function startSession(profileId: string | null, saves: LocalSaveService):
       save();
       window.location.reload();
     },
+    onSaveNow: save,
+    lastSavedAt: () => lastSavedAt,
     onExport: () => {
       save();
       const text = profileId ? saves.exportText(profileId) : null;

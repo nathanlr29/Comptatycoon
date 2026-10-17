@@ -1,3 +1,4 @@
+import './settings';
 import { getBrowserStorage, LocalSaveService, requestPersistentStorage } from './persistence/LocalSaveService';
 import { ProfileStore } from './persistence/ProfileStore';
 import { startSession } from './session';
@@ -7,6 +8,7 @@ import './styles/ui.css';
 import './styles/profiles.css';
 import './styles/expansion.css';
 import './styles/coffee.css';
+import './styles/settings.css';
 
 const storage = getBrowserStorage();
 const saves = new LocalSaveService(storage, new ProfileStore(storage));

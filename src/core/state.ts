@@ -60,7 +60,8 @@ export interface GameState {
   /** Horodatage (ms) jusqu'auquel la production a été créditée. */
   lastSimulatedAt: number;
   createdAt: number;
-  stats: { totalEarned: number; clicks: number };
+  /** `playMs` : temps passé le jeu ouvert (hors absences rattrapées), gardé après une cession. */
+  stats: { totalEarned: number; clicks: number; playMs: number };
   /** Choisie à la fondation, fixe ensuite (docs/GDD.md §13). */
   difficulty: DifficultyId;
   prestige: PrestigeState;
@@ -92,7 +93,7 @@ export function createInitialState(now: number, options: NewGameOptions = {}): G
     coffee: { machine: 1, readyAt: 0 },
     lastSimulatedAt: now,
     createdAt: options.createdAt ?? now,
-    stats: { totalEarned: 0, clicks: 0 },
+    stats: { totalEarned: 0, clicks: 0, playMs: 0 },
     difficulty: options.difficulty ?? DEFAULT_DIFFICULTY,
     prestige: options.prestige ?? { contacts: 0, sales: 0, pastEarned: 0 },
   };

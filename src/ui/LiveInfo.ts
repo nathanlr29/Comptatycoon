@@ -8,6 +8,7 @@ import { h } from './dom';
 import { FiscalBanner, notifyEvent } from './EventsView';
 import type { NotificationManager } from './NotificationManager';
 import { ObjectivesView } from './ObjectivesView';
+import { settings } from '../settings';
 
 /** Bandeaux (Période fiscale, pause café) et objectifs en cours, en bas à gauche au-dessus de la barre d'action. */
 export class LiveInfo {
@@ -19,7 +20,7 @@ export class LiveInfo {
   constructor(store: GameStore, notifications: NotificationManager, intercept: (report: EventReport) => boolean = () => false) {
     this.objectives = new ObjectivesView((id) => {
       const def = getObjective(id);
-      if (store.dispatch({ type: 'claimObjective', id }, Date.now()).ok && def) notifications.show(OBJECTIVE_TEXTS.claimed, def.title, 'success');
+      if (store.dispatch({ type: 'claimObjective', id }, Date.now()).ok && def) notifications.show(OBJECTIVE_TEXTS.claimed, def.title, 'success', undefined, 'objectives');
     });
     document.body.append(h('div', { class: 'live-info' }, this.banner.el, this.coffee.el, this.objectives.el));
     store.onEvent((report) => {
@@ -30,6 +31,7 @@ export class LiveInfo {
   render(state: GameState, now: number): void {
     this.banner.render(state, now);
     this.coffee.render(state, now);
-    this.objectives.render(state, now);
+    this.objectives.el.hidden = !settings.get().showObjectives;
+    if (!this.objectives.el.hidden) this.objectives.render(state, now);
   }
 }
