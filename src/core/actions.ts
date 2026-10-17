@@ -11,6 +11,8 @@ import { canTakeCoffeeBreak, canUpgradeCoffeeMachine, takeCoffeeBreak, upgradeCo
 import { canClaimObjective, claimObjective } from './objectives';
 import { discoverSecret } from './secrets';
 import { canSellFirm, sellFirm } from './prestige';
+import { buyTalent, canBuyTalent } from './talents';
+import type { TalentId } from '../data/talents';
 import { canDismiss, canDismissPartner, canHire, canHirePartner } from './recruitment';
 import type { RefusalReason } from './refusals';
 import { canBuyUpgrade } from './upgrades';
@@ -34,7 +36,8 @@ export type GameAction =
   | { type: 'coffeeBreak' }
   | { type: 'upgradeCoffeeMachine' }
   /** Cession du cabinet (docs/GDD.md §14) : nouvelle partie, contacts gardés. */
-  | { type: 'sellFirm' };
+  | { type: 'sellFirm' }
+  | { type: 'buyTalent'; id: TalentId };
 
 export type ActionResult = { ok: true; amount?: number } | { ok: false; reason: RefusalReason };
 
@@ -155,6 +158,11 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       const check = canSellFirm(state);
       if (!check.ok) return refuse(state, check.reason);
       return { state: sellFirm(state, check.contacts, now), result: { ok: true, amount: check.contacts } };
+    }
+    case 'buyTalent': {
+      const check = canBuyTalent(state, action.id);
+      if (!check.ok) return refuse(state, check.reason);
+      return { state: buyTalent(state, action.id), result: { ok: true, amount: check.cost } };
     }
   }
 }

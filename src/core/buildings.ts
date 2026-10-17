@@ -1,6 +1,7 @@
 import { BUILDINGS, CONSTRUCTIBLE, CONSTRUCTION, type BuildingDefinition, type BuildingType } from '../data/buildings';
 import { EXTERIOR_TYPES, ROOMS } from '../data/office';
 import type { RefusalReason } from './refusals';
+import { talentValue } from './talents';
 import type { BuildingState, GameState } from './state';
 
 export type BuildCheck =
@@ -25,9 +26,16 @@ export function getUpgradeCost(def: BuildingDefinition, level: number): number {
   return def.upgradeCosts?.[level - 1] ?? Math.ceil(def.cost * CONSTRUCTION.upgradeCostGrowth ** level);
 }
 
-/** Durée du chantier pour atteindre `targetLevel`. */
-export function getConstructionMs(targetLevel: number): number {
-  return Math.min(CONSTRUCTION.maxMs, CONSTRUCTION.baseMs * targetLevel ** 2);
+/** Durée du chantier pour atteindre `targetLevel`, raccourcie par l'atout « Artisans de confiance » si `state` est donné. */
+export function getConstructionMs(targetLevel: number, state?: GameState): number {
+  const speed = state ? talentValue(state, 'trustedBuilders') : 1;
+  return Math.round(Math.min(CONSTRUCTION.maxMs, CONSTRUCTION.baseMs * targetLevel ** 2) * speed);
+}
+
+/** Prix pour monter une pièce au niveau suivant ; l'agrandissement du cabinet profite de l'atout « Bailleur ami ». */
+export function getUpgradePrice(state: GameState, building: BuildingState): number {
+  const cost = getUpgradeCost(BUILDINGS[building.type], building.level);
+  return building.type === 'headquarters' ? Math.ceil(cost * talentValue(state, 'friendlyLandlord')) : cost;
 }
 
 /**
@@ -45,7 +53,7 @@ export function findFreeSlot(state: GameState, type: BuildingType): string | und
 
 export function canBuild(state: GameState, type: BuildingType): PlaceCheck {
   const def = BUILDINGS[type];
-  const base = { cost: def.cost, durationMs: getConstructionMs(1) };
+  const base = { cost: def.cost, durationMs: getConstructionMs(1, state) };
   if (!CONSTRUCTIBLE.includes(type)) return { ok: false, reason: 'unknown', ...base };
   if (state.buildings.some((b) => b.type === type)) return { ok: false, reason: 'already_owned', ...base };
   if (getHqLevel(state) < def.requiresHq) return { ok: false, reason: 'requires_hq', ...base };
@@ -60,7 +68,7 @@ export function canUpgrade(state: GameState, buildingId: string): BuildCheck {
   if (!building) return { ok: false, reason: 'unknown', cost: 0, durationMs: 0 };
   const def = BUILDINGS[building.type];
   const target = building.level + 1;
-  const base = { cost: getUpgradeCost(def, building.level), durationMs: getConstructionMs(target) };
+  const base = { cost: getUpgradePrice(state, building), durationMs: getConstructionMs(target, state) };
   if (building.pending) return { ok: false, reason: 'under_construction', ...base };
   if (building.level >= def.maxLevel) return { ok: false, reason: 'max_level', ...base };
   if (state.money < base.cost) return { ok: false, reason: 'insufficient_funds', ...base };

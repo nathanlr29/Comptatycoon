@@ -41,6 +41,8 @@ export function refusalText(reason: RefusalReason, threshold = 0): string {
       return 'Niveau maximum atteint';
     case 'cooling_down':
       return 'Le café coule encore';
+    case 'insufficient_contacts':
+      return 'Pas assez de contacts';
     case 'unknown':
       return 'Impossible';
   }

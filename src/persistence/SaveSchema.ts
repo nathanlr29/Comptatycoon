@@ -8,6 +8,7 @@ import { DEFAULT_DIFFICULTY, DIFFICULTY_IDS, type DifficultyId } from '../data/d
 import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import { UPGRADE_IDS, type UpgradeId } from '../data/upgrades';
 import type { BuildingState, GameState, PrestigeState, TimedEffect } from '../core/state';
+import { TALENT_IDS, TALENTS, type TalentLevels } from '../data/talents';
 
 /** Format stocké : `{ schemaVersion, savedAt, state }` (docs/GDD.md §10). */
 export const SCHEMA_VERSION = 2;
@@ -143,13 +144,27 @@ function difficulty(value: unknown, path: string): DifficultyId {
 
 /** Cessions : absentes des anciennes sauvegardes (aucun contact). */
 function prestige(value: unknown, path: string): PrestigeState {
-  if (value === undefined) return { contacts: 0, sales: 0, pastEarned: 0 };
+  if (value === undefined) return { contacts: 0, sales: 0, pastEarned: 0, talents: {} };
   const p = obj(value, path);
   return {
     contacts: int(p.contacts, `${path}.contacts`, 0),
     sales: int(p.sales, `${path}.sales`, 0),
     pastEarned: num(p.pastEarned, `${path}.pastEarned`, 0),
+    talents: talents(p.talents, `${path}.talents`),
   };
+}
+
+/** Atouts du réseau : absents avant leur arrivée ; un atout inconnu est ignoré, un niveau trop haut ramené au maximum. */
+function talents(value: unknown, path: string): TalentLevels {
+  if (value === undefined) return {};
+  const t = obj(value, path);
+  const out: TalentLevels = {};
+  for (const id of TALENT_IDS) {
+    if (t[id] === undefined) continue;
+    const level = Math.min(int(t[id], `${path}.${id}`, 0), TALENTS[id].costs.length);
+    if (level > 0) out[id] = level;
+  }
+  return out;
 }
 
 /** Valide champ par champ et reconstruit un état propre (les champs inconnus sont ignorés). */

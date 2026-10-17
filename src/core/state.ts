@@ -4,6 +4,7 @@ import { STAFF_ROLES, type StaffRole } from '../data/staff';
 import type { DepartmentId } from '../data/departments';
 import type { BuildingType } from '../data/buildings';
 import type { SecretId } from '../data/secrets';
+import type { TalentLevels } from '../data/talents';
 import type { UpgradeId } from '../data/upgrades';
 
 /** Effet temporaire (ex. Période fiscale). Expire à `expiresAt` (ms). */
@@ -31,6 +32,8 @@ export interface PrestigeState {
   sales: number;
   /** Chiffre d'affaires des parties précédentes (la partie en cours est dans `stats.totalEarned`). */
   pastEarned: number;
+  /** Atouts du réseau achetés avec les contacts (docs/GDD.md §14 bis). */
+  talents: TalentLevels;
 }
 
 /** État complet et sérialisable du jeu : objets simples uniquement. */
@@ -95,6 +98,6 @@ export function createInitialState(now: number, options: NewGameOptions = {}): G
     createdAt: options.createdAt ?? now,
     stats: { totalEarned: 0, clicks: 0, playMs: 0 },
     difficulty: options.difficulty ?? DEFAULT_DIFFICULTY,
-    prestige: options.prestige ?? { contacts: 0, sales: 0, pastEarned: 0 },
+    prestige: options.prestige ?? { contacts: 0, sales: 0, pastEarned: 0, talents: {} },
   };
 }

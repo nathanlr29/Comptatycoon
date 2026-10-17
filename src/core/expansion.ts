@@ -2,6 +2,7 @@ import { FIRM_BONUS_PER_LEVEL, getExpansionLevel, type ExpansionLevel } from '..
 import { canUpgrade } from './buildings';
 import { getStaffCount, type Check } from './recruitment';
 import type { GameState } from './state';
+import { talentValue } from './talents';
 
 /** Niveau du cabinet = niveau du Bureau principal. */
 export function getFirmLevel(state: GameState): number {
@@ -11,6 +12,11 @@ export function getFirmLevel(state: GameState): number {
 /** Prochaine étape d'agrandissement, ou null si le cabinet est au maximum. */
 export function getNextExpansion(state: GameState): ExpansionLevel | null {
   return getExpansionLevel(getFirmLevel(state) + 1) ?? null;
+}
+
+/** Prix affiché d'une étape d'agrandissement, avec l'atout « Bailleur ami » (même calcul que `canUpgrade('hq')`). */
+export function getExpansionCost(state: GameState, level: ExpansionLevel): number {
+  return Math.ceil(level.cost * talentValue(state, 'friendlyLandlord'));
 }
 
 /** Multiplicateur de production globale apporté par le niveau du cabinet. */

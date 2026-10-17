@@ -1,4 +1,4 @@
-import { canExpand, getFirmLevel, missingForExpansion } from '../core/expansion';
+import { canExpand, getExpansionCost, getFirmLevel, missingForExpansion } from '../core/expansion';
 import { formatMoney } from '../core/format';
 import type { GameState } from '../core/state';
 import { EXPANSION_LEVELS, FIRM_BONUS_PER_LEVEL, MAX_FIRM_LEVEL, type ExpansionLevel } from '../data/expansion';
@@ -47,12 +47,12 @@ export class ExpansionPanel {
       row.el.classList.toggle('expansion__step--done', done);
       row.el.classList.toggle('expansion__step--next', next);
       row.el.classList.toggle('expansion__step--later', !done && !next);
-      setText(row.status, done ? (level.level === current ? 'Actuel' : 'Fait') : next ? '' : formatMoney(level.cost));
+      setText(row.status, done ? (level.level === current ? 'Actuel' : 'Fait') : next ? '' : formatMoney(getExpansionCost(state, level)));
       row.status.hidden = next;
       row.button.hidden = !next;
       row.reason.hidden = !next;
       if (!next) continue;
-      setText(row.button, `Agrandir · ${formatMoney(level.cost)}`);
+      setText(row.button, `Agrandir · ${formatMoney(getExpansionCost(state, level))}`);
       row.button.disabled = !check.ok;
       let reason = '';
       if (!check.ok) {

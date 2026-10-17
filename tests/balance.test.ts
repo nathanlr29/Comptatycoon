@@ -3,6 +3,8 @@ import type { GameAction } from '../src/core/actions';
 import { getBaseIncomePerSecond, getHireCost, getPartnerCost } from '../src/core/economy';
 import { getFirmLevel } from '../src/core/expansion';
 import { canSellFirm } from '../src/core/prestige';
+import { canBuyTalent } from '../src/core/talents';
+import { TALENT_IDS } from '../src/data/talents';
 import { createRng } from '../src/core/random';
 import { getCapacity, getStaffCount } from '../src/core/recruitment';
 import { createInitialState, type GameState } from '../src/core/state';
@@ -16,7 +18,8 @@ import { UPGRADE_IDS, UPGRADES } from '../src/data/upgrades';
 
 /**
  * Partie simulée par un joueur appliqué : 2 saisies/s, achète dès que possible, recrute le meilleur
- * collaborateur payable en moins d'une minute de revenu, cède le cabinet quand la cession double son réseau.
+ * collaborateur payable en moins d'une minute de revenu, cède le cabinet quand la cession double son réseau,
+ * puis achète les atouts du réseau les moins chers.
  * Rapport détaillé : `npm run simulate` (variables MINUTES, CPS, DIFFICULTY).
  */
 export interface SimReport {
@@ -46,6 +49,14 @@ export function simulateSession(minutes: number, cps = 2, difficulty: Difficulty
     now = sec * 1000;
     store.tick(now);
     for (const o of OBJECTIVES) act({ type: 'claimObjective', id: o.id });
+    // Atouts du réseau : le moins cher d'abord, tant qu'il reste des contacts.
+    for (let k = 0; k < 10; k++) {
+      const s = store.getState();
+      const affordable = TALENT_IDS.map((id) => ({ id, check: canBuyTalent(s, id) })).filter((t) => t.check.ok);
+      if (!affordable.length) break;
+      affordable.sort((a, b) => a.check.cost - b.check.cost);
+      act({ type: 'buyTalent', id: affordable[0]!.id });
+    }
     for (const id of [...UPGRADE_IDS].sort(byCost)) act({ type: 'buyUpgrade', id });
     act({ type: 'upgradeBuilding', buildingId: 'hq' });
     for (const id of DEPARTMENT_IDS) if (act({ type: 'buyDepartment', id })) mark(DEPARTMENTS[id].name, sec);

@@ -11,8 +11,9 @@ import { perkSummaryText } from '../data/perks';
 import type { UpgradeId } from '../data/upgrades';
 import { getExpansionLevel } from '../data/expansion';
 import { clickLabel, clockText, COFFEE_TEXTS, durationText, multiplierText } from '../data/texts';
-import { canSellFirm } from '../core/prestige';
-import { contactsBonusText, contactsText, SALE_TEXTS } from '../data/prestige';
+import { getContactsForSale, getSaleBoost, isSaleWorthwhile } from '../core/prestige';
+import { boostText, contactsText, SALE_TEXTS } from '../data/prestige';
+import { TALENT_TEXTS, TALENTS, type TalentId } from '../data/talents';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
 import { actionSound } from './actionSounds';
@@ -31,8 +32,8 @@ import { RoomsPanel } from './RoomsPanel';
 import { Secrets } from './Secrets';
 import { DevelopmentPanel } from './DevelopmentPanel';
 import { departmentViews } from './departmentViews';
-import { Modal } from './Modal';
 import { SalePanel } from './SalePanel';
+import { confirmSale } from './saleFlow';
 import { Tabs } from './Tabs';
 import { UpgradesPanel } from './UpgradesPanel';
 
@@ -41,6 +42,9 @@ type View = { render: (state: GameState, now: number) => void; el: HTMLElement }
 function isDepartmentId(id: string): id is DepartmentId {
   return (DEPARTMENT_IDS as string[]).includes(id);
 }
+
+/** Index de l'onglet « Cession » dans le panneau Améliorer. */
+const SALE_TAB = 2;
 
 function query(selector: string): HTMLElement {
   const el = document.querySelector<HTMLElement>(selector);
@@ -77,6 +81,8 @@ export class App {
   private readonly coffeeTime = h('span', { class: 'coffee-button__time' });
   private readonly coffeeButton = h('button', { class: 'expand-button coffee-button', type: 'button', 'aria-label': COFFEE_TEXTS.title, hidden: true });
   private openView: View | null = null;
+  /** Nombre de cessions au moment de la dernière invitation à céder (une par partie). */
+  private saleNudgedAt = -1;
   private readonly liveInfo: LiveInfo;
   private readonly secrets: Secrets;
 
@@ -107,7 +113,7 @@ export class App {
     this.growth = new Tabs([
       { label: 'Améliorations', view: this.upgrades },
       { label: 'Développement', view: development },
-      { label: SALE_TEXTS.tab, view: new SalePanel(() => this.sell()) },
+      { label: SALE_TEXTS.tab, view: new SalePanel(() => this.sell(), (id) => this.buyTalent(id)) },
     ]);
 
     this.expandButton.innerHTML = ICONS.expand;
@@ -142,28 +148,29 @@ export class App {
 
   /** Cession du cabinet, après confirmation : la partie repart du petit bureau avec les contacts gagnés. */
   private sell(): void {
-    const state = this.store.getState();
-    const check = canSellFirm(state);
-    if (!check.ok) return;
-    const total = state.prestige.contacts + check.contacts;
-    Modal.open({
-      title: SALE_TEXTS.confirmTitle,
-      body: [h('p', { text: SALE_TEXTS.confirmBody(contactsText(total), contactsBonusText(total)) }), h('p', { text: SALE_TEXTS.loses })],
-      buttons: [
-        { label: 'Annuler' },
-        {
-          label: SALE_TEXTS.confirm,
-          tone: 'danger',
-          onClick: () => {
-            if (!this.store.dispatch({ type: 'sellFirm' }, Date.now()).ok) return;
-            this.panel.close();
-            this.game.events.emit(MAP_EVENTS.recenter);
-            this.notifications.show(SALE_TEXTS.done, SALE_TEXTS.doneBody(contactsBonusText(total)), 'success', 6000);
-          },
-        },
-      ],
-      dismiss: { label: 'Annuler' },
+    confirmSale(this.store, {
+      onSold: () => {
+        this.panel.close();
+        this.game.events.emit(MAP_EVENTS.recenter);
+      },
+      onOpenTalents: () => {
+        this.growth.select(SALE_TAB);
+        this.show('Améliorer', this.growth);
+      },
     });
+  }
+
+  private buyTalent(id: TalentId): void {
+    if (this.store.dispatch({ type: 'buyTalent', id }, Date.now()).ok) this.notifications.show(TALENT_TEXTS.bought(TALENTS[id].name), TALENTS[id].effect(this.store.getState().prestige.talents[id] ?? 1), 'success');
+  }
+
+  /** Pastille sur « Améliorer » et une notification par partie quand la cession vaut le coup. */
+  private nudgeSale(state: GameState): void {
+    const worthwhile = isSaleWorthwhile(state);
+    this.dock.setUpgradesReady(worthwhile);
+    if (!worthwhile || this.saleNudgedAt === state.prestige.sales) return;
+    this.saleNudgedAt = state.prestige.sales;
+    this.notifications.show(SALE_TEXTS.worthwhile, SALE_TEXTS.worthwhileBody(contactsText(getContactsForSale(state)), boostText(getSaleBoost(state))), 'success', 8000);
   }
 
   private click(): number | null {
@@ -273,6 +280,7 @@ export class App {
     this.dock.setLabel(this.secrets.clickLabel(now) ?? clickLabel(firmLevel));
     this.expandButton.classList.toggle('expand-button--ready', canExpand(state).ok);
     this.renderCoffeeButton(state, now);
+    this.nudgeSale(state);
     this.openView?.render(state, now);
   }
 }
