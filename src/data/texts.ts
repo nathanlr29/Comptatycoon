@@ -104,6 +104,12 @@ export function effectText(def: BuildingDefinition, level: number): string {
   return parts.length > 0 ? parts.join(' · ') : 'Permet d’ouvrir le pôle';
 }
 
+/** Niveau d'une pièce pour le menu : « niv. 2 · Cafétéria » quand le niveau a un nom. */
+export function levelText(def: BuildingDefinition, level: number): string {
+  const name = def.levelNames?.[level - 1];
+  return name ? `niv. ${level} · ${name}` : `niv. ${level}`;
+}
+
 /** Durée lisible : « 40 s », « 2 min », « 1 min 30 s ». */
 export function durationText(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000));

@@ -42,6 +42,7 @@ export class AmbientLayer {
     for (const f of furniture) {
       if (f.type === 'rack') this.serverLeds(f);
       else if (f.type === 'coffee') this.steam(f);
+      else if (f.type === 'kitchen') this.steam(f, 0.5, 0.32);
       else if (f.type === 'fountain') this.ripples(f);
     }
     this.tickClock(new Date());
@@ -86,10 +87,10 @@ export class AmbientLayer {
     }
   }
 
-  /** Volutes de vapeur au-dessus de la tasse de la machine à café. */
-  private steam(f: Furniture): void {
+  /** Vapeur au-dessus du point (dx, dy) du meuble : tasse du café, casserole du chef. */
+  private steam(f: Furniture, dx = 0.8, dy = 0.25): void {
     if (this.still) return;
-    const base = isoToScreen(f.x + 0.8, f.y + 0.25, 42);
+    const base = isoToScreen(f.x + dx, f.y + dy, 42);
     for (let k = 0; k < 3; k++) {
       const puff = this.add(this.scene.add.graphics().setDepth(depthOf(f.x + 1.2, f.y + 0.5) + 0.05));
       puff.fillStyle(COLORS.white, 0.7).fillCircle(0, 0, 3);

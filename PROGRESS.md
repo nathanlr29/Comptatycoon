@@ -20,6 +20,14 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Cantine (17/10/2026, demande de Nathan, fil « Cantine », GDD §6 ter).
+- Pièce du menu « Pièces » au Campus (niveau 7), place fixe {16, 15, 8 × 5} convenue avec « Locaux et parking » et « Confort des équipes ». Quatre niveaux nommés (Kitchenette, Cafétéria, Self-service, Restaurant d'entreprise), 50 Md€ puis 200 Md€, 800 Md€, 3 000 Md€. Effets par niveau : production +4 %, démissions −15 % (via `eventWeightPerLevel`), +5 réputation à l'aménagement.
+- `data/canteen.ts` (niveaux, chiffres, plan `CANTEEN_ROOM`, `canteenSeats`), `core/canteen.ts` (`isLunchTime`), `game/canteenFurniture.ts` (kitchenette, tables, buffet, cuisine et chef ; vapeur de la casserole dans `AmbientLayer`). Nouveau `Furniture.minLevel` + `roomFurnitureAt` : une pièce se meuble selon son niveau. `BuildingDefinition.levelNames` : « niv. 2 · Cafétéria » dans le menu (`levelText`).
+- Déjeuner : de 12 h à 13 h 30 (heure réelle), jusqu'à 6 collaborateurs s'attablent (`StaffLayer.setGathering('lunch', …, 'seated')` dans `MapScene.refresh`).
+- Sauvegarde : aucun nouveau champ (la cantine est un bâtiment).
+- À vérifier sur iPhone : lisibilité du mobilier de la cantine au zoom, trajet des personnages vers la cantine à midi.
+- Correctif `Routine.stopWalk` : une personne qui se lève pendant son fondu d'arrivée (déjeuner déjà commencé à l'ouverture de la partie) restait invisible ; l'opacité est remise à 1.
+
 Zoom iPhone (16/10/2026, fil « Bug de zoom iPhone ») : la page ne zoome plus (`touch-action: manipulation` partout sauf le canvas, gestes Safari bloqués dans `ui/pageZoom.ts`, remise à l'échelle 1 si elle zoome quand même, champ Importer à 16 px). Carte : zoom max ×1,6 au lieu de ×2, pincement amorti (`pinchZoomFactor` dans `game/geometry.ts`).
 
 Locaux et parking (16/10/2026, demande de Nathan « nouvelles améliorations des locaux : agrandissement, parking… », fil « Locaux et parking »).

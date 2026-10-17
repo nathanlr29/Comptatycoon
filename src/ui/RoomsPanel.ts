@@ -2,7 +2,7 @@ import { canBuild, canUpgrade, getConstructionProgress } from '../core/buildings
 import { formatMoney } from '../core/format';
 import type { BuildingState, GameState } from '../core/state';
 import { BUILDINGS, CONSTRUCTIBLE, type BuildingType } from '../data/buildings';
-import { durationText, effectText, refusalText } from '../data/texts';
+import { durationText, effectText, levelText, refusalText } from '../data/texts';
 import { h, setText } from './dom';
 
 type Row = {
@@ -70,7 +70,7 @@ export class RoomsPanel {
       const def = BUILDINGS[row.type];
       const building = this.find(row.type);
       const works = building?.pending;
-      setText(row.level, building && building.level > 0 ? `niv. ${building.level}` : '');
+      setText(row.level, building && building.level > 0 ? levelText(def, building.level) : '');
       row.bar.hidden = !works;
       if (works && building) {
         const pct = Math.round(getConstructionProgress(building, now) * 100);
@@ -90,7 +90,7 @@ export class RoomsPanel {
       const check = canUpgrade(state, building.id);
       const maxed = !check.ok && check.reason === 'max_level';
       const shown = Math.max(building.level, 1);
-      setText(row.effect, maxed || works ? effectText(def, shown) : `${effectText(def, shown)} → niv. ${building.level + 1} en ${durationText(check.durationMs)}`);
+      setText(row.effect, maxed || works ? effectText(def, shown) : `${effectText(def, shown)} → ${levelText(def, building.level + 1)} en ${durationText(check.durationMs)}`);
       setText(row.button, works ? 'Travaux' : maxed ? 'Niveau max' : `Améliorer · ${formatMoney(check.cost)}`);
       row.button.disabled = !check.ok;
       row.button.classList.toggle('item__buy--owned', maxed);

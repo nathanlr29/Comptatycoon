@@ -4,6 +4,7 @@
  * Coordonnées en cases de la grille isométrique (voir src/game/iso.ts) : x vers le bas à droite,
  * y vers le bas à gauche, origine au coin du fond. Rien n'est dessiné pour une pièce non achetée.
  */
+import { CANTEEN_ROOM } from './canteen';
 
 export interface TileRect {
   x: number;
@@ -44,7 +45,11 @@ export type FurnitureType =
   | 'fountain'
   | 'bench'
   | 'parasol'
-  | 'lounger';
+  | 'lounger'
+  | 'kitchenette'
+  | 'canteenTable'
+  | 'buffet'
+  | 'kitchen';
 
 export interface Furniture {
   type: FurnitureType;
@@ -52,6 +57,8 @@ export interface Furniture {
   x: number;
   y: number;
   facing?: Facing;
+  /** Niveau de la pièce à partir duquel le meuble apparaît (1 par défaut). */
+  minLevel?: number;
 }
 
 /** Types de pièces, alignés sur les types de bâtiments (docs/GDD.md §6 et src/data/departments.ts). */
@@ -65,7 +72,8 @@ export type RoomType =
   | 'advisoryWing'
   | 'garden'
   | 'fountain'
-  | 'terrace';
+  | 'terrace'
+  | 'canteen';
 
 /**
  * Aménagements sans pièce au sol : le parking devant l'immeuble (hors de l'emprise, voir `parkingStalls`)
@@ -276,6 +284,7 @@ export const ROOMS: RoomLayout[] = [
       { type: 'plant', x: 29.1, y: 4.1 },
     ],
   },
+  CANTEEN_ROOM,
 ];
 
 /**
@@ -328,6 +337,11 @@ export function getRoom(type: RoomType): RoomLayout {
 }
 
 /** Postes visibles : ceux des niveaux atteints, puis ceux des pièces achetées (dans cet ordre). */
+/** Mobilier d'une pièce à un niveau donné (une pièce plus haute en niveau se meuble davantage). */
+export function roomFurnitureAt(room: RoomLayout, level: number): Furniture[] {
+  return room.furniture.filter((f) => (f.minLevel ?? 1) <= level);
+}
+
 export function visibleDesks(stage: number, rooms: readonly RoomType[]): Desk[] {
   const fromStages = OFFICE_STAGES.filter((s) => s.stage <= stage).flatMap((s) => s.desks);
   const fromRooms = ROOMS.filter((r) => r.minStage <= stage && rooms.includes(r.type)).flatMap((r) => r.desks);

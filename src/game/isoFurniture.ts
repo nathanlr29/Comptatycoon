@@ -1,6 +1,7 @@
 /** Mobilier en fausse 3D : chaque objet est un Graphics trié en profondeur par son coin avant. */
 import type Phaser from 'phaser';
 import { deskRect, type Desk, type Furniture, type FurnitureType } from '../data/office';
+import { CANTEEN_SIZES, drawCanteenFurniture, isCanteenFurniture } from './canteenFurniture';
 import { depthOf, isoQuad, isoToScreen } from './iso';
 import { box, groundShadow, poly } from './isoDraw';
 import { COLORS, shade } from './palette';
@@ -32,6 +33,7 @@ const SIZE: Record<FurnitureType, [number, number]> = {
   bench: [1.4, 0.5],
   parasol: [1.2, 1.2],
   lounger: [0.6, 1.4],
+  ...CANTEEN_SIZES,
 };
 
 export function drawFurniture(scene: Phaser.Scene, f: Furniture): G[] {
@@ -39,6 +41,10 @@ export function drawFurniture(scene: Phaser.Scene, f: Furniture): G[] {
   const { x, y } = f;
   const out: G[] = [];
   const add = (draw: (g: G) => void, px = x, py = y, pw = w, ph = h) => out.push(piece(scene, px, py, pw, ph, draw));
+  if (isCanteenFurniture(f.type)) {
+    drawCanteenFurniture({ ...f, type: f.type }, add);
+    return out;
+  }
   switch (f.type) {
     case 'plant':
       add((g) => {

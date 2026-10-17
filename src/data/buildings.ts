@@ -1,3 +1,4 @@
+import { CANTEEN, CANTEEN_LEVELS } from './canteen';
 import { EXPANSION_LEVELS, MAX_FIRM_LEVEL } from './expansion';
 import type { EventId } from './events';
 import type { StaffRole } from './staff';
@@ -15,7 +16,8 @@ export type BuildingType =
   | 'fountain'
   | 'terrace'
   | 'parking'
-  | 'signage';
+  | 'signage'
+  | 'canteen';
 
 export interface BuildingEffect {
   /** Bonus de production globale par niveau (0,1 = +10 %). */
@@ -44,6 +46,8 @@ export interface BuildingDefinition {
   effect: BuildingEffect;
   /** Coûts d'amélioration explicites (index = niveau actuel − 1) ; sinon cost × 5^niveau. */
   upgradeCosts?: number[];
+  /** Nom de chaque niveau (index = niveau − 1), affiché dans le menu des pièces. */
+  levelNames?: readonly string[];
 }
 
 export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
@@ -160,6 +164,18 @@ export const BUILDINGS: Record<BuildingType, BuildingDefinition> = {
     requiresHq: 6,
     effect: { reputationOnBuild: 5, reputationEveryMs: 60_000, eventWeightPerLevel: { resignation: -0.3 } },
   },
+  canteen: {
+    type: 'canteen',
+    name: 'Cantine',
+    description: 'On déjeune ensemble : l’équipe travaille mieux et démissionne moins.',
+    cost: CANTEEN.costs[0],
+    maxLevel: CANTEEN_LEVELS.length,
+    // Sa place n'existe qu'au « Campus » (niveau 7, src/data/canteen.ts).
+    requiresHq: 7,
+    effect: { globalPerLevel: CANTEEN.globalPerLevel, eventWeightPerLevel: { resignation: -CANTEEN.resignationCutPerLevel }, reputationOnBuild: 5 },
+    upgradeCosts: CANTEEN.costs.slice(1),
+    levelNames: CANTEEN_LEVELS.map((l) => l.name),
+  },
 };
 
 /**
@@ -175,6 +191,7 @@ export const CONSTRUCTIBLE: BuildingType[] = [
   'signage',
   'parking',
   'terrace',
+  'canteen',
 ];
 
 /** Durée de chantier : 10 s × niveau visé², plafonnée à 10 min. */

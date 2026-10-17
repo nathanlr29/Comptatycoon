@@ -16,6 +16,7 @@ export type PlaceKind = 'printer' | 'coffee' | 'meeting' | 'lounge';
 const PLACE_OF: Partial<Record<string, PlaceKind>> = {
   printer: 'printer',
   coffee: 'coffee',
+  kitchenette: 'coffee',
   meetingTable: 'meeting',
   whiteboard: 'meeting',
   sofa: 'lounge',
