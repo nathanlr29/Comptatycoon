@@ -7,6 +7,7 @@ import { getDifficulty } from './difficulty';
 import { getFirmMultiplier } from './expansion';
 import { getPerkEffects } from './perks';
 import { getPrestigeMultiplier } from './prestige';
+import { talentValue } from './talents';
 import type { GameState } from './state';
 
 /**
@@ -26,7 +27,7 @@ export interface Multipliers {
 
 export function getMultipliers(state: GameState): Multipliers {
   const role = Object.fromEntries(STAFF_ROLES.map((r) => [r, 1])) as Record<StaffRole, number>;
-  let click = 1;
+  let click = talentValue(state, 'quickInput');
   let clickIncomeShare = 0;
   let global = getFirmMultiplier(state);
   for (const id of state.upgrades) {
@@ -89,7 +90,7 @@ export function scaledCost(baseCost: number, owned: number, growth: number = BAL
 
 /** Prix d'embauche, réduit par les avantages sociaux (mutuelle, titres-restaurant). */
 export function getHireCost(state: GameState, role: StaffRole): number {
-  return Math.ceil(scaledCost(STAFF[role].baseCost, state.staff[role], STAFF[role].costGrowth) * getPerkEffects(state).hireCost);
+  return Math.ceil(scaledCost(STAFF[role].baseCost, state.staff[role], STAFF[role].costGrowth) * getPerkEffects(state).hireCost * talentValue(state, 'headhunter'));
 }
 
 /** Indemnité pour licencier un collaborateur : part du prix payé pour le dernier recruté. */

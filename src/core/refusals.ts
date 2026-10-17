@@ -15,4 +15,5 @@ export type RefusalReason =
   | 'under_construction'
   | 'max_level'
   | 'cooling_down'
+  | 'insufficient_contacts'
   | 'unknown';

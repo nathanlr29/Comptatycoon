@@ -20,6 +20,15 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Prestige : revendre le cabinet (17/10/2026, demande de Nathan « il faut donner envie de tout remettre à 0 », fil « Prestige », GDD §14 et §14 bis). Part de la cession de #27.
+- **Atouts du réseau** : 12 atouts permanents payés en contacts, sans perdre le bonus de production (un contact dépensé reste dans le réseau). Départ avec argent, juniors, réputation, machine à café, 2e associé ; embauches, travaux et agrandissements moins chers ou plus rapides ; absence plus longue ; plus de contacts à la cession ; cession dès le niveau 4. Les atouts « au départ » s'appliquent aussi tout de suite à l'achat. `data/talents.ts`, `core/talents.ts`, action `buyTalent`, refus `insufficient_contacts`, `ui/TalentsPanel.ts`.
+- **Onglet Cession plus parlant** : offre de reprise, production du réseau avant → après (×N), contacts à faire jouer, CA manquant pour le contact suivant avec barre, titre du joueur (Jeune confrère → Légende de l'Ordre). Pastille sur « Améliorer » et notification une fois par partie quand la cession vaut le coup (`isSaleWorthwhile`). Bilan après la cession avec « Choisir mes atouts » (`ui/saleFlow.ts`).
+- Branchements : `getClickValue` (Saisie éclair), `getHireCost`, `getConstructionMs(level, state)`, `getUpgradePrice` / `getExpansionCost` (Bailleur ami, aussi dans le panneau Locaux), `getOfflineCapMs`, `getContactsForSale` (Négociateur), `getSaleMinFirmLevel`. `SALE.minFirmLevel` supprimé (le niveau vient de l'atout).
+- Sauvegarde : `prestige.talents` relu par `readState()` (absent = aucun atout, sans nouvelle version).
+- Joueur simulé (achète les atouts les moins chers) : 1re cession à 21,8 min (+32), 2e partie 10 min (11 sans atouts), 3e 7 min, 4e 6 min.
+- Vérifié en Chromium (iPhone 13) : onglet Cession, liste des atouts, confirmation, bilan, achat de l'Apport personnel juste après la cession (1 000 € crédités), aucune cible sous 44 px, pas de débordement horizontal, aucune erreur console.
+- À vérifier sur iPhone : lisibilité de l'onglet Cession (long, il défile), pastille violette sur « Améliorer », bilan de cession en paysage.
+
 Cantine (17/10/2026, demande de Nathan, fil « Cantine », GDD §6 ter).
 - Pièce du menu « Pièces » au Campus (niveau 7), place fixe {16, 15, 8 × 5} convenue avec « Locaux et parking » et « Confort des équipes ». Quatre niveaux nommés (Kitchenette, Cafétéria, Self-service, Restaurant d'entreprise), 50 Md€ puis 200 Md€, 800 Md€, 3 000 Md€. Effets par niveau : production +4 %, démissions −15 % (via `eventWeightPerLevel`), +5 réputation à l'aménagement.
 - `data/canteen.ts` (niveaux, chiffres, plan `CANTEEN_ROOM`, `canteenSeats`), `core/canteen.ts` (`isLunchTime`), `game/canteenFurniture.ts` (kitchenette, tables, buffet, cuisine et chef ; vapeur de la casserole dans `AmbientLayer`). Nouveau `Furniture.minLevel` + `roomFurnitureAt` : une pièce se meuble selon son niveau. `BuildingDefinition.levelNames` : « niv. 2 · Cafétéria » dans le menu (`levelText`).

@@ -20,17 +20,20 @@ function tab(icon: string, label: string, onClick: () => void) {
 export class ActionDock {
   private readonly actionLabel = h('span', { class: 'dock__action-label' });
   private readonly action = h('button', { class: 'dock__action', type: 'button' }, this.actionLabel);
+  private readonly upgradesTab: HTMLButtonElement;
 
   constructor(root: HTMLElement, handlers: DockHandlers) {
-    root.replaceChildren(
-      tab(ICONS.hire, 'Recruter', handlers.onOpenRecruitment),
-      this.action,
-      tab(ICONS.upgrade, 'Améliorer', handlers.onOpenUpgrades),
-    );
+    this.upgradesTab = tab(ICONS.upgrade, 'Améliorer', handlers.onOpenUpgrades);
+    root.replaceChildren(tab(ICONS.hire, 'Recruter', handlers.onOpenRecruitment), this.action, this.upgradesTab);
     this.action.addEventListener('click', (e) => {
       const amount = handlers.onClick();
       if (amount !== null) this.floatGain(amount, e);
     });
+  }
+
+  /** Pastille sur « Améliorer » (une cession qui vaut le coup attend dans l'onglet Cession). */
+  setUpgradesReady(ready: boolean): void {
+    this.upgradesTab.classList.toggle('dock__tab--ready', ready);
   }
 
   setLabel(label: string): void {

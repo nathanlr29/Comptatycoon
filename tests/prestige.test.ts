@@ -45,10 +45,10 @@ describe('cession du cabinet', () => {
   });
 
   it('repart du petit bureau en gardant mode, contacts, date de fondation et temps de jeu', () => {
-    const before = seat({ difficulty: 'hard', createdAt: T0 - 1_000, prestige: { contacts: 4, sales: 1, pastEarned: 2e7 } });
+    const before = seat({ difficulty: 'hard', createdAt: T0 - 1_000, prestige: { contacts: 4, sales: 1, pastEarned: 2e7, talents: {} } });
     const { state, result } = applyAction(before, { type: 'sellFirm' }, T0 + 5_000);
     expect(result).toEqual({ ok: true, amount: 15 });
-    expect(state.prestige).toEqual({ contacts: 19, sales: 2, pastEarned: 2e7 + 1e8 });
+    expect(state.prestige).toEqual({ contacts: 19, sales: 2, pastEarned: 2e7 + 1e8, talents: {} });
     expect(state.difficulty).toBe('hard');
     expect(state.createdAt).toBe(T0 - 1_000);
     expect(state.lastSimulatedAt).toBe(T0 + 5_000);
@@ -66,7 +66,7 @@ describe('cession du cabinet', () => {
 
   it('chaque contact ajoute 10 % de production, pour toute la suite', () => {
     const plain = makeState({ staff });
-    const networked = makeState({ staff, prestige: { contacts: 12, sales: 1, pastEarned: 0 } });
+    const networked = makeState({ staff, prestige: { contacts: 12, sales: 1, pastEarned: 0, talents: {} } });
     expect(getPrestigeMultiplier(networked)).toBeCloseTo(2.2, 9);
     expect(getBaseIncomePerSecond(networked)).toBeCloseTo(getBaseIncomePerSecond(plain) * 2.2, 9);
   });

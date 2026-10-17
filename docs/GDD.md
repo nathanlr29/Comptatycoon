@@ -275,7 +275,29 @@ Choisis à la fondation du cabinet (écran d'accueil), **définitifs** : rappel�
 Onglet **« Cession »** du panneau « Améliorer ». Quand le cabinet a atteint **Le siège** (niveau 5), le joueur peut le céder à un confrère et repartir du petit bureau en gardant son **réseau** : des contacts qui augmentent la production pour toujours.
 - Contacts gagnés = `floor(√(chiffre d'affaires de la partie / 1 000 000) × facteur du mode)` : 10 contacts à 100 M€, 31 à 1 Md€, 100 à 10 Md€. Cession refusée si elle rapporte 0 contact.
 - Chaque contact : production +10 % (bonus additif `1 + 0,1 × contacts`, multiplié avec les autres sources).
-- Gardés : contacts, nombre de cessions, chiffre d'affaires cumulé des parties précédentes, mode de difficulté, date de fondation. Tout le reste repart de zéro (argent, équipe, associés, améliorations, pièces, pôles, réputation, objectifs, statistiques de la partie).
+- Gardés : contacts, atouts du réseau (§14 bis), nombre de cessions, chiffre d'affaires cumulé des parties précédentes, mode de difficulté, date de fondation. Tout le reste repart de zéro (argent, équipe, associés, améliorations, pièces, pôles, réputation, objectifs, statistiques de la partie).
 - Confirmation obligatoire (fenêtre qui rappelle le total de contacts et ce qui est perdu). Après la cession, la caméra se recentre sur le petit bureau.
 - État : `prestige: { contacts, sales, pastEarned }` dans `GameState`, lu par `SaveSchema.readState()` (absent = aucun contact). Action `{ type: 'sellFirm' }` ; règles dans `src/core/prestige.ts`, chiffres dans `src/data/prestige.ts`.
-- Rythme mesuré par le joueur simulé (`npm run simulate`, 2 saisies/s, achète tout dès que possible, avec les 36 améliorations) : Pôle Social vers 10 min, Le siège et première cession vers 23 min ; chaque partie suivante atteint le siège en 10 à 15 min et le réseau double à chaque cession. Un vrai joueur, qui ne clique ni n'achète en continu, va nettement moins vite.
+- Rythme mesuré par le joueur simulé (`npm run simulate`, 2 saisies/s, achète tout dès que possible, avec les 36 améliorations, atouts les moins chers d'abord) : Pôle Social vers 11 min, Le siège et première cession vers 22 min (+32 contacts) ; 2e partie en 10 min (+90), 3e en 7 min, 4e en 6 min, et le réseau double à chaque cession. Un vrai joueur, qui ne clique ni n'achète en continu, va nettement moins vite.
+- **Donner envie de céder** : l'onglet montre l'offre de reprise (+N contacts), la production du réseau avant → après (« +120 % → +450 % (×2,5) »), les contacts à faire jouer après la cession, le chiffre d'affaires qui manque pour le contact suivant (barre de progression) et un titre selon la taille du réseau (Jeune confrère dès 1 contact, Notable du quartier 10, Figure régionale 50, Ténor de la profession 200, Légende de l'Ordre 1 000). Quand la cession vaut le coup (la première, puis toute cession qui multiplie au moins par 2 la production du réseau), une pastille apparaît sur « Améliorer » et une notification l'annonce une fois par partie. Après la cession, un bilan (CA de la partie, contacts gagnés, ce que les atouts donnent au départ) propose « Choisir mes atouts ».
+
+## 14 bis. Atouts du réseau
+Sous la cession, dans l'onglet « Cession ». Les contacts **se dépensent** en atouts permanents, sans quitter le réseau : le bonus de +10 % par contact compte tous les contacts, dépensés ou non. Contacts à faire jouer = contacts − somme des prix des niveaux achetés. Les atouts sont gardés à chaque cession (pas à la réinitialisation du cabinet). Données : `src/data/talents.ts` ; règles : `src/core/talents.ts` ; action `{ type: 'buyTalent', id }`, refus `insufficient_contacts` ou `max_level`.
+
+| Atout | Prix par niveau (contacts) | Effet par niveau |
+|---|---|---|
+| Saisie éclair | 1 · 5 · 20 | saisie manuelle ×2 · ×4 · ×8 |
+| Apport personnel* | 3 · 15 · 60 | départ avec 1 000 € · 50 000 € · 5 M€ |
+| Équipe fidèle* | 3 · 10 · 40 | départ avec 3 · 6 · 10 juniors |
+| Nom connu* | 5 · 15 · 50 | départ avec 10 · 25 · 50 de réputation |
+| Fidèle à sa machine* | 2 · 8 · 25 | départ avec la machine à capsules · l'expresso · le comptoir de barista |
+| Chasseur de têtes | 5 · 20 · 60 | embauches −10 % · −20 % · −30 % |
+| Artisans de confiance | 10 · 40 | durée des travaux −25 % · −50 % |
+| Bailleur ami | 8 · 30 | agrandissements −20 % · −40 % |
+| Bras droit | 5 · 20 | absence créditée +4 h · +8 h |
+| Associé de toujours* | 20 | départ avec 2 associés |
+| Négociateur | 10 · 40 · 120 | contacts à la cession +20 % · +40 % · +60 % |
+| Repreneur pressé | 50 | cession possible dès L'étage complet (niveau 4) |
+
+\* Atout « au départ » : appliqué à chaque nouveau cabinet après une cession, et tout de suite à l'achat (la différence avec le niveau précédent : argent, réputation et juniors s'ajoutent, l'associé et la machine sont garantis). L'apport n'est pas du chiffre d'affaires (il ne compte pas pour les contacts).
+- État : `prestige.talents` (niveau par atout, absent = 0), lu par `SaveSchema.readState()` : atout inconnu ignoré, niveau borné au maximum, absent des anciennes parties = aucun atout (pas de nouvelle version de schéma).

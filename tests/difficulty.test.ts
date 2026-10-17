@@ -53,9 +53,9 @@ describe('modes de difficulté', () => {
 
 describe('sauvegarde du mode et des cessions', () => {
   it('relit le mode et le réseau', () => {
-    const state = makeState({ difficulty: 'hard', prestige: { contacts: 12, sales: 2, pastEarned: 3e9 } });
+    const state = makeState({ difficulty: 'hard', prestige: { contacts: 12, sales: 2, pastEarned: 3e9, talents: {} } });
     const parsed = parseSave(serializeSave(state, T0));
-    expect(parsed.ok && [parsed.save.state.difficulty, parsed.save.state.prestige]).toEqual(['hard', { contacts: 12, sales: 2, pastEarned: 3e9 }]);
+    expect(parsed.ok && [parsed.save.state.difficulty, parsed.save.state.prestige]).toEqual(['hard', { contacts: 12, sales: 2, pastEarned: 3e9, talents: {} }]);
   });
 
   it('une ancienne partie sans ces champs passe en Classique, sans contact', () => {
@@ -63,7 +63,7 @@ describe('sauvegarde du mode et des cessions', () => {
     delete old.state.difficulty;
     delete old.state.prestige;
     const parsed = parseSave(JSON.stringify(old));
-    expect(parsed.ok && [parsed.save.state.difficulty, parsed.save.state.prestige]).toEqual(['normal', { contacts: 0, sales: 0, pastEarned: 0 }]);
+    expect(parsed.ok && [parsed.save.state.difficulty, parsed.save.state.prestige]).toEqual(['normal', { contacts: 0, sales: 0, pastEarned: 0, talents: {} }]);
   });
 
   it('refuse un mode inconnu en nommant le champ', () => {
