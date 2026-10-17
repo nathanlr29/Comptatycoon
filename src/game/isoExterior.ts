@@ -14,9 +14,9 @@ type G = Phaser.GameObjects.Graphics;
 
 const ASPHALT = 0x4b5160;
 const SIDEWALK = 0xb8b2a6;
-const CAR_COLORS = [0xdc2626, 0xf8fafc, 0x1e3a8a, 0x111827, 0x9ca3af, 0x0f766e, 0xf59e0b] as const;
+export const CAR_COLORS = [0xdc2626, 0xf8fafc, 0x1e3a8a, 0x111827, 0x9ca3af, 0x0f766e, 0xf59e0b] as const;
 
-function noise(a: number, b: number): number {
+export function noise(a: number, b: number): number {
   const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
   return s - Math.floor(s);
 }
@@ -40,23 +40,27 @@ export function drawParkingGround(g: G, stage: number, level: number): void {
   }
 }
 
-/** Voiture garée dans une place, capot vers l'allée (+y). */
-function car(scene: Phaser.Scene, s: TileRect, color: number): G {
+/** Voiture garée dans une place, capot vers l'allée (+y), dessinée dans `g`. */
+export function drawCar(g: G, s: TileRect, color: number, tint: (c: number) => number = (c) => c): void {
   const x = s.x + 0.17;
   const y = s.y + 0.22;
   const w = s.w - 0.34;
   const h = 1.45;
-  const g = scene.add.graphics();
   groundShadow(g, x, y, w, h);
   for (const [wx, wy] of [[x + 0.02, y + 0.25], [x + w - 0.1, y + 0.25], [x + 0.02, y + h - 0.4], [x + w - 0.1, y + h - 0.4]] as const) {
-    box(g, wx, wy, 0.08, 0.22, 0, 7, 0x111827, false);
+    box(g, wx, wy, 0.08, 0.22, 0, 7, tint(0x111827), false);
   }
-  box(g, x, y, w, h, 4, 9, color);
-  box(g, x + 0.08, y + 0.3, w - 0.16, 0.75, 13, 8, shade(color, 0.9));
-  poly(g, isoQuad(x + 0.1, y + 0.32, w - 0.2, 0.71, 21.2), 0x9fc6dd);
+  box(g, x, y, w, h, 4, 9, tint(color));
+  box(g, x + 0.08, y + 0.3, w - 0.16, 0.75, 13, 8, tint(shade(color, 0.9)));
+  poly(g, isoQuad(x + 0.1, y + 0.32, w - 0.2, 0.71, 21.2), tint(0x9fc6dd));
   const front = [isoToScreen(x + 0.1, y + h, 10), isoToScreen(x + w - 0.1, y + h, 10)];
   for (const p of front) g.fillStyle(0xfef3c7, 1).fillCircle(p.x, p.y, 1.8);
-  return g.setDepth(depthOf(x + w, y + h));
+}
+
+function car(scene: Phaser.Scene, s: TileRect, color: number): G {
+  const g = scene.add.graphics();
+  drawCar(g, s, color);
+  return g.setDepth(depthOf(s.x + s.w - 0.17, s.y + 1.67));
 }
 
 /** Borne de recharge au fond d'une place (parking niveau 2 et plus). */
@@ -97,7 +101,7 @@ export function drawParkingProps(scene: Phaser.Scene, stage: number, level: numb
 }
 
 /** Police 3 × 5 des lettres de l'enseigne. */
-const GLYPHS: Record<string, string[]> = {
+export const GLYPHS: Record<string, string[]> = {
   C: ['###', '#..', '#..', '#..', '###'],
   O: ['###', '#.#', '#.#', '#.#', '###'],
   M: ['#.#', '###', '###', '#.#', '#.#'],

@@ -167,6 +167,12 @@ Une pièce du menu « Pièces », à sa place fixe au Campus (niveau 7 du cabine
 Effets, par niveau : production globale +4 % ; poids de l'événement « Démission » (§8) × (1 − 0,15 × niveau), soit −60 % au restaurant d'entreprise, cumulé avec le mode de difficulté, la terrasse et le confort des équipes. Aucun effet temporaire : tout compte aussi hors ligne.
 **Déjeuner** (visuel seulement) : de 12 h à 13 h 30, heure réelle du joueur, jusqu'à 6 collaborateurs vont s'asseoir aux tables de la cantine (deux places par table, `canteenSeats`), puis regagnent leur bureau. La kitchenette sert aussi de coin café pour les allées et venues.
 
+## 6 quater. La façade (vue extérieure)
+Un bouton « Façade » (à côté de Recentrer) ouvre un aperçu plein écran du cabinet vu de dehors. Il n'y a rien de jouable et aucun effet sur le jeu ; « ← Cabinet » ou Échap ramène à l'open space, qui reste l'écran principal.
+- L'immeuble grandit avec le niveau du cabinet : boutique en rez-de-chaussée (1), deux vitrines (2), puis un étage de plus par niveau jusqu'au siège (5, quatre étages). L'annexe à droite, avec sa passerelle vitrée, apparaît au niveau 6 et le pavillon du campus au niveau 7.
+- Le parking et l'enseigne « COMPTA » ne figurent qu'une fois achetés. L'enseigne est au-dessus de la vitrine aux niveaux 1 et 2, puis sur le toit.
+- Le jour et la nuit suivent l'heure réelle, comme à l'intérieur : le soir, les fenêtres et les lampadaires s'allument, et tard dans la nuit il reste moins de bureaux allumés. Ni météo ni saisons.
+
 ## 7. Départements (achats uniques sauf mention)
 Les technologies (Automatisation de la saisie, Assistant comptable IA…) sont dans l'onglet « Améliorations », rubrique Technologies (§3 bis).
 

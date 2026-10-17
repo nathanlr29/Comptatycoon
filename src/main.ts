@@ -10,6 +10,7 @@ import './styles/profiles.css';
 import './styles/expansion.css';
 import './styles/coffee.css';
 import './styles/settings.css';
+import './styles/facade.css';
 
 const storage = getBrowserStorage();
 const saves = new LocalSaveService(storage, new ProfileStore(storage));
