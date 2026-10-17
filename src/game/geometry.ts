@@ -13,7 +13,10 @@ export const GESTURE = {
   tapMaxDuration: 250,
 } as const;
 
-export const ZOOM = { min: 0.35, max: 2, initial: 0.9 } as const;
+export const ZOOM = { min: 0.35, max: 1.6, initial: 0.9 } as const;
+
+/** Pincement amorti : le zoom suit le doigt un peu moins vite, et jamais par à-coups. */
+export const PINCH = { damping: 0.8, maxStep: 1.12, minDistance: 24 } as const;
 
 export interface GestureSample {
   /** Distance maximale parcourue depuis le point de départ, en px écran. */
@@ -30,6 +33,16 @@ export function isTap(g: GestureSample): boolean {
 
 export function clampZoom(zoom: number, minZoom: number): number {
   return Math.min(ZOOM.max, Math.max(minZoom, zoom));
+}
+
+/**
+ * Facteur de zoom pour un mouvement de pincement (distance entre les doigts avant/après).
+ * Doigts trop proches : mesure instable, on ne zoome pas.
+ */
+export function pinchZoomFactor(before: number, after: number): number {
+  if (before < PINCH.minDistance || after < PINCH.minDistance) return 1;
+  const factor = Math.pow(after / before, PINCH.damping);
+  return Math.min(PINCH.maxStep, Math.max(1 / PINCH.maxStep, factor));
 }
 
 /** Facteur de zoom pour une rotation de molette (deltaY > 0 = dézoomer). */

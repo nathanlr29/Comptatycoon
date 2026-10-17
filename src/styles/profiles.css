@@ -230,12 +230,13 @@
   background: var(--bg);
   color: var(--text);
   /* 16 px minimum : Safari iOS ne zoome pas sur le champ. */
-  font: 1rem var(--font);
+  font: max(16px, 1rem) var(--font);
 }
 
 .modal__textarea {
   resize: vertical;
-  font: 0.8125rem ui-monospace, Menlo, monospace;
+  /* 16 px aussi : en dessous, Safari iOS zoome la page au focus. */
+  font: max(16px, 1rem) ui-monospace, Menlo, monospace;
   word-break: break-all;
 }
 

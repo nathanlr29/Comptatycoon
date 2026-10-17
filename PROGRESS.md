@@ -20,6 +20,8 @@
 - [ ] 10 Comptes joueur : pseudo + mot de passe (Firebase)
 
 ## État actuel
+Zoom iPhone (16/10/2026, fil « Bug de zoom iPhone ») : la page ne zoome plus (`touch-action: manipulation` partout sauf le canvas, gestes Safari bloqués dans `ui/pageZoom.ts`, remise à l'échelle 1 si elle zoome quand même, champ Importer à 16 px). Carte : zoom max ×1,6 au lieu de ×2, pincement amorti (`pinchZoomFactor` dans `game/geometry.ts`).
+
 Locaux et parking (16/10/2026, demande de Nathan « nouvelles améliorations des locaux : agrandissement, parking… », fil « Locaux et parking »).
 - **Deux niveaux après le siège** : 6 « L’annexe » (2,5 Md€, 60 collaborateurs, 4 associés, 30 × 15, extension à l'est) et 7 « Le campus » (250 Md€, 75 collaborateurs, 5 associés, 30 × 20, extension au sud), +10 % de production chacun et leurs postes. Places réservées dans `data/office.ts` (commentaires) : niveau 6 `{24,5,6,4}` et `{24,9,6,4}`, niveau 7 `{0,15,8,5}` et `{8,15,8,5}` pour « Confort des équipes », `{16,15,8,5}` pour « Cantine ». La cession reste possible dès le siège.
 - **Parking** (100 k€, niv. 3 du cabinet, 3 niveaux) : +5 places d'encadrement par niveau (`BuildingEffect.capacityPerLevel`, lu par `getCapacity` et le départ d'un associé). Dessiné dehors, devant la façade à gauche de l'entrée (`parkingStalls`, `parkingRect`) : bitume, marquage, voitures garées, bornes de recharge au niv. 2, panneau « P ». Il suit la façade quand le cabinet s'agrandit ; la caméra l'inclut.
@@ -153,6 +155,7 @@ Vue en fausse 3D (16/10/2026, demande de Nathan) : cabinet en isométrique 2:1 (
 - Un test d'architecture interdit à `src/core/` d'importer Phaser, le DOM ou le stockage.
 
 ## À vérifier à la main (iPhone, navigateur)
+- iPhone (bug zoom, 16/10/2026) : taper vite 5 fois sur le solde ou 7 fois sur l'effectif ne zoome plus la page ; pincer sur le HUD ou un panneau ne zoome pas la page ; le zoom de la carte s'arrête à ×1,6 et se dézoome au pincement ou avec Recentrer ; le champ Importer ne zoome pas au focus.
 - Ouvrir le site publié sur iPhone (Safari) : pas de zoom ni de défilement de la page, bandeau sous l'encoche.
 - iPhone : pincement fluide et centré entre les doigts, inertie agréable (ni trop longue ni trop courte), aucun tap accidentel en fin de glissement.
 - iPhone : rotation portrait ↔ paysage sans déformation ni zone vide ; bouton Recentrer atteignable au pouce.

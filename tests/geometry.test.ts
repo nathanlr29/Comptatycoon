@@ -5,6 +5,8 @@ import {
   clampZoom,
   hitTest,
   isTap,
+  pinchZoomFactor,
+  PINCH,
   fitZoom,
   clampScrollIn,
   screenToWorld,
@@ -31,9 +33,23 @@ describe('tap ou glissement', () => {
 });
 
 describe('zoom', () => {
-  it('borne le zoom entre le minimum et 2', () => {
+  it('borne le zoom entre le minimum et le maximum (pas de zoom démesuré)', () => {
     expect(clampZoom(5, ZOOM.min)).toBe(ZOOM.max);
     expect(clampZoom(0.1, ZOOM.min)).toBe(ZOOM.min);
+    expect(ZOOM.max).toBeLessThanOrEqual(1.6);
+  });
+
+  it('amortit le pincement et évite les à-coups', () => {
+    expect(pinchZoomFactor(100, 110)).toBeGreaterThan(1);
+    expect(pinchZoomFactor(100, 110)).toBeLessThan(1.1);
+    expect(pinchZoomFactor(100, 300)).toBe(PINCH.maxStep);
+    expect(pinchZoomFactor(300, 100)).toBeCloseTo(1 / PINCH.maxStep, 9);
+    expect(pinchZoomFactor(100, 100)).toBe(1);
+  });
+
+  it('ignore un pincement aux doigts trop proches (mesure instable)', () => {
+    expect(pinchZoomFactor(5, 40)).toBe(1);
+    expect(pinchZoomFactor(0, 0)).toBe(1);
   });
 
   it('cadre une zone entière dans la vue', () => {

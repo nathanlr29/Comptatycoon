@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { CameraController } from './CameraController';
-import { GESTURE, isTap, wheelZoomFactor } from './geometry';
+import { GESTURE, isTap, pinchZoomFactor, wheelZoomFactor } from './geometry';
 
 interface Gesture {
   startX: number;
@@ -80,7 +80,7 @@ export class InputController {
     const midAfter = { x: (p.x + other.x) / 2, y: (p.y + other.y) / 2 };
     this.points.set(p.id, { x: p.x, y: p.y });
 
-    if (before > 0) this.camera.zoomAt(after / before, midAfter.x, midAfter.y);
+    this.camera.zoomAt(pinchZoomFactor(before, after), midAfter.x, midAfter.y);
     this.camera.panBy(midAfter.x - midBefore.x, midAfter.y - midBefore.y);
   }
 
