@@ -34,7 +34,7 @@ export function simulate(state: GameState, now: number): GameState {
     ...current,
     lastSimulatedAt: t,
     effects: current.effects.filter((e) => e.expiresAt > t),
-    stats: { ...current.stats, totalEarned: current.stats.totalEarned + earned },
+    stats: { ...current.stats, totalEarned: current.stats.totalEarned + earned, playMs: current.stats.playMs + steps * step },
   };
 }
 

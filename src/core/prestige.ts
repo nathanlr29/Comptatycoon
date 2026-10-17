@@ -25,9 +25,9 @@ export function canSellFirm(state: GameState): SaleCheck {
   return { ok: true, contacts };
 }
 
-/** Nouvelle partie au petit bureau ; seuls la difficulté, les contacts et la date de fondation sont gardés. Suppose `canSellFirm(...).ok`. */
+/** Nouvelle partie au petit bureau ; seuls la difficulté, les contacts, la date de fondation et le temps de jeu sont gardés. Suppose `canSellFirm(...).ok`. */
 export function sellFirm(state: GameState, contacts: number, now: number): GameState {
-  return createInitialState(now, {
+  const next = createInitialState(now, {
     difficulty: state.difficulty,
     createdAt: state.createdAt,
     prestige: {
@@ -36,4 +36,5 @@ export function sellFirm(state: GameState, contacts: number, now: number): GameS
       pastEarned: state.prestige.pastEarned + state.stats.totalEarned,
     },
   });
+  return { ...next, stats: { ...next.stats, playMs: state.stats.playMs } };
 }

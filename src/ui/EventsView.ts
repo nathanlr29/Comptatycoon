@@ -11,19 +11,19 @@ import type { NotificationManager } from './NotificationManager';
 export function notifyEvent(notifications: NotificationManager, report: EventReport): void {
   switch (report.id) {
     case 'fiscalPeriod':
-      return notifications.show(EVENT_TEXTS.fiscalPeriod.title, EVENT_TEXTS.fiscalPeriod.body, 'success');
+      return notifications.show(EVENT_TEXTS.fiscalPeriod.title, EVENT_TEXTS.fiscalPeriod.body, 'success', undefined, 'events');
     case 'taxAudit': {
-      if (report.protected) return notifications.show(EVENT_TEXTS.taxAuditSafe.title, EVENT_TEXTS.taxAuditSafe.body, 'success');
+      if (report.protected) return notifications.show(EVENT_TEXTS.taxAuditSafe.title, EVENT_TEXTS.taxAuditSafe.body, 'success', undefined, 'events');
       const t = EVENT_TEXTS.taxAuditLoss(formatMoney(report.loss), report.reputationChange);
-      return notifications.show(t.title, t.body, 'warning', 5000);
+      return notifications.show(t.title, t.body, 'warning', 5000, 'events');
     }
     case 'resignation': {
       const t = EVENT_TEXTS.resignation(STAFF[report.role].name);
-      return notifications.show(t.title, t.body, 'warning', 5000);
+      return notifications.show(t.title, t.body, 'warning', 5000, 'events');
     }
     case 'prestigiousClient': {
       const t = EVENT_TEXTS.prestigiousClient(formatMoney(report.bonus), report.reputation);
-      return notifications.show(t.title, t.body, 'success');
+      return notifications.show(t.title, t.body, 'success', undefined, 'events');
     }
   }
 }

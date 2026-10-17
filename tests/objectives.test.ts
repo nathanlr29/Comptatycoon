@@ -20,12 +20,12 @@ describe('objectifs', () => {
 
   it('suivent la progression, plafonnée à la cible', () => {
     const def = OBJECTIVES[0]!;
-    expect(getObjectiveProgress(makeState({ stats: { totalEarned: 0, clicks: 4 } }), def, T0)).toEqual({ current: 4, target: 10, done: false });
-    expect(getObjectiveProgress(makeState({ stats: { totalEarned: 0, clicks: 25 } }), def, T0)).toEqual({ current: 10, target: 10, done: true });
+    expect(getObjectiveProgress(makeState({ stats: { totalEarned: 0, clicks: 4, playMs: 0 } }), def, T0)).toEqual({ current: 4, target: 10, done: false });
+    expect(getObjectiveProgress(makeState({ stats: { totalEarned: 0, clicks: 25, playMs: 0 } }), def, T0)).toEqual({ current: 10, target: 10, done: true });
   });
 
   it('se réclament une seule fois, seulement atteints et visibles', () => {
-    const state = makeState({ stats: { totalEarned: 0, clicks: 10 } });
+    const state = makeState({ stats: { totalEarned: 0, clicks: 10, playMs: 0 } });
     expect(applyAction(makeState(), claim('firstInvoices'), T0).result).toEqual({ ok: false, reason: 'missing_prerequisite' });
     expect(applyAction(state, claim('income1000'), T0).result).toEqual({ ok: false, reason: 'locked' });
     const { state: after, result } = applyAction(state, claim('firstInvoices'), T0);

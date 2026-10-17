@@ -68,6 +68,8 @@ describe('production passive', () => {
     for (let i = 1; i <= 40; i++) many = simulate(many, T0 + i * 250);
     expect(many.money).toBe(once.money);
     expect(many.lastSimulatedAt).toBe(once.lastSimulatedAt);
+    expect(many.stats.playMs).toBe(10_000);
+    expect(once.stats.playMs).toBe(10_000);
   });
 
   it('garde le temps restant pour le tick suivant', () => {

@@ -6,6 +6,7 @@
  *
  * Coût : une horloge à 2 Hz choisit les activités ; seules les personnes en marche ont un tween.
  */
+import { reducedMotion } from '../../settings';
 import Phaser from 'phaser';
 import type { TeamRole } from '../../core/team';
 import { depthOf, isoToScreen, screenToIso } from '../iso';
@@ -51,7 +52,6 @@ export class Routine {
   private readonly people = new Map<string, Person>();
   private places: Place[] = [];
   private readonly gatherings = new Set<string>();
-  private readonly motion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -62,7 +62,7 @@ export class Routine {
   }
 
   get still(): boolean {
-    return this.motion.matches;
+    return reducedMotion();
   }
 
   setPlaces(places: Place[]): void {

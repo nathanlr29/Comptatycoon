@@ -55,7 +55,7 @@ export function applyAction(state: GameState, action: GameAction, now: number): 
       const next: GameState = {
         ...state,
         money: state.money + amount,
-        stats: { totalEarned: state.stats.totalEarned + amount, clicks: state.stats.clicks + 1 },
+        stats: { ...state.stats, totalEarned: state.stats.totalEarned + amount, clicks: state.stats.clicks + 1 },
       };
       return { state: next, result: { ok: true, amount } };
     }

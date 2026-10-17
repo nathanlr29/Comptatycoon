@@ -4,9 +4,9 @@ import type { ScreenPoint } from './iso';
 import { DEPTH } from './iso';
 import { COLORS } from './palette';
 
-export function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
+import { reducedMotion } from '../settings';
+
+export const prefersReducedMotion = reducedMotion;
 
 export interface RevealTarget {
   /** Point du monde à cadrer. */

@@ -12,11 +12,11 @@ import { drawPerkItem, visiblePerkItems } from './perkFurniture';
 import { floor, gravelPath, wallDecor, wallFootShadow } from './isoTextures';
 import { LightingLayer } from './lighting';
 import { COLORS, ROOM_FLOORS, shade } from './palette';
+import { reducedMotion } from '../settings';
 
 type Obj = Phaser.GameObjects.Graphics | Phaser.GameObjects.Image;
 type G = Phaser.GameObjects.Graphics;
 
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /** Cloison basse en placoplâtre, chapeau en bois. */
 function partition(g: G, x: number, y: number, w: number, h: number): void {

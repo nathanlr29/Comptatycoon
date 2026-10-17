@@ -15,6 +15,8 @@ import { canSellFirm } from '../core/prestige';
 import { contactsBonusText, contactsText, SALE_TEXTS } from '../data/prestige';
 import { MAP_EVENTS } from '../game/MapScene';
 import { ActionDock } from './ActionDock';
+import { actionSound } from './actionSounds';
+import { playSound, unlockAudioOnFirstGesture } from './sound';
 import { BuildingInfo } from './BuildingInfo';
 import { CoffeePanel } from './CoffeePanel';
 import { h } from './dom';
@@ -120,6 +122,11 @@ export class App {
 
     this.secrets = new Secrets(store, this.notifications, this.hud);
     this.liveInfo = new LiveInfo(store, this.notifications, (report) => this.secrets.interceptEvent(report));
+    store.onAction((action, result) => {
+      const sound = result.ok ? actionSound(action) : null;
+      if (sound) playSound(sound);
+    });
+    unlockAudioOnFirstGesture();
     store.subscribe((state) => this.render(state));
     this.render(store.getState());
   }
@@ -229,7 +236,7 @@ export class App {
     const pending = new Set(state.buildings.filter((b) => b.pending && b.id !== 'hq').map((b) => b.id));
     for (const id of this.roomWorks) {
       const building = state.buildings.find((b) => b.id === id);
-      if (!pending.has(id) && building) this.notifications.show('Travaux terminés', `${BUILDINGS[building.type].name}, niveau ${building.level}`, 'success');
+      if (!pending.has(id) && building) this.notifications.show('Travaux terminés', `${BUILDINGS[building.type].name}, niveau ${building.level}`, 'success', undefined, 'works');
     }
     this.roomWorks = pending;
   }
@@ -259,7 +266,7 @@ export class App {
     const firmLevel = getFirmLevel(state);
     if (firmLevel > this.firmLevel) {
       const level = getExpansionLevel(firmLevel);
-      if (level) this.notifications.show('Cabinet agrandi', `${level.name} · +1 réputation`, 'success');
+      if (level) this.notifications.show('Cabinet agrandi', `${level.name} · +1 réputation`, 'success', undefined, 'works');
     }
     this.firmLevel = firmLevel;
     this.announceFinishedRooms(state);

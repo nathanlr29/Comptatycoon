@@ -29,7 +29,7 @@ const played = makeState({
   staff: { intern: 3, junior: 2, senior: 1, manager: 0 },
   upgrades: ['dualScreen'],
   effects: [{ id: 'fiscal', incomeMultiplier: 2, expiresAt: T0 + 60_000 }],
-  stats: { totalEarned: 5000, clicks: 42 },
+  stats: { totalEarned: 5000, clicks: 42, playMs: 0 },
 });
 
 describe('schéma de sauvegarde', () => {
@@ -79,7 +79,7 @@ describe('schéma de sauvegarde', () => {
     const parsed = validateSave({ savedAt: T0, state: v0State });
     expect(parsed).toEqual({
       ok: true,
-      save: { schemaVersion: SCHEMA_VERSION, savedAt: T0, state: { ...played, stats: { totalEarned: 0, clicks: 0 } } },
+      save: { schemaVersion: SCHEMA_VERSION, savedAt: T0, state: { ...played, stats: { totalEarned: 0, clicks: 0, playMs: 0 } } },
     });
   });
 
@@ -236,5 +236,17 @@ describe('profils', () => {
     storage.data.set(PROFILE_INDEX_KEY, 'oups');
     expect(profiles.list()).toEqual([]);
     expect(storage.getItem(`${PROFILE_INDEX_KEY}:corrupt-${T0}`)).toBe('oups');
+  });
+});
+
+describe('temps de jeu', () => {
+  it('une sauvegarde sans temps de jeu se relit à 0, et le temps de jeu est relu tel quel', () => {
+    const old = JSON.parse(serializeSave(makeState(), T0));
+    delete old.state.stats.playMs;
+    const parsed = validateSave(old);
+    expect(parsed.ok && parsed.save.state.stats.playMs).toBe(0);
+    const played = makeState({ stats: { totalEarned: 10, clicks: 1, playMs: 90_000 } });
+    const again = parseSave(serializeSave(played, T0));
+    expect(again.ok && again.save.state.stats.playMs).toBe(90_000);
   });
 });

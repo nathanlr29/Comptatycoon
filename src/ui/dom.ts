@@ -22,6 +22,5 @@ export function setText(el: HTMLElement, value: string): void {
   if (el.textContent !== value) el.textContent = value;
 }
 
-export function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
+/** Animations réduites : réglage du joueur (Paramètres) ou de l'appareil. */
+export { reducedMotion as prefersReducedMotion } from '../settings';
